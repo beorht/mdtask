@@ -1,0 +1,5 @@
+[
+  { "id": "student-1", "role": "student", "name": "Иван Иванов", "group": "IT-21" },
+  { "id": "student-2", "role": "student", "name": "Мария Петрова", "group": "IT-21" },
+  { "id": "teacher-1", "role": "teacher", "name": "Сергей Смирнов" }
+]

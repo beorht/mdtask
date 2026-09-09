@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <%- include('partials/head', { pageTitle: 'Редактор: ' + assignment.title }) %>
+</head>
+<body>
+  <div class="app-layout">
+    <%- include('partials/sidebar') %>
+    <main class="content editor-layout">
+      <h1>Редактирование: <%= assignment.title %></h1>
+      <div class="editor-panes">
+        <textarea id="editorSource"><%= markdown %></textarea>
+        <div id="editorPreview" class="content"></div>
+      </div>
+    </main>
+  </div>
+  <%- include('partials/scripts') %>
+  <script src="/js/editor-preview.js" defer></script>
+</body>
+</html>

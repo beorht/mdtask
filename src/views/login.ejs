@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <%- include('partials/head', { pageTitle: 'Вход' }) %>
+</head>
+<body class="login-page">
+  <main class="login-card">
+    <h1>mdtask</h1>
+    <% if (error) { %>
+      <p class="error"><%= error %></p>
+    <% } %>
+    <form method="post" action="/login">
+      <label for="studentId">Student ID</label>
+      <input id="studentId" name="studentId" autofocus>
+      <button type="submit" class="btn-primary">Войти</button>
+    </form>
+  </main>
+</body>
+</html>

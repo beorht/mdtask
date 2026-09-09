@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <%- include('partials/head', { pageTitle: 'Мои задания' }) %>
+</head>
+<body>
+  <div class="app-layout">
+    <%- include('partials/sidebar') %>
+    <main class="content">
+      <h1>Мои задания</h1>
+      <% courses.forEach(function (course) { %>
+        <h2><%= course.title %></h2>
+        <% const courseAssignments = assignments.filter(function (a) { return a.courseId === course.id; }); %>
+        <% if (courseAssignments.length === 0) { %>
+          <p class="empty-state">В этом курсе пока нет заданий.</p>
+        <% } else { %>
+        <ul class="assignment-list">
+          <% courseAssignments.forEach(function (a) { %>
+            <li class="assignment-card">
+              <a href="/assignment/<%= a.id %>"><%= a.title %></a>
+              <span class="badge badge-<%= a.status %>"></span>
+              <span class="due-date<%= a.dueSoon ? ' due-soon' : '' %>">до <%= a.dueDate %></span>
+              <% if (a.targetType === 'individual') { %><span class="tag">доп. задание</span><% } %>
+            </li>
+          <% }) %>
+        </ul>
+        <% } %>
+      <% }) %>
+    </main>
+  </div>
+  <%- include('partials/scripts') %>
+</body>
+</html>

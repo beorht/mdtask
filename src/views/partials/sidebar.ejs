@@ -1,0 +1,27 @@
+<nav class="sidebar" id="sidebar">
+  <button class="sidebar-toggle" id="sidebarToggle" aria-label="Меню">☰</button>
+  <ul class="tree">
+    <% sidebarTree.forEach(function renderNode(node) { %>
+      <li>
+        <% if (node.assignmentId) { %>
+          <% const assignmentHref = user.role === 'teacher' ? '/teacher/assignment/' + node.assignmentId + '/edit' : '/assignment/' + node.assignmentId; %>
+          <a href="<%= assignmentHref %>" class="<%= activeAssignmentId === node.assignmentId ? 'active' : '' %>">
+            <%= node.title %>
+            <% if (node.status) { %><span class="badge badge-<%= node.status %>"></span><% } %>
+          </a>
+        <% } else { %>
+          <span class="tree-section"><%= node.title %></span>
+        <% } %>
+        <% if (node.children && node.children.length) { %>
+          <ul>
+            <% node.children.forEach(renderNode) %>
+          </ul>
+        <% } %>
+      </li>
+    <% }) %>
+  </ul>
+  <div class="sidebar-footer">
+    <button id="themeToggle" class="btn-secondary">🌓 Тема</button>
+    <form method="post" action="/logout"><button type="submit" class="btn-secondary"><%= user.name %> · выйти</button></form>
+  </div>
+</nav>

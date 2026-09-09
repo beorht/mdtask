@@ -1,0 +1,38 @@
+[
+  {
+    "id": "assign-1",
+    "courseId": "course-1",
+    "title": "Задание 1: Настройка репозитория",
+    "mdPath": "section-1/task-1.md",
+    "targetType": "group",
+    "targetStudentId": null,
+    "dueDate": "2026-09-20"
+  },
+  {
+    "id": "assign-2",
+    "courseId": "course-1",
+    "title": "Задание 2: Ветвление",
+    "mdPath": "section-1/task-2.md",
+    "targetType": "group",
+    "targetStudentId": null,
+    "dueDate": "2026-09-27"
+  },
+  {
+    "id": "assign-3",
+    "courseId": "course-1",
+    "title": "Задание 1: Express-сервер",
+    "mdPath": "section-2/task-1.md",
+    "targetType": "group",
+    "targetStudentId": null,
+    "dueDate": "2026-10-04"
+  },
+  {
+    "id": "assign-4",
+    "courseId": "course-1",
+    "title": "Дополнительное задание: Рефакторинг",
+    "mdPath": "individual/student-1/extra-task.md",
+    "targetType": "individual",
+    "targetStudentId": "student-1",
+    "dueDate": "2026-10-10"
+  }
+]

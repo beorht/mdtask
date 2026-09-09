@@ -1,0 +1,43 @@
+<!-- src/views/assignment-view.ejs -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <%- include('partials/head', { pageTitle: assignment.title }) %>
+</head>
+<body>
+  <a href="/" class="back-home">← На главную</a>
+  <div class="app-layout">
+    <%- include('partials/sidebar') %>
+    <main class="content">
+      <nav class="breadcrumbs">Мои задания / <%= assignment.title %></nav>
+      <%- html %>
+
+      <section class="submission-block">
+        <% if (submissions.length > 1) { %>
+          <div class="tabs">
+            <button class="tab-btn active" data-tab="main">Основная сдача</button>
+            <button class="tab-btn" data-tab="retry">Пересдача</button>
+          </div>
+        <% } %>
+        <% submissions.forEach(function (s) { %>
+          <div class="submission-card" data-submission-type="<%= s.parentSubmissionId ? 'retry' : 'main' %>">
+            <span class="badge badge-<%= s.status %>"></span>
+            <ul><% s.files.forEach(function (f) { %><li><%= f %></li><% }) %></ul>
+            <% if (s.comment) { %><p class="comment"><%= s.comment %></p><% } %>
+          </div>
+        <% }) %>
+        <div class="dropzone">Перетащите файл(ы) сюда или выберите вручную (.zip, .rar)</div>
+      </section>
+    </main>
+    <aside class="toc">
+      <h3>На этой странице</h3>
+      <ul>
+        <% toc.forEach(function (h) { %>
+          <li class="toc-level-<%= h.level %>"><a href="#<%= h.slug %>"><%= h.text %></a></li>
+        <% }) %>
+      </ul>
+    </aside>
+  </div>
+  <%- include('partials/scripts') %>
+</body>
+</html>

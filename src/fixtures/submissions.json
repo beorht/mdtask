@@ -1,0 +1,32 @@
+[
+  {
+    "id": "sub-1",
+    "assignmentId": "assign-1",
+    "studentId": "student-1",
+    "files": ["solution.zip"],
+    "status": "pending",
+    "comment": null,
+    "checkedAt": null,
+    "parentSubmissionId": null
+  },
+  {
+    "id": "sub-2",
+    "assignmentId": "assign-2",
+    "studentId": "student-1",
+    "files": ["v1.zip"],
+    "status": "not_done",
+    "comment": "Не хватает merge в main",
+    "checkedAt": "2026-09-15T10:00:00.000Z",
+    "parentSubmissionId": null
+  },
+  {
+    "id": "sub-3",
+    "assignmentId": "assign-2",
+    "studentId": "student-1",
+    "files": ["v2.zip"],
+    "status": "pending",
+    "comment": null,
+    "checkedAt": null,
+    "parentSubmissionId": "sub-2"
+  }
+]

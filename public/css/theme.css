@@ -1,0 +1,79 @@
+:root {
+  /* brand */
+  --color-peach: #F8B195;
+  --color-peach-light: #FDE3D4;
+  --color-coral: #F67280;
+  --color-coral-dark: #D9505E;
+  --color-coral-darker: #B83A47;
+  --color-gradient-brand: linear-gradient(135deg, #F8B195, #F67280);
+
+  /* status (kept distinct from brand coral) */
+  --color-status-done: #4CAF7D;
+  --color-status-failed: #C6404F;
+  --color-status-pending: #E8A33D;
+  --color-status-pending-icon-size: 0.55rem;
+
+  /* neutral - light theme */
+  --color-ink: #2B2622;
+  --color-ink-soft: #5C5550;
+  --color-paper: #FFFFFF;
+  --color-paper-muted: #FAF7F5;
+  --color-border: #EDE3DE;
+
+  /* semantic aliases used across components.css */
+  --bg: var(--color-paper);
+  --sidebar-bg: var(--color-paper-muted);
+  --text: var(--color-ink);
+  --text-soft: var(--color-ink-soft);
+  --accent: var(--color-coral);
+  --accent-text: var(--color-coral-dark);
+  --accent-text-hover: var(--color-coral-darker);
+  --accent-soft-bg: var(--color-peach-light);
+  --border: var(--color-border);
+  --on-accent-text: #ffffff;
+}
+
+:root[data-theme="dark"] {
+  --color-ink: #EDE3DE;
+  --color-ink-soft: #C9BEB8;
+  --color-paper: #221E1C;
+  --color-paper-muted: #2E2825;
+  --color-border: #3A332F;
+
+  --bg: var(--color-paper);
+  --sidebar-bg: var(--color-paper-muted);
+  --text: var(--color-ink);
+  --text-soft: var(--color-ink-soft);
+  /* on dark backgrounds Peach reads better than the darkened Coral variants */
+  --accent: var(--color-coral);
+  --accent-text: var(--color-peach);
+  --accent-text-hover: var(--color-peach);
+  --accent-soft-bg: rgba(248, 177, 149, 0.12);
+  --border: var(--color-border);
+  /* primary buttons stay Coral-filled, but need dark text to avoid getting lost */
+  --on-accent-text: var(--color-paper);
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Source Serif Pro", Georgia, serif;
+  line-height: 1.65;
+}
+
+code, pre {
+  font-family: "Fira Code", "Source Code Pro", monospace;
+}
+
+a {
+  color: var(--accent-text);
+}
+a:hover {
+  color: var(--accent-text-hover);
+  text-decoration: underline;
+}
+
+::selection {
+  background: rgba(246, 114, 128, 0.3);
+}
