@@ -68,7 +68,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: "Source Serif Pro", Georgia, serif;
+  font-family: "Open Sans", -apple-system, "Segoe UI", Arial, sans-serif;
   font-size: 17px;
   line-height: 1.7;
   -webkit-font-smoothing: antialiased;

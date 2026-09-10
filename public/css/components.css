@@ -103,7 +103,7 @@
 :root[data-theme="dark"] .badge-not_done { background: color-mix(in srgb, var(--color-status-failed) 20%, transparent); color: var(--color-status-failed); }
 :root[data-theme="dark"] .badge-pending { background: color-mix(in srgb, var(--color-status-pending) 20%, transparent); color: var(--color-status-pending); }
 
-.content { max-width: 800px; margin: 0 auto; padding: 2rem; flex: 1; }
+.content { max-width: 800px; margin: 0 auto; padding: 2rem; flex: 1; font-size: 1.1em; }
 .content a { color: var(--accent-text); }
 .content a:hover { color: var(--accent-text-hover); }
 
