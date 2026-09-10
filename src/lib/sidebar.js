@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { parseSummary } = require('./summary-parser');
-const { getAssignments, getSubmissions } = require('../fixtures');
+const { getAssignments, getSubmissions } = require('../db');
 
 const SUMMARY_PATH = path.join(__dirname, '..', '..', 'content', 'SUMMARY.md');
 

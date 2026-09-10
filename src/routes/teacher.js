@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const { requireRole } = require('../middleware/auth');
 const { buildSidebarTree } = require('../lib/sidebar');
-const { getCourses, getAssignments, getUsers, getSubmissions, updateSubmissionStatus, reopenSubmission } = require('../fixtures');
+const { getCourses, getAssignments, getUsers, getSubmissions, updateSubmissionStatus, reopenSubmission } = require('../db');
 const { renderMarkdown } = require('../lib/markdown');
 
 const router = express.Router();
@@ -31,8 +31,19 @@ router.get('/teacher/assignment/:id/edit', requireRole('teacher'), (req, res) =>
     sidebarTree,
     assignment,
     markdown,
+    saved: req.query.saved === '1',
     activeAssignmentId: assignment.id,
   });
+});
+
+router.post('/teacher/assignment/:id/save', requireRole('teacher'), (req, res) => {
+  const assignment = getAssignments().find((a) => a.id === req.params.id);
+  if (!assignment) return res.status(404).render('404');
+
+  const markdown = typeof req.body.markdown === 'string' ? req.body.markdown : '';
+  fs.writeFileSync(path.join(CONTENT_DIR, assignment.mdPath), markdown, 'utf-8');
+
+  res.redirect(`/teacher/assignment/${assignment.id}/edit?saved=1`);
 });
 
 router.post('/api/preview', requireRole('teacher'), (req, res) => {

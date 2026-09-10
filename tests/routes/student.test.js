@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert');
 const request = require('supertest');
 const { createApp } = require('../../src/server');
-const fixtures = require('../../src/fixtures');
+const fixtures = require('../../src/db');
 
 async function loginAs(app, studentId) {
   const agent = request.agent(app);

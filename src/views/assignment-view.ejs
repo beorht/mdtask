@@ -25,7 +25,14 @@
             <% if (s.comment) { %><p class="comment"><%= s.comment %></p><% } %>
           </div>
         <% }) %>
-        <div class="dropzone" tabindex="0">Перетащите файл(ы) сюда или выберите вручную (.zip, .rar)</div>
+        <% if (canSubmit) { %>
+          <form method="post" action="/assignment/<%= assignment.id %>/submit" enctype="multipart/form-data" id="uploadForm">
+            <div class="dropzone" tabindex="0" id="dropzone">Перетащите файл(ы) сюда или выберите вручную (.zip, .rar)</div>
+            <input type="file" name="files" id="fileInput" accept=".zip,.rar" multiple hidden>
+          </form>
+        <% } else { %>
+          <p class="empty-state">Приём решений по этому заданию закрыт.</p>
+        <% } %>
       </section>
     </main>
     <aside class="toc">

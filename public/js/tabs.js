@@ -20,20 +20,44 @@
     showTab(initial ? initial.dataset.tab : 'main');
   }
 
-  // Visual-only drag feedback on the upload dropzone (no real upload in this prototype).
-  const dropzone = document.querySelector('.dropzone');
-  if (dropzone) {
+  // Real upload: click/drop -> populate the hidden file input -> submit the form.
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+  const uploadForm = document.getElementById('uploadForm');
+
+  if (dropzone && fileInput && uploadForm) {
+    dropzone.addEventListener('click', function () {
+      fileInput.click();
+    });
+    dropzone.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        fileInput.click();
+      }
+    });
+    fileInput.addEventListener('change', function () {
+      if (fileInput.files.length > 0) uploadForm.submit();
+    });
+
     ['dragenter', 'dragover'].forEach(function (evt) {
       dropzone.addEventListener(evt, function (e) {
         e.preventDefault();
         dropzone.classList.add('drag-over');
       });
     });
-    ['dragleave', 'drop'].forEach(function (evt) {
+    ['dragleave'].forEach(function (evt) {
       dropzone.addEventListener(evt, function (e) {
         e.preventDefault();
         dropzone.classList.remove('drag-over');
       });
+    });
+    dropzone.addEventListener('drop', function (e) {
+      e.preventDefault();
+      dropzone.classList.remove('drag-over');
+      if (e.dataTransfer && e.dataTransfer.files.length > 0) {
+        fileInput.files = e.dataTransfer.files;
+        uploadForm.submit();
+      }
     });
   }
 })();
