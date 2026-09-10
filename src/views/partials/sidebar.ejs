@@ -1,5 +1,6 @@
 <nav class="sidebar" id="sidebar">
   <button class="sidebar-toggle" id="sidebarToggle" aria-label="Меню">☰</button>
+  <a href="<%= user.role === 'teacher' ? '/teacher' : '/' %>" class="back-home">← На главную</a>
   <ul class="tree">
     <% sidebarTree.forEach(function renderNode(node) { %>
       <li>
