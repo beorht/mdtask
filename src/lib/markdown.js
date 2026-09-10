@@ -53,4 +53,4 @@ function extractHeadings(text) {
   return headings;
 }
 
-module.exports = { renderMarkdown, extractHeadings };
+module.exports = { renderMarkdown, extractHeadings, slugify };

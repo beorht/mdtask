@@ -250,6 +250,7 @@
     transform var(--duration-fast) var(--ease-standard),
     box-shadow var(--duration-fast) var(--ease-standard);
 }
+a.btn { display: inline-block; text-decoration: none; }
 button { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
 button:hover { background: var(--accent-soft-bg); transform: translateY(-1px); box-shadow: 0 4px 10px rgba(43, 38, 34, 0.06); }
 button:active { transform: translateY(0); box-shadow: none; }
@@ -344,3 +345,20 @@ button:focus-visible { outline: 2px solid var(--color-coral); outline-offset: 2p
 
 .progress-bar { background: var(--border); border-radius: 999px; height: 0.5rem; overflow: hidden; }
 .progress-bar__fill { height: 100%; background: var(--color-gradient-brand); }
+
+.new-assignment-form { display: flex; flex-direction: column; gap: 0.75rem; max-width: 420px; }
+.new-assignment-form label { font-weight: bold; }
+.new-assignment-form input[type="text"],
+.new-assignment-form input[type="date"],
+.new-assignment-form input:not([type="radio"]),
+.new-assignment-form select {
+  font: inherit;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.5rem 0.6rem;
+  background: var(--bg);
+  color: var(--text);
+}
+.new-assignment-form fieldset { border: 1px solid var(--border); border-radius: 6px; padding: 0.75rem; }
+.new-assignment-form fieldset label { font-weight: normal; display: block; margin: 0.25rem 0; }
+.new-assignment-form .btn-primary { align-self: flex-start; }

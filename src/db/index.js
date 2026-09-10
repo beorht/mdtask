@@ -99,6 +99,14 @@ function updateSubmissionFiles(id, files) {
   return rowToSubmission(db.prepare('SELECT * FROM submissions WHERE id = ?').get(id));
 }
 
+function createAssignment({ courseId, title, mdPath, targetType, targetStudentId, dueDate }) {
+  const id = `assign-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  db.prepare(
+    'INSERT INTO assignments (id, course_id, title, md_path, target_type, target_student_id, due_date) VALUES (?, ?, ?, ?, ?, ?, ?)'
+  ).run(id, courseId, title, mdPath, targetType, targetStudentId || null, dueDate);
+  return rowToAssignment(db.prepare('SELECT * FROM assignments WHERE id = ?').get(id));
+}
+
 function updateAssignmentTitle(id, title) {
   db.prepare('UPDATE assignments SET title = ? WHERE id = ?').run(title, id);
 }
@@ -122,6 +130,7 @@ module.exports = {
   createSubmission,
   getLatestSubmission,
   updateSubmissionFiles,
+  createAssignment,
   updateAssignmentTitle,
   setAssignmentDueDateForTests,
   __resetForTests,

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <%- include('partials/head', { pageTitle: 'Новое задание' }) %>
+</head>
+<body>
+  <div class="app-layout">
+    <%- include('partials/sidebar') %>
+    <main class="content">
+      <nav class="breadcrumbs">Мои курсы / <%= course.title %> / Новое задание</nav>
+      <h1>Новое задание</h1>
+      <% if (error) { %><p style="color: var(--color-status-failed);"><%= error %></p><% } %>
+
+      <form method="post" action="/teacher/courses/<%= course.id %>/assignments" class="new-assignment-form">
+        <label for="title">Название задания</label>
+        <input id="title" name="title" required value="<%= typeof title !== 'undefined' ? title : '' %>">
+
+        <fieldset>
+          <legend>Тип задания</legend>
+          <label><input type="radio" name="targetType" value="group" checked> Общее (для всей группы)</label>
+          <label><input type="radio" name="targetType" value="individual"> Индивидуальное (для одного студента)</label>
+        </fieldset>
+
+        <div id="groupFields">
+          <label for="sectionTitle">Раздел</label>
+          <input id="sectionTitle" name="sectionTitle" list="sectionOptions" placeholder="Например: Раздел 1 (или новое название)">
+          <datalist id="sectionOptions">
+            <% sections.forEach(function (s) { %><option value="<%= s.title %>"><% }) %>
+          </datalist>
+        </div>
+
+        <div id="individualFields" hidden>
+          <label for="targetStudentId">Студент</label>
+          <select id="targetStudentId" name="targetStudentId">
+            <% students.forEach(function (s) { %>
+              <option value="<%= s.id %>"><%= s.name %> (<%= s.group %>)</option>
+            <% }) %>
+          </select>
+        </div>
+
+        <label for="dueDate">Дедлайн</label>
+        <input id="dueDate" type="date" name="dueDate" required>
+
+        <button type="submit" class="btn-primary">Создать</button>
+      </form>
+    </main>
+  </div>
+  <%- include('partials/scripts') %>
+  <script>
+    (function () {
+      const radios = document.querySelectorAll('input[name="targetType"]');
+      const groupFields = document.getElementById('groupFields');
+      const individualFields = document.getElementById('individualFields');
+      radios.forEach(function (radio) {
+        radio.addEventListener('change', function () {
+          const isIndividual = radio.value === 'individual' && radio.checked;
+          groupFields.hidden = isIndividual;
+          individualFields.hidden = !isIndividual;
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

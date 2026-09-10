@@ -10,6 +10,7 @@
       <h1>Мои курсы</h1>
       <% courses.forEach(function (course) { %>
         <h2><%= course.title %></h2>
+        <p><a href="/teacher/courses/<%= course.id %>/assignments/new" class="btn btn-primary">+ Новое задание</a></p>
         <% const courseAssignments = assignments.filter(function (a) { return a.courseId === course.id; }); %>
         <% if (courseAssignments.length === 0) { %>
           <p class="empty-state">В этом курсе пока нет заданий.</p>
