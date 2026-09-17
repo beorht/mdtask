@@ -8,6 +8,7 @@ const TOPICS = [
   { key: 'update', label: 'UPDATE' },
   { key: 'delete', label: 'DELETE' },
   { key: 'drop', label: 'DROP TABLE' },
+  { key: 'select_where', label: 'SELECT + WHERE: вывод данных' },
 ];
 
 const TOPIC_LABELS = Object.fromEntries(TOPICS.map((t) => [t.key, t.label]));

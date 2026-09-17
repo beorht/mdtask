@@ -1,7 +1,7 @@
 const express = require('express');
 const { requireRole, requireAuth } = require('../middleware/auth');
 const { buildSidebarTree } = require('../lib/sidebar');
-const { runPreview, checkSolution, getTableSchema } = require('../lib/sql-sandbox');
+const { runPreview, checkSolution, getTableSchema, getTableData } = require('../lib/sql-sandbox');
 const { getSqlExercises, getSqlAttempts, getSolvedSqlExerciseIds, getUsers, getAllSqlAttempts } = require('../db');
 const { renderMarkdown } = require('../lib/markdown');
 const { TOPIC_THEORY } = require('../content/sql-theory');
@@ -107,6 +107,7 @@ router.get('/trainer/:id', requireRole('student'), findExerciseWithProgress, (re
   const exercise = req.sqlExercise;
   const attempts = getSqlAttempts(exercise.id, req.session.user.id);
   const schema = getTableSchema(req.session.user.id, exercise);
+  const data = getTableData(req.session.user.id, exercise);
 
   const currentIndex = req.sqlExercises.findIndex((e) => e.id === exercise.id);
   const next = req.sqlExercises[currentIndex + 1] || null;
@@ -118,6 +119,7 @@ router.get('/trainer/:id', requireRole('student'), findExerciseWithProgress, (re
     topicLabel: TOPIC_LABELS[exercise.topic],
     attempts,
     schema,
+    data,
     next,
     runResult: null,
     submitResult: null,
@@ -134,6 +136,7 @@ router.post('/trainer/:id/run', requireRole('student'), findExerciseWithProgress
 
   const attempts = getSqlAttempts(exercise.id, req.session.user.id);
   const schema = getTableSchema(req.session.user.id, exercise);
+  const data = getTableData(req.session.user.id, exercise);
   const currentIndex = req.sqlExercises.findIndex((e) => e.id === exercise.id);
   const next = req.sqlExercises[currentIndex + 1] || null;
 
@@ -144,6 +147,7 @@ router.post('/trainer/:id/run', requireRole('student'), findExerciseWithProgress
     topicLabel: TOPIC_LABELS[exercise.topic],
     attempts,
     schema,
+    data,
     next,
     runResult,
     submitResult: null,
@@ -162,6 +166,7 @@ router.post('/trainer/:id/submit', requireRole('student'), findExerciseWithProgr
   const exercises = withProgress(getSqlExercises(), solvedIds);
   const attempts = getSqlAttempts(exercise.id, req.session.user.id);
   const schema = getTableSchema(req.session.user.id, exercise);
+  const data = getTableData(req.session.user.id, exercise);
   const currentIndex = exercises.findIndex((e) => e.id === exercise.id);
   const next = exercises[currentIndex + 1] || null;
 
@@ -172,6 +177,7 @@ router.post('/trainer/:id/submit', requireRole('student'), findExerciseWithProgr
     topicLabel: TOPIC_LABELS[exercise.topic],
     attempts,
     schema,
+    data,
     next,
     runResult: null,
     submitResult,

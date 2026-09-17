@@ -47,6 +47,45 @@
         <% } %>
       </section>
 
+      <section class="task-panel">
+        <h3 class="task-panel-title">Данные для просмотра</h3>
+        <% if (data.length) { %>
+          <% data.forEach(function (table) { %>
+            <div class="sql-schema-table">
+              <strong><%= table.name %></strong>
+              <% if (table.rows.length) { %>
+                <table class="sql-result-table">
+                  <thead><tr><% table.columns.forEach(function (c) { %><th><%= c %></th><% }) %></tr></thead>
+                  <tbody>
+                    <% table.rows.forEach(function (row) { %>
+                      <tr><% table.columns.forEach(function (c) { %><td><%= row[c] %></td><% }) %></tr>
+                    <% }) %>
+                  </tbody>
+                </table>
+              <% } else { %>
+                <p class="empty-state">Таблица пока пуста.</p>
+              <% } %>
+            </div>
+          <% }) %>
+        <% } else { %>
+          <p class="empty-state">В песочнице пока нет таблиц с данными.</p>
+        <% } %>
+      </section>
+
+      <% if (exercise.checkType === 'select_match' && exercise.expectedResult.length) { %>
+        <section class="task-panel">
+          <h3 class="task-panel-title">Как должен выглядеть результат</h3>
+          <table class="sql-result-table">
+            <thead><tr><% Object.keys(exercise.expectedResult[0]).forEach(function (c) { %><th><%= c %></th><% }) %></tr></thead>
+            <tbody>
+              <% exercise.expectedResult.forEach(function (row) { %>
+                <tr><% Object.keys(row).forEach(function (c) { %><td><%= row[c] %></td><% }) %></tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </section>
+      <% } %>
+
       <section class="task-panel task-panel-editor">
         <h3 class="task-panel-title">SQL Editor</h3>
         <form method="post" action="/trainer/<%= exercise.id %>/run" class="sql-console-form">

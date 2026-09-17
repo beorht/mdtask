@@ -1895,5 +1895,880 @@ module.exports = [
     "checkerSql": "SELECT name FROM sqlite_master WHERE type='table' AND name='payments'",
     "orderMatters": false,
     "expectedResult": []
+  },
+  {
+    "id": "select_where-50",
+    "orderIndex": 50,
+    "topic": "select_where",
+    "title": "Полный список товаров",
+    "descriptionMd": "Выведите полный список товаров магазина: все столбцы и все позиции каталога, ничего не пропуская.",
+    "schemaSql": "\nCREATE TABLE products (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL,\n  category TEXT NOT NULL,\n  price REAL NOT NULL,\n  quantity INTEGER NOT NULL\n);\nINSERT INTO products (id, name, category, price, quantity) VALUES\n  (1, 'Ноутбук', 'Электроника', 55000, 10),\n  (2, 'Мышь', 'Электроника', 1200, 50),\n  (3, 'Стол', 'Мебель', 8000, 5),\n  (4, 'Стул', 'Мебель', 3000, 20),\n  (5, 'Книга', 'Книги', 500, 100),\n  (6, 'Ручка', 'Канцтовары', 50, 200),\n  (7, 'Карандаш', 'Канцтовары', 30, 300),\n  (8, 'Тетрадь', 'Канцтовары', 40, 150),\n  (9, 'Флешка', 'Электроника', 800, 60),\n  (10, 'Футболка', 'Одежда', 1500, 40),\n  (11, 'Куртка', 'Одежда', 7000, 15);\n",
+    "allowedStatement": "SELECT",
+    "checkType": "select_match",
+    "checkerSql": null,
+    "orderMatters": false,
+    "expectedResult": [
+      {
+        "id": 1,
+        "name": "Ноутбук",
+        "category": "Электроника",
+        "price": 55000,
+        "quantity": 10
+      },
+      {
+        "id": 2,
+        "name": "Мышь",
+        "category": "Электроника",
+        "price": 1200,
+        "quantity": 50
+      },
+      {
+        "id": 3,
+        "name": "Стол",
+        "category": "Мебель",
+        "price": 8000,
+        "quantity": 5
+      },
+      {
+        "id": 4,
+        "name": "Стул",
+        "category": "Мебель",
+        "price": 3000,
+        "quantity": 20
+      },
+      {
+        "id": 5,
+        "name": "Книга",
+        "category": "Книги",
+        "price": 500,
+        "quantity": 100
+      },
+      {
+        "id": 6,
+        "name": "Ручка",
+        "category": "Канцтовары",
+        "price": 50,
+        "quantity": 200
+      },
+      {
+        "id": 7,
+        "name": "Карандаш",
+        "category": "Канцтовары",
+        "price": 30,
+        "quantity": 300
+      },
+      {
+        "id": 8,
+        "name": "Тетрадь",
+        "category": "Канцтовары",
+        "price": 40,
+        "quantity": 150
+      },
+      {
+        "id": 9,
+        "name": "Флешка",
+        "category": "Электроника",
+        "price": 800,
+        "quantity": 60
+      },
+      {
+        "id": 10,
+        "name": "Футболка",
+        "category": "Одежда",
+        "price": 1500,
+        "quantity": 40
+      },
+      {
+        "id": 11,
+        "name": "Куртка",
+        "category": "Одежда",
+        "price": 7000,
+        "quantity": 15
+      }
+    ]
+  },
+  {
+    "id": "select_where-51",
+    "orderIndex": 51,
+    "topic": "select_where",
+    "title": "Только названия товаров",
+    "descriptionMd": "Выведите только названия всех товаров каталога, без остальных данных.",
+    "schemaSql": "\nCREATE TABLE products (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL,\n  category TEXT NOT NULL,\n  price REAL NOT NULL,\n  quantity INTEGER NOT NULL\n);\nINSERT INTO products (id, name, category, price, quantity) VALUES\n  (1, 'Ноутбук', 'Электроника', 55000, 10),\n  (2, 'Мышь', 'Электроника', 1200, 50),\n  (3, 'Стол', 'Мебель', 8000, 5),\n  (4, 'Стул', 'Мебель', 3000, 20),\n  (5, 'Книга', 'Книги', 500, 100),\n  (6, 'Ручка', 'Канцтовары', 50, 200),\n  (7, 'Карандаш', 'Канцтовары', 30, 300),\n  (8, 'Тетрадь', 'Канцтовары', 40, 150),\n  (9, 'Флешка', 'Электроника', 800, 60),\n  (10, 'Футболка', 'Одежда', 1500, 40),\n  (11, 'Куртка', 'Одежда', 7000, 15);\n",
+    "allowedStatement": "SELECT",
+    "checkType": "select_match",
+    "checkerSql": null,
+    "orderMatters": false,
+    "expectedResult": [
+      {
+        "name": "Ноутбук"
+      },
+      {
+        "name": "Мышь"
+      },
+      {
+        "name": "Стол"
+      },
+      {
+        "name": "Стул"
+      },
+      {
+        "name": "Книга"
+      },
+      {
+        "name": "Ручка"
+      },
+      {
+        "name": "Карандаш"
+      },
+      {
+        "name": "Тетрадь"
+      },
+      {
+        "name": "Флешка"
+      },
+      {
+        "name": "Футболка"
+      },
+      {
+        "name": "Куртка"
+      }
+    ]
+  },
+  {
+    "id": "select_where-52",
+    "orderIndex": 52,
+    "topic": "select_where",
+    "title": "Название и цена",
+    "descriptionMd": "Для прайс-листа выведите только название и цену каждого товара.",
+    "schemaSql": "\nCREATE TABLE products (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL,\n  category TEXT NOT NULL,\n  price REAL NOT NULL,\n  quantity INTEGER NOT NULL\n);\nINSERT INTO products (id, name, category, price, quantity) VALUES\n  (1, 'Ноутбук', 'Электроника', 55000, 10),\n  (2, 'Мышь', 'Электроника', 1200, 50),\n  (3, 'Стол', 'Мебель', 8000, 5),\n  (4, 'Стул', 'Мебель', 3000, 20),\n  (5, 'Книга', 'Книги', 500, 100),\n  (6, 'Ручка', 'Канцтовары', 50, 200),\n  (7, 'Карандаш', 'Канцтовары', 30, 300),\n  (8, 'Тетрадь', 'Канцтовары', 40, 150),\n  (9, 'Флешка', 'Электроника', 800, 60),\n  (10, 'Футболка', 'Одежда', 1500, 40),\n  (11, 'Куртка', 'Одежда', 7000, 15);\n",
+    "allowedStatement": "SELECT",
+    "checkType": "select_match",
+    "checkerSql": null,
+    "orderMatters": false,
+    "expectedResult": [
+      {
+        "name": "Ноутбук",
+        "price": 55000
+      },
+      {
+        "name": "Мышь",
+        "price": 1200
+      },
+      {
+        "name": "Стол",
+        "price": 8000
+      },
+      {
+        "name": "Стул",
+        "price": 3000
+      },
+      {
+        "name": "Книга",
+        "price": 500
+      },
+      {
+        "name": "Ручка",
+        "price": 50
+      },
+      {
+        "name": "Карандаш",
+        "price": 30
+      },
+      {
+        "name": "Тетрадь",
+        "price": 40
+      },
+      {
+        "name": "Флешка",
+        "price": 800
+      },
+      {
+        "name": "Футболка",
+        "price": 1500
+      },
+      {
+        "name": "Куртка",
+        "price": 7000
+      }
+    ]
+  },
+  {
+    "id": "select_where-53",
+    "orderIndex": 53,
+    "topic": "select_where",
+    "title": "Название, категория и цена",
+    "descriptionMd": "Выведите название, категорию и цену каждого товара.",
+    "schemaSql": "\nCREATE TABLE products (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL,\n  category TEXT NOT NULL,\n  price REAL NOT NULL,\n  quantity INTEGER NOT NULL\n);\nINSERT INTO products (id, name, category, price, quantity) VALUES\n  (1, 'Ноутбук', 'Электроника', 55000, 10),\n  (2, 'Мышь', 'Электроника', 1200, 50),\n  (3, 'Стол', 'Мебель', 8000, 5),\n  (4, 'Стул', 'Мебель', 3000, 20),\n  (5, 'Книга', 'Книги', 500, 100),\n  (6, 'Ручка', 'Канцтовары', 50, 200),\n  (7, 'Карандаш', 'Канцтовары', 30, 300),\n  (8, 'Тетрадь', 'Канцтовары', 40, 150),\n  (9, 'Флешка', 'Электроника', 800, 60),\n  (10, 'Футболка', 'Одежда', 1500, 40),\n  (11, 'Куртка', 'Одежда', 7000, 15);\n",
+    "allowedStatement": "SELECT",
+    "checkType": "select_match",
+    "checkerSql": null,
+    "orderMatters": false,
+    "expectedResult": [
+      {
+        "name": "Ноутбук",
+        "category": "Электроника",
+        "price": 55000
+      },
+      {
+        "name": "Мышь",
+        "category": "Электроника",
+        "price": 1200
+      },
+      {
+        "name": "Стол",
+        "category": "Мебель",
+        "price": 8000
+      },
+      {
+        "name": "Стул",
+        "category": "Мебель",
+        "price": 3000
+      },
+      {
+        "name": "Книга",
+        "category": "Книги",
+        "price": 500
+      },
+      {
+        "name": "Ручка",
+        "category": "Канцтовары",
+        "price": 50
+      },
+      {
+        "name": "Карандаш",
+        "category": "Канцтовары",
+        "price": 30
+      },
+      {
+        "name": "Тетрадь",
+        "category": "Канцтовары",
+        "price": 40
+      },
+      {
+        "name": "Флешка",
+        "category": "Электроника",
+        "price": 800
+      },
+      {
+        "name": "Футболка",
+        "category": "Одежда",
+        "price": 1500
+      },
+      {
+        "name": "Куртка",
+        "category": "Одежда",
+        "price": 7000
+      }
+    ]
+  },
+  {
+    "id": "select_where-54",
+    "orderIndex": 54,
+    "topic": "select_where",
+    "title": "Понятные подписи в отчёте",
+    "descriptionMd": "Выведите название и цену каждого товара, но в результате назовите эти два столбца «title» и «cost» — так, чтобы менеджеру не пришлось объяснять, что значит «name» и «price».",
+    "schemaSql": "\nCREATE TABLE products (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL,\n  category TEXT NOT NULL,\n  price REAL NOT NULL,\n  quantity INTEGER NOT NULL\n);\nINSERT INTO products (id, name, category, price, quantity) VALUES\n  (1, 'Ноутбук', 'Электроника', 55000, 10),\n  (2, 'Мышь', 'Электроника', 1200, 50),\n  (3, 'Стол', 'Мебель', 8000, 5),\n  (4, 'Стул', 'Мебель', 3000, 20),\n  (5, 'Книга', 'Книги', 500, 100),\n  (6, 'Ручка', 'Канцтовары', 50, 200),\n  (7, 'Карандаш', 'Канцтовары', 30, 300),\n  (8, 'Тетрадь', 'Канцтовары', 40, 150),\n  (9, 'Флешка', 'Электроника', 800, 60),\n  (10, 'Футболка', 'Одежда', 1500, 40),\n  (11, 'Куртка', 'Одежда', 7000, 15);\n",
+    "allowedStatement": "SELECT",
+    "checkType": "select_match",
+    "checkerSql": null,
+    "orderMatters": false,
+    "expectedResult": [
+      {
+        "title": "Ноутбук",
+        "cost": 55000
+      },
+      {
+        "title": "Мышь",
+        "cost": 1200
+      },
+      {
+        "title": "Стол",
+        "cost": 8000
+      },
+      {
+        "title": "Стул",
+        "cost": 3000
+      },
+      {
+        "title": "Книга",
+        "cost": 500
+      },
+      {
+        "title": "Ручка",
+        "cost": 50
+      },
+      {
+        "title": "Карандаш",
+        "cost": 30
+      },
+      {
+        "title": "Тетрадь",
+        "cost": 40
+      },
+      {
+        "title": "Флешка",
+        "cost": 800
+      },
+      {
+        "title": "Футболка",
+        "cost": 1500
+      },
+      {
+        "title": "Куртка",
+        "cost": 7000
+      }
+    ]
+  },
+  {
+    "id": "select_where-55",
+    "orderIndex": 55,
+    "topic": "select_where",
+    "title": "Список категорий без повторов",
+    "descriptionMd": "Выведите список категорий товаров так, чтобы каждая категория встретилась в результате только один раз, без повторяющихся строк.",
+    "schemaSql": "\nCREATE TABLE products (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL,\n  category TEXT NOT NULL,\n  price REAL NOT NULL,\n  quantity INTEGER NOT NULL\n);\nINSERT INTO products (id, name, category, price, quantity) VALUES\n  (1, 'Ноутбук', 'Электроника', 55000, 10),\n  (2, 'Мышь', 'Электроника', 1200, 50),\n  (3, 'Стол', 'Мебель', 8000, 5),\n  (4, 'Стул', 'Мебель', 3000, 20),\n  (5, 'Книга', 'Книги', 500, 100),\n  (6, 'Ручка', 'Канцтовары', 50, 200),\n  (7, 'Карандаш', 'Канцтовары', 30, 300),\n  (8, 'Тетрадь', 'Канцтовары', 40, 150),\n  (9, 'Флешка', 'Электроника', 800, 60),\n  (10, 'Футболка', 'Одежда', 1500, 40),\n  (11, 'Куртка', 'Одежда', 7000, 15);\n",
+    "allowedStatement": "SELECT",
+    "checkType": "select_match",
+    "checkerSql": null,
+    "orderMatters": false,
+    "expectedResult": [
+      {
+        "category": "Электроника"
+      },
+      {
+        "category": "Мебель"
+      },
+      {
+        "category": "Книги"
+      },
+      {
+        "category": "Канцтовары"
+      },
+      {
+        "category": "Одежда"
+      }
+    ]
+  },
+  {
+    "id": "select_where-56",
+    "orderIndex": 56,
+    "topic": "select_where",
+    "title": "Сколько всего товаров",
+    "descriptionMd": "Посчитайте, сколько всего товаров в каталоге, и выведите одно число с именем «count».",
+    "schemaSql": "\nCREATE TABLE products (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL,\n  category TEXT NOT NULL,\n  price REAL NOT NULL,\n  quantity INTEGER NOT NULL\n);\nINSERT INTO products (id, name, category, price, quantity) VALUES\n  (1, 'Ноутбук', 'Электроника', 55000, 10),\n  (2, 'Мышь', 'Электроника', 1200, 50),\n  (3, 'Стол', 'Мебель', 8000, 5),\n  (4, 'Стул', 'Мебель', 3000, 20),\n  (5, 'Книга', 'Книги', 500, 100),\n  (6, 'Ручка', 'Канцтовары', 50, 200),\n  (7, 'Карандаш', 'Канцтовары', 30, 300),\n  (8, 'Тетрадь', 'Канцтовары', 40, 150),\n  (9, 'Флешка', 'Электроника', 800, 60),\n  (10, 'Футболка', 'Одежда', 1500, 40),\n  (11, 'Куртка', 'Одежда', 7000, 15);\n",
+    "allowedStatement": "SELECT",
+    "checkType": "select_match",
+    "checkerSql": null,
+    "orderMatters": false,
+    "expectedResult": [
+      {
+        "count": 11
+      }
+    ]
+  },
+  {
+    "id": "select_where-57",
+    "orderIndex": 57,
+    "topic": "select_where",
+    "title": "Суммарная цена каталога",
+    "descriptionMd": "Сложите цены всех товаров каталога и выведите одно итоговое число с именем «total_price».",
+    "schemaSql": "\nCREATE TABLE products (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL,\n  category TEXT NOT NULL,\n  price REAL NOT NULL,\n  quantity INTEGER NOT NULL\n);\nINSERT INTO products (id, name, category, price, quantity) VALUES\n  (1, 'Ноутбук', 'Электроника', 55000, 10),\n  (2, 'Мышь', 'Электроника', 1200, 50),\n  (3, 'Стол', 'Мебель', 8000, 5),\n  (4, 'Стул', 'Мебель', 3000, 20),\n  (5, 'Книга', 'Книги', 500, 100),\n  (6, 'Ручка', 'Канцтовары', 50, 200),\n  (7, 'Карандаш', 'Канцтовары', 30, 300),\n  (8, 'Тетрадь', 'Канцтовары', 40, 150),\n  (9, 'Флешка', 'Электроника', 800, 60),\n  (10, 'Футболка', 'Одежда', 1500, 40),\n  (11, 'Куртка', 'Одежда', 7000, 15);\n",
+    "allowedStatement": "SELECT",
+    "checkType": "select_match",
+    "checkerSql": null,
+    "orderMatters": false,
+    "expectedResult": [
+      {
+        "total_price": 77120
+      }
+    ]
+  },
+  {
+    "id": "select_where-58",
+    "orderIndex": 58,
+    "topic": "select_where",
+    "title": "Самый дорогой товар",
+    "descriptionMd": "Найдите цену самого дорогого товара в каталоге и выведите одно число с именем «max_price».",
+    "schemaSql": "\nCREATE TABLE products (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL,\n  category TEXT NOT NULL,\n  price REAL NOT NULL,\n  quantity INTEGER NOT NULL\n);\nINSERT INTO products (id, name, category, price, quantity) VALUES\n  (1, 'Ноутбук', 'Электроника', 55000, 10),\n  (2, 'Мышь', 'Электроника', 1200, 50),\n  (3, 'Стол', 'Мебель', 8000, 5),\n  (4, 'Стул', 'Мебель', 3000, 20),\n  (5, 'Книга', 'Книги', 500, 100),\n  (6, 'Ручка', 'Канцтовары', 50, 200),\n  (7, 'Карандаш', 'Канцтовары', 30, 300),\n  (8, 'Тетрадь', 'Канцтовары', 40, 150),\n  (9, 'Флешка', 'Электроника', 800, 60),\n  (10, 'Футболка', 'Одежда', 1500, 40),\n  (11, 'Куртка', 'Одежда', 7000, 15);\n",
+    "allowedStatement": "SELECT",
+    "checkType": "select_match",
+    "checkerSql": null,
+    "orderMatters": false,
+    "expectedResult": [
+      {
+        "max_price": 55000
+      }
+    ]
+  },
+  {
+    "id": "select_where-59",
+    "orderIndex": 59,
+    "topic": "select_where",
+    "title": "Минимальный остаток на складе",
+    "descriptionMd": "Найдите наименьший остаток на складе среди всех товаров и выведите одно число с именем «min_quantity».",
+    "schemaSql": "\nCREATE TABLE products (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL,\n  category TEXT NOT NULL,\n  price REAL NOT NULL,\n  quantity INTEGER NOT NULL\n);\nINSERT INTO products (id, name, category, price, quantity) VALUES\n  (1, 'Ноутбук', 'Электроника', 55000, 10),\n  (2, 'Мышь', 'Электроника', 1200, 50),\n  (3, 'Стол', 'Мебель', 8000, 5),\n  (4, 'Стул', 'Мебель', 3000, 20),\n  (5, 'Книга', 'Книги', 500, 100),\n  (6, 'Ручка', 'Канцтовары', 50, 200),\n  (7, 'Карандаш', 'Канцтовары', 30, 300),\n  (8, 'Тетрадь', 'Канцтовары', 40, 150),\n  (9, 'Флешка', 'Электроника', 800, 60),\n  (10, 'Футболка', 'Одежда', 1500, 40),\n  (11, 'Куртка', 'Одежда', 7000, 15);\n",
+    "allowedStatement": "SELECT",
+    "checkType": "select_match",
+    "checkerSql": null,
+    "orderMatters": false,
+    "expectedResult": [
+      {
+        "min_quantity": 5
+      }
+    ]
+  },
+  {
+    "id": "select_where-60",
+    "orderIndex": 60,
+    "topic": "select_where",
+    "title": "Только категория «Электроника»",
+    "descriptionMd": "Выведите все данные о товарах, которые относятся к категории «Электроника».",
+    "schemaSql": "\nCREATE TABLE products (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL,\n  category TEXT NOT NULL,\n  price REAL NOT NULL,\n  quantity INTEGER NOT NULL\n);\nINSERT INTO products (id, name, category, price, quantity) VALUES\n  (1, 'Ноутбук', 'Электроника', 55000, 10),\n  (2, 'Мышь', 'Электроника', 1200, 50),\n  (3, 'Стол', 'Мебель', 8000, 5),\n  (4, 'Стул', 'Мебель', 3000, 20),\n  (5, 'Книга', 'Книги', 500, 100),\n  (6, 'Ручка', 'Канцтовары', 50, 200),\n  (7, 'Карандаш', 'Канцтовары', 30, 300),\n  (8, 'Тетрадь', 'Канцтовары', 40, 150),\n  (9, 'Флешка', 'Электроника', 800, 60),\n  (10, 'Футболка', 'Одежда', 1500, 40),\n  (11, 'Куртка', 'Одежда', 7000, 15);\n",
+    "allowedStatement": "SELECT",
+    "checkType": "select_match",
+    "checkerSql": null,
+    "orderMatters": false,
+    "expectedResult": [
+      {
+        "id": 1,
+        "name": "Ноутбук",
+        "category": "Электроника",
+        "price": 55000,
+        "quantity": 10
+      },
+      {
+        "id": 2,
+        "name": "Мышь",
+        "category": "Электроника",
+        "price": 1200,
+        "quantity": 50
+      },
+      {
+        "id": 9,
+        "name": "Флешка",
+        "category": "Электроника",
+        "price": 800,
+        "quantity": 60
+      }
+    ]
+  },
+  {
+    "id": "select_where-61",
+    "orderIndex": 61,
+    "topic": "select_where",
+    "title": "Товары дороже 5000",
+    "descriptionMd": "Выведите все данные о товарах, цена которых больше 5000.",
+    "schemaSql": "\nCREATE TABLE products (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL,\n  category TEXT NOT NULL,\n  price REAL NOT NULL,\n  quantity INTEGER NOT NULL\n);\nINSERT INTO products (id, name, category, price, quantity) VALUES\n  (1, 'Ноутбук', 'Электроника', 55000, 10),\n  (2, 'Мышь', 'Электроника', 1200, 50),\n  (3, 'Стол', 'Мебель', 8000, 5),\n  (4, 'Стул', 'Мебель', 3000, 20),\n  (5, 'Книга', 'Книги', 500, 100),\n  (6, 'Ручка', 'Канцтовары', 50, 200),\n  (7, 'Карандаш', 'Канцтовары', 30, 300),\n  (8, 'Тетрадь', 'Канцтовары', 40, 150),\n  (9, 'Флешка', 'Электроника', 800, 60),\n  (10, 'Футболка', 'Одежда', 1500, 40),\n  (11, 'Куртка', 'Одежда', 7000, 15);\n",
+    "allowedStatement": "SELECT",
+    "checkType": "select_match",
+    "checkerSql": null,
+    "orderMatters": false,
+    "expectedResult": [
+      {
+        "id": 1,
+        "name": "Ноутбук",
+        "category": "Электроника",
+        "price": 55000,
+        "quantity": 10
+      },
+      {
+        "id": 3,
+        "name": "Стол",
+        "category": "Мебель",
+        "price": 8000,
+        "quantity": 5
+      },
+      {
+        "id": 11,
+        "name": "Куртка",
+        "category": "Одежда",
+        "price": 7000,
+        "quantity": 15
+      }
+    ]
+  },
+  {
+    "id": "select_where-62",
+    "orderIndex": 62,
+    "topic": "select_where",
+    "title": "Товары в средней ценовой категории",
+    "descriptionMd": "Выведите все данные о товарах, цена которых не меньше 1000 и не больше 8000 одновременно.",
+    "schemaSql": "\nCREATE TABLE products (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL,\n  category TEXT NOT NULL,\n  price REAL NOT NULL,\n  quantity INTEGER NOT NULL\n);\nINSERT INTO products (id, name, category, price, quantity) VALUES\n  (1, 'Ноутбук', 'Электроника', 55000, 10),\n  (2, 'Мышь', 'Электроника', 1200, 50),\n  (3, 'Стол', 'Мебель', 8000, 5),\n  (4, 'Стул', 'Мебель', 3000, 20),\n  (5, 'Книга', 'Книги', 500, 100),\n  (6, 'Ручка', 'Канцтовары', 50, 200),\n  (7, 'Карандаш', 'Канцтовары', 30, 300),\n  (8, 'Тетрадь', 'Канцтовары', 40, 150),\n  (9, 'Флешка', 'Электроника', 800, 60),\n  (10, 'Футболка', 'Одежда', 1500, 40),\n  (11, 'Куртка', 'Одежда', 7000, 15);\n",
+    "allowedStatement": "SELECT",
+    "checkType": "select_match",
+    "checkerSql": null,
+    "orderMatters": false,
+    "expectedResult": [
+      {
+        "id": 2,
+        "name": "Мышь",
+        "category": "Электроника",
+        "price": 1200,
+        "quantity": 50
+      },
+      {
+        "id": 3,
+        "name": "Стол",
+        "category": "Мебель",
+        "price": 8000,
+        "quantity": 5
+      },
+      {
+        "id": 4,
+        "name": "Стул",
+        "category": "Мебель",
+        "price": 3000,
+        "quantity": 20
+      },
+      {
+        "id": 10,
+        "name": "Футболка",
+        "category": "Одежда",
+        "price": 1500,
+        "quantity": 40
+      },
+      {
+        "id": 11,
+        "name": "Куртка",
+        "category": "Одежда",
+        "price": 7000,
+        "quantity": 15
+      }
+    ]
+  },
+  {
+    "id": "select_where-63",
+    "orderIndex": 63,
+    "topic": "select_where",
+    "title": "Дешёвые канцтовары",
+    "descriptionMd": "Выведите все данные о товарах, которые одновременно относятся к категории «Канцтовары» и стоят меньше 50.",
+    "schemaSql": "\nCREATE TABLE products (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL,\n  category TEXT NOT NULL,\n  price REAL NOT NULL,\n  quantity INTEGER NOT NULL\n);\nINSERT INTO products (id, name, category, price, quantity) VALUES\n  (1, 'Ноутбук', 'Электроника', 55000, 10),\n  (2, 'Мышь', 'Электроника', 1200, 50),\n  (3, 'Стол', 'Мебель', 8000, 5),\n  (4, 'Стул', 'Мебель', 3000, 20),\n  (5, 'Книга', 'Книги', 500, 100),\n  (6, 'Ручка', 'Канцтовары', 50, 200),\n  (7, 'Карандаш', 'Канцтовары', 30, 300),\n  (8, 'Тетрадь', 'Канцтовары', 40, 150),\n  (9, 'Флешка', 'Электроника', 800, 60),\n  (10, 'Футболка', 'Одежда', 1500, 40),\n  (11, 'Куртка', 'Одежда', 7000, 15);\n",
+    "allowedStatement": "SELECT",
+    "checkType": "select_match",
+    "checkerSql": null,
+    "orderMatters": false,
+    "expectedResult": [
+      {
+        "id": 7,
+        "name": "Карандаш",
+        "category": "Канцтовары",
+        "price": 30,
+        "quantity": 300
+      },
+      {
+        "id": 8,
+        "name": "Тетрадь",
+        "category": "Канцтовары",
+        "price": 40,
+        "quantity": 150
+      }
+    ]
+  },
+  {
+    "id": "select_where-64",
+    "orderIndex": 64,
+    "topic": "select_where",
+    "title": "Книги или одежда",
+    "descriptionMd": "Выведите все данные о товарах, которые относятся к категории «Книги» либо к категории «Одежда».",
+    "schemaSql": "\nCREATE TABLE products (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL,\n  category TEXT NOT NULL,\n  price REAL NOT NULL,\n  quantity INTEGER NOT NULL\n);\nINSERT INTO products (id, name, category, price, quantity) VALUES\n  (1, 'Ноутбук', 'Электроника', 55000, 10),\n  (2, 'Мышь', 'Электроника', 1200, 50),\n  (3, 'Стол', 'Мебель', 8000, 5),\n  (4, 'Стул', 'Мебель', 3000, 20),\n  (5, 'Книга', 'Книги', 500, 100),\n  (6, 'Ручка', 'Канцтовары', 50, 200),\n  (7, 'Карандаш', 'Канцтовары', 30, 300),\n  (8, 'Тетрадь', 'Канцтовары', 40, 150),\n  (9, 'Флешка', 'Электроника', 800, 60),\n  (10, 'Футболка', 'Одежда', 1500, 40),\n  (11, 'Куртка', 'Одежда', 7000, 15);\n",
+    "allowedStatement": "SELECT",
+    "checkType": "select_match",
+    "checkerSql": null,
+    "orderMatters": false,
+    "expectedResult": [
+      {
+        "id": 5,
+        "name": "Книга",
+        "category": "Книги",
+        "price": 500,
+        "quantity": 100
+      },
+      {
+        "id": 10,
+        "name": "Футболка",
+        "category": "Одежда",
+        "price": 1500,
+        "quantity": 40
+      },
+      {
+        "id": 11,
+        "name": "Куртка",
+        "category": "Одежда",
+        "price": 7000,
+        "quantity": 15
+      }
+    ]
+  },
+  {
+    "id": "select_where-65",
+    "orderIndex": 65,
+    "topic": "select_where",
+    "title": "Самое дешёвое и самое дорогое",
+    "descriptionMd": "Выведите все данные о товарах, цена которых меньше 100 либо больше 10000.",
+    "schemaSql": "\nCREATE TABLE products (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL,\n  category TEXT NOT NULL,\n  price REAL NOT NULL,\n  quantity INTEGER NOT NULL\n);\nINSERT INTO products (id, name, category, price, quantity) VALUES\n  (1, 'Ноутбук', 'Электроника', 55000, 10),\n  (2, 'Мышь', 'Электроника', 1200, 50),\n  (3, 'Стол', 'Мебель', 8000, 5),\n  (4, 'Стул', 'Мебель', 3000, 20),\n  (5, 'Книга', 'Книги', 500, 100),\n  (6, 'Ручка', 'Канцтовары', 50, 200),\n  (7, 'Карандаш', 'Канцтовары', 30, 300),\n  (8, 'Тетрадь', 'Канцтовары', 40, 150),\n  (9, 'Флешка', 'Электроника', 800, 60),\n  (10, 'Футболка', 'Одежда', 1500, 40),\n  (11, 'Куртка', 'Одежда', 7000, 15);\n",
+    "allowedStatement": "SELECT",
+    "checkType": "select_match",
+    "checkerSql": null,
+    "orderMatters": false,
+    "expectedResult": [
+      {
+        "id": 1,
+        "name": "Ноутбук",
+        "category": "Электроника",
+        "price": 55000,
+        "quantity": 10
+      },
+      {
+        "id": 6,
+        "name": "Ручка",
+        "category": "Канцтовары",
+        "price": 50,
+        "quantity": 200
+      },
+      {
+        "id": 7,
+        "name": "Карандаш",
+        "category": "Канцтовары",
+        "price": 30,
+        "quantity": 300
+      },
+      {
+        "id": 8,
+        "name": "Тетрадь",
+        "category": "Канцтовары",
+        "price": 40,
+        "quantity": 150
+      }
+    ]
+  },
+  {
+    "id": "select_where-66",
+    "orderIndex": 66,
+    "topic": "select_where",
+    "title": "Все, кроме мебели",
+    "descriptionMd": "Выведите все данные о товарах, которые не относятся к категории «Мебель».",
+    "schemaSql": "\nCREATE TABLE products (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL,\n  category TEXT NOT NULL,\n  price REAL NOT NULL,\n  quantity INTEGER NOT NULL\n);\nINSERT INTO products (id, name, category, price, quantity) VALUES\n  (1, 'Ноутбук', 'Электроника', 55000, 10),\n  (2, 'Мышь', 'Электроника', 1200, 50),\n  (3, 'Стол', 'Мебель', 8000, 5),\n  (4, 'Стул', 'Мебель', 3000, 20),\n  (5, 'Книга', 'Книги', 500, 100),\n  (6, 'Ручка', 'Канцтовары', 50, 200),\n  (7, 'Карандаш', 'Канцтовары', 30, 300),\n  (8, 'Тетрадь', 'Канцтовары', 40, 150),\n  (9, 'Флешка', 'Электроника', 800, 60),\n  (10, 'Футболка', 'Одежда', 1500, 40),\n  (11, 'Куртка', 'Одежда', 7000, 15);\n",
+    "allowedStatement": "SELECT",
+    "checkType": "select_match",
+    "checkerSql": null,
+    "orderMatters": false,
+    "expectedResult": [
+      {
+        "id": 1,
+        "name": "Ноутбук",
+        "category": "Электроника",
+        "price": 55000,
+        "quantity": 10
+      },
+      {
+        "id": 2,
+        "name": "Мышь",
+        "category": "Электроника",
+        "price": 1200,
+        "quantity": 50
+      },
+      {
+        "id": 5,
+        "name": "Книга",
+        "category": "Книги",
+        "price": 500,
+        "quantity": 100
+      },
+      {
+        "id": 6,
+        "name": "Ручка",
+        "category": "Канцтовары",
+        "price": 50,
+        "quantity": 200
+      },
+      {
+        "id": 7,
+        "name": "Карандаш",
+        "category": "Канцтовары",
+        "price": 30,
+        "quantity": 300
+      },
+      {
+        "id": 8,
+        "name": "Тетрадь",
+        "category": "Канцтовары",
+        "price": 40,
+        "quantity": 150
+      },
+      {
+        "id": 9,
+        "name": "Флешка",
+        "category": "Электроника",
+        "price": 800,
+        "quantity": 60
+      },
+      {
+        "id": 10,
+        "name": "Футболка",
+        "category": "Одежда",
+        "price": 1500,
+        "quantity": 40
+      },
+      {
+        "id": 11,
+        "name": "Куртка",
+        "category": "Одежда",
+        "price": 7000,
+        "quantity": 15
+      }
+    ]
+  },
+  {
+    "id": "select_where-67",
+    "orderIndex": 67,
+    "topic": "select_where",
+    "title": "Название заканчивается на букву «а»",
+    "descriptionMd": "Выведите все данные о товарах, название которых заканчивается на букву «а».",
+    "schemaSql": "\nCREATE TABLE products (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL,\n  category TEXT NOT NULL,\n  price REAL NOT NULL,\n  quantity INTEGER NOT NULL\n);\nINSERT INTO products (id, name, category, price, quantity) VALUES\n  (1, 'Ноутбук', 'Электроника', 55000, 10),\n  (2, 'Мышь', 'Электроника', 1200, 50),\n  (3, 'Стол', 'Мебель', 8000, 5),\n  (4, 'Стул', 'Мебель', 3000, 20),\n  (5, 'Книга', 'Книги', 500, 100),\n  (6, 'Ручка', 'Канцтовары', 50, 200),\n  (7, 'Карандаш', 'Канцтовары', 30, 300),\n  (8, 'Тетрадь', 'Канцтовары', 40, 150),\n  (9, 'Флешка', 'Электроника', 800, 60),\n  (10, 'Футболка', 'Одежда', 1500, 40),\n  (11, 'Куртка', 'Одежда', 7000, 15);\n",
+    "allowedStatement": "SELECT",
+    "checkType": "select_match",
+    "checkerSql": null,
+    "orderMatters": false,
+    "expectedResult": [
+      {
+        "id": 5,
+        "name": "Книга",
+        "category": "Книги",
+        "price": 500,
+        "quantity": 100
+      },
+      {
+        "id": 6,
+        "name": "Ручка",
+        "category": "Канцтовары",
+        "price": 50,
+        "quantity": 200
+      },
+      {
+        "id": 9,
+        "name": "Флешка",
+        "category": "Электроника",
+        "price": 800,
+        "quantity": 60
+      },
+      {
+        "id": 10,
+        "name": "Футболка",
+        "category": "Одежда",
+        "price": 1500,
+        "quantity": 40
+      },
+      {
+        "id": 11,
+        "name": "Куртка",
+        "category": "Одежда",
+        "price": 7000,
+        "quantity": 15
+      }
+    ]
+  },
+  {
+    "id": "select_where-68",
+    "orderIndex": 68,
+    "topic": "select_where",
+    "title": "Средний остаток на складе",
+    "descriptionMd": "Выведите все данные о товарах, у которых остаток на складе не меньше 50 и не больше 200.",
+    "schemaSql": "\nCREATE TABLE products (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL,\n  category TEXT NOT NULL,\n  price REAL NOT NULL,\n  quantity INTEGER NOT NULL\n);\nINSERT INTO products (id, name, category, price, quantity) VALUES\n  (1, 'Ноутбук', 'Электроника', 55000, 10),\n  (2, 'Мышь', 'Электроника', 1200, 50),\n  (3, 'Стол', 'Мебель', 8000, 5),\n  (4, 'Стул', 'Мебель', 3000, 20),\n  (5, 'Книга', 'Книги', 500, 100),\n  (6, 'Ручка', 'Канцтовары', 50, 200),\n  (7, 'Карандаш', 'Канцтовары', 30, 300),\n  (8, 'Тетрадь', 'Канцтовары', 40, 150),\n  (9, 'Флешка', 'Электроника', 800, 60),\n  (10, 'Футболка', 'Одежда', 1500, 40),\n  (11, 'Куртка', 'Одежда', 7000, 15);\n",
+    "allowedStatement": "SELECT",
+    "checkType": "select_match",
+    "checkerSql": null,
+    "orderMatters": false,
+    "expectedResult": [
+      {
+        "id": 2,
+        "name": "Мышь",
+        "category": "Электроника",
+        "price": 1200,
+        "quantity": 50
+      },
+      {
+        "id": 5,
+        "name": "Книга",
+        "category": "Книги",
+        "price": 500,
+        "quantity": 100
+      },
+      {
+        "id": 6,
+        "name": "Ручка",
+        "category": "Канцтовары",
+        "price": 50,
+        "quantity": 200
+      },
+      {
+        "id": 8,
+        "name": "Тетрадь",
+        "category": "Канцтовары",
+        "price": 40,
+        "quantity": 150
+      },
+      {
+        "id": 9,
+        "name": "Флешка",
+        "category": "Электроника",
+        "price": 800,
+        "quantity": 60
+      }
+    ]
+  },
+  {
+    "id": "select_where-69",
+    "orderIndex": 69,
+    "topic": "select_where",
+    "title": "Три ключевые категории",
+    "descriptionMd": "Выведите все данные о товарах, которые относятся к категории «Электроника», «Мебель» либо «Книги».",
+    "schemaSql": "\nCREATE TABLE products (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL,\n  category TEXT NOT NULL,\n  price REAL NOT NULL,\n  quantity INTEGER NOT NULL\n);\nINSERT INTO products (id, name, category, price, quantity) VALUES\n  (1, 'Ноутбук', 'Электроника', 55000, 10),\n  (2, 'Мышь', 'Электроника', 1200, 50),\n  (3, 'Стол', 'Мебель', 8000, 5),\n  (4, 'Стул', 'Мебель', 3000, 20),\n  (5, 'Книга', 'Книги', 500, 100),\n  (6, 'Ручка', 'Канцтовары', 50, 200),\n  (7, 'Карандаш', 'Канцтовары', 30, 300),\n  (8, 'Тетрадь', 'Канцтовары', 40, 150),\n  (9, 'Флешка', 'Электроника', 800, 60),\n  (10, 'Футболка', 'Одежда', 1500, 40),\n  (11, 'Куртка', 'Одежда', 7000, 15);\n",
+    "allowedStatement": "SELECT",
+    "checkType": "select_match",
+    "checkerSql": null,
+    "orderMatters": false,
+    "expectedResult": [
+      {
+        "id": 1,
+        "name": "Ноутбук",
+        "category": "Электроника",
+        "price": 55000,
+        "quantity": 10
+      },
+      {
+        "id": 2,
+        "name": "Мышь",
+        "category": "Электроника",
+        "price": 1200,
+        "quantity": 50
+      },
+      {
+        "id": 3,
+        "name": "Стол",
+        "category": "Мебель",
+        "price": 8000,
+        "quantity": 5
+      },
+      {
+        "id": 4,
+        "name": "Стул",
+        "category": "Мебель",
+        "price": 3000,
+        "quantity": 20
+      },
+      {
+        "id": 5,
+        "name": "Книга",
+        "category": "Книги",
+        "price": 500,
+        "quantity": 100
+      },
+      {
+        "id": 9,
+        "name": "Флешка",
+        "category": "Электроника",
+        "price": 800,
+        "quantity": 60
+      }
+    ]
   }
 ];
