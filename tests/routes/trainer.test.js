@@ -153,3 +153,53 @@ test('attempt history 404s for an unknown student/exercise pair', async () => {
   const res = await teacher.get(`/teacher/trainer/results/no-such-student/${first.id}`);
   assert.strictEqual(res.status, 404);
 });
+
+test('restricted group (IB/WEB) only sees the select_where topic in theory, practice list and sidebar', async () => {
+  const app = createApp();
+  const agent = await loginAs(app, 'student-8'); // seeded with student_group 'IB'
+
+  const theoryIndex = await agent.get('/trainer/theory');
+  assert.strictEqual(theoryIndex.status, 200);
+  assert.match(theoryIndex.text, /SELECT \+ WHERE/);
+  assert.doesNotMatch(theoryIndex.text, />CREATE TABLE</);
+
+  const practiceIndex = await agent.get('/trainer');
+  assert.strictEqual(practiceIndex.status, 200);
+  assert.match(practiceIndex.text, /SELECT \+ WHERE/);
+  assert.doesNotMatch(practiceIndex.text, />CREATE TABLE</);
+});
+
+test('restricted group cannot open theory/practice pages for other topics directly by URL', async () => {
+  const app = createApp();
+  const agent = await loginAs(app, 'student-8');
+
+  assert.strictEqual((await agent.get('/trainer/theory/create_table')).status, 404);
+  assert.strictEqual((await agent.get('/trainer/practice/create_table')).status, 404);
+});
+
+test('restricted group cannot open an exercise from a disallowed topic even by direct URL', async () => {
+  const app = createApp();
+  const agent = await loginAs(app, 'student-8');
+  const otherTopicExercise = db.getSqlExercises().find((e) => e.topic === 'create_table');
+
+  const res = await agent.get(`/trainer/${otherTopicExercise.id}`);
+  assert.strictEqual(res.status, 404);
+});
+
+test('restricted group starts unlocked on the first select_where exercise, not stuck behind other topics', async () => {
+  const app = createApp();
+  const agent = await loginAs(app, 'student-8');
+  const firstSelectWhere = db.getSqlExercises().find((e) => e.topic === 'select_where');
+
+  const res = await agent.get(`/trainer/${firstSelectWhere.id}`);
+  assert.strictEqual(res.status, 200);
+});
+
+test('non-restricted groups still see the full trainer curriculum', async () => {
+  const app = createApp();
+  const agent = await loginAs(app, 'student-1'); // group IT-21, not restricted
+
+  const theoryIndex = await agent.get('/trainer/theory');
+  assert.match(theoryIndex.text, />CREATE TABLE</);
+  assert.strictEqual((await agent.get('/trainer/theory/create_table')).status, 200);
+});

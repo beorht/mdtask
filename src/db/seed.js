@@ -10,6 +10,7 @@ function seed(conn) {
   insertUser.run('student-5', 'student', 'Дмитрий Новиков', 'IT-22');
   insertUser.run('student-6', 'student', 'Ольга Морозова', 'IT-22');
   insertUser.run('student-7', 'student', 'Артём Волков', 'IT-22');
+  insertUser.run('student-8', 'student', 'Шахзода Каримова', 'IB');
   insertUser.run('teacher-1', 'teacher', 'Сергей Смирнов', null);
 
   const insertCourse = conn.prepare('INSERT INTO courses (id, title, teacher_id) VALUES (?, ?, ?)');

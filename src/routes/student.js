@@ -54,7 +54,7 @@ function canSubmit(assignment, latestSubmission) {
 
 router.get('/', requireRole('student'), (req, res) => {
   const user = req.session.user;
-  const sidebarTree = buildSidebarTree({ role: 'student', studentId: user.id });
+  const sidebarTree = buildSidebarTree({ role: 'student', studentId: user.id, studentGroup: user.group });
   const courses = getCourses();
   const submissions = getSubmissions().filter((s) => s.studentId === user.id);
 
@@ -88,7 +88,7 @@ router.get('/assignment/:id', requireRole('student'), (req, res) => {
     .filter((s) => s.assignmentId === assignment.id && s.studentId === user.id)
     .sort((a, b) => (a.parentSubmissionId ? 1 : -1));
 
-  const sidebarTree = buildSidebarTree({ role: 'student', studentId: user.id });
+  const sidebarTree = buildSidebarTree({ role: 'student', studentId: user.id, studentGroup: user.group });
   const latest = getLatestSubmission(assignment.id, user.id);
 
   res.render('assignment-view', {

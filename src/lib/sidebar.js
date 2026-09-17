@@ -2,11 +2,12 @@ const fs = require('fs');
 const path = require('path');
 const { parseSummary } = require('./summary-parser');
 const { getAssignments, getSubmissions, getSqlExercises, getSolvedSqlExerciseIds } = require('../db');
-const { TOPICS } = require('./sql-topics');
+const { getTopicsForUser } = require('./sql-topics');
 
 const SUMMARY_PATH = path.join(__dirname, '..', '..', 'content', 'SUMMARY.md');
 
-function buildSidebarTree({ role, studentId }) {
+function buildSidebarTree({ role, studentId, studentGroup }) {
+  const TOPICS = getTopicsForUser({ role, group: studentGroup });
   const summaryText = fs.readFileSync(SUMMARY_PATH, 'utf-8');
   const tree = parseSummary(summaryText);
   const assignments = getAssignments();

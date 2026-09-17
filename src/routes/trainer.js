@@ -5,9 +5,14 @@ const { runPreview, checkSolution, getTableSchema, getTableData } = require('../
 const { getSqlExercises, getSqlAttempts, getSolvedSqlExerciseIds, getUsers, getAllSqlAttempts } = require('../db');
 const { renderMarkdown } = require('../lib/markdown');
 const { TOPIC_THEORY } = require('../content/sql-theory');
-const { TOPICS, TOPIC_LABELS } = require('../lib/sql-topics');
+const { TOPIC_LABELS, getAllowedTopicKeys, getTopicsForUser } = require('../lib/sql-topics');
 
 const router = express.Router();
+
+function exercisesForUser(user) {
+  const allowed = getAllowedTopicKeys(user);
+  return getSqlExercises().filter((e) => allowed.includes(e.topic));
+}
 
 function withProgress(exercises, solvedIds) {
   return exercises.map((ex, i) => {
@@ -18,7 +23,7 @@ function withProgress(exercises, solvedIds) {
 }
 
 function findExerciseWithProgress(req, res, next) {
-  const exercises = withProgress(getSqlExercises(), getSolvedSqlExerciseIds(req.session.user.id));
+  const exercises = withProgress(exercisesForUser(req.session.user), getSolvedSqlExerciseIds(req.session.user.id));
   const exercise = exercises.find((e) => e.id === req.params.id);
   if (!exercise) return res.status(404).render('404');
   if (!exercise.unlocked) return res.status(403).render('403');
@@ -29,7 +34,11 @@ function findExerciseWithProgress(req, res, next) {
 
 function sidebarForRequest(req) {
   const user = req.session.user;
-  return buildSidebarTree({ role: user.role, studentId: user.role === 'student' ? user.id : undefined });
+  return buildSidebarTree({
+    role: user.role,
+    studentId: user.role === 'student' ? user.id : undefined,
+    studentGroup: user.role === 'student' ? user.group : undefined,
+  });
 }
 
 // --- Theory: overview + one page per topic ---
@@ -38,7 +47,7 @@ router.get('/trainer/theory', requireAuth, (req, res) => {
   res.render('trainer/theory-index', {
     user: req.session.user,
     sidebarTree: sidebarForRequest(req),
-    topics: TOPICS,
+    topics: getTopicsForUser(req.session.user),
     activeAssignmentId: null,
     activePath: '/trainer/theory',
   });
@@ -46,7 +55,9 @@ router.get('/trainer/theory', requireAuth, (req, res) => {
 
 router.get('/trainer/theory/:topic', requireAuth, (req, res) => {
   const topic = TOPIC_THEORY[req.params.topic];
-  if (!topic) return res.status(404).render('404');
+  if (!topic || !getAllowedTopicKeys(req.session.user).includes(req.params.topic)) {
+    return res.status(404).render('404');
+  }
 
   res.render('trainer/theory', {
     user: req.session.user,
@@ -63,9 +74,9 @@ router.get('/trainer/theory/:topic', requireAuth, (req, res) => {
 
 router.get('/trainer', requireRole('student'), (req, res) => {
   const solvedIds = getSolvedSqlExerciseIds(req.session.user.id);
-  const exercises = withProgress(getSqlExercises(), solvedIds);
+  const exercises = withProgress(exercisesForUser(req.session.user), solvedIds);
 
-  const topics = TOPICS.map((topic) => {
+  const topics = getTopicsForUser(req.session.user).map((topic) => {
     const topicExercises = exercises.filter((e) => e.topic === topic.key);
     return {
       ...topic,
@@ -86,9 +97,11 @@ router.get('/trainer', requireRole('student'), (req, res) => {
 
 router.get('/trainer/practice/:topic', requireRole('student'), (req, res) => {
   const topicKey = req.params.topic;
-  if (!TOPIC_LABELS[topicKey]) return res.status(404).render('404');
+  if (!TOPIC_LABELS[topicKey] || !getAllowedTopicKeys(req.session.user).includes(topicKey)) {
+    return res.status(404).render('404');
+  }
 
-  const exercises = withProgress(getSqlExercises(), getSolvedSqlExerciseIds(req.session.user.id)).filter(
+  const exercises = withProgress(exercisesForUser(req.session.user), getSolvedSqlExerciseIds(req.session.user.id)).filter(
     (e) => e.topic === topicKey
   );
 
@@ -163,7 +176,7 @@ router.post('/trainer/:id/submit', requireRole('student'), findExerciseWithProgr
   const submitResult = checkSolution(req.session.user.id, exercise, sql);
 
   const solvedIds = getSolvedSqlExerciseIds(req.session.user.id);
-  const exercises = withProgress(getSqlExercises(), solvedIds);
+  const exercises = withProgress(exercisesForUser(req.session.user), solvedIds);
   const attempts = getSqlAttempts(exercise.id, req.session.user.id);
   const schema = getTableSchema(req.session.user.id, exercise);
   const data = getTableData(req.session.user.id, exercise);
