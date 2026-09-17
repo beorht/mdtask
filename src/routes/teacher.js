@@ -19,6 +19,7 @@ const router = express.Router();
 
 const CONTENT_DIR = path.join(__dirname, '..', '..', 'content', 'src');
 const SUMMARY_PATH = path.join(__dirname, '..', '..', 'content', 'SUMMARY.md');
+const UPLOAD_DIR = path.join(__dirname, '..', '..', 'uploads');
 
 function resolveSectionDir(sectionTitle, sections) {
   const existing = sections.find((s) => s.title === sectionTitle);
@@ -153,9 +154,16 @@ router.get('/teacher/assignment/:id/submissions', requireRole('teacher'), (req, 
   if (!assignment) return res.status(404).render('404');
 
   const users = getUsers();
-  const rows = getSubmissions()
-    .filter((s) => s.assignmentId === assignment.id && !s.parentSubmissionId)
-    .map((s) => ({ ...s, student: users.find((u) => u.id === s.studentId) }));
+  // Show the newest submission per student (a resubmission after "not_done" creates a new
+  // chained row) so the teacher always reviews the current state, not a stale rejected one.
+  const latestByStudent = new Map();
+  for (const s of getSubmissions().filter((s) => s.assignmentId === assignment.id)) {
+    const current = latestByStudent.get(s.studentId);
+    if (!current || new Date(s.submittedAt) > new Date(current.submittedAt)) {
+      latestByStudent.set(s.studentId, s);
+    }
+  }
+  const rows = [...latestByStudent.values()].map((s) => ({ ...s, student: users.find((u) => u.id === s.studentId) }));
 
   const sidebarTree = buildSidebarTree({ role: 'teacher' });
 
@@ -166,6 +174,25 @@ router.get('/teacher/assignment/:id/submissions', requireRole('teacher'), (req, 
     rows,
     activeAssignmentId: assignment.id,
   });
+});
+
+router.get('/teacher/assignment/:id/submissions/:submissionId/files/:index', requireRole('teacher'), (req, res) => {
+  const submission = getSubmissions().find((s) => s.id === req.params.submissionId && s.assignmentId === req.params.id);
+  if (!submission) return res.status(404).render('404');
+
+  const index = Number(req.params.index);
+  if (!Number.isInteger(index) || index < 0 || index >= submission.storedFiles.length) {
+    return res.status(404).render('404');
+  }
+
+  const dir = path.resolve(UPLOAD_DIR, submission.assignmentId, submission.studentId);
+  const filePath = path.resolve(dir, submission.storedFiles[index]);
+  if (filePath !== path.join(dir, submission.storedFiles[index]) || !filePath.startsWith(dir + path.sep)) {
+    return res.status(400).send('Invalid file path');
+  }
+  if (!fs.existsSync(filePath)) return res.status(404).render('404');
+
+  res.download(filePath, submission.files[index] || path.basename(filePath));
 });
 
 const TEACHER_SETTABLE_STATUSES = ['done', 'not_done'];

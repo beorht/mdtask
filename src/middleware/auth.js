@@ -6,4 +6,9 @@ function requireRole(role) {
   };
 }
 
-module.exports = { requireRole };
+function requireAuth(req, res, next) {
+  if (!req.session.user) return res.redirect('/login');
+  next();
+}
+
+module.exports = { requireRole, requireAuth };

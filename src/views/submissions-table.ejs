@@ -18,7 +18,17 @@
             <tr>
               <td><%= row.student.name %></td>
               <td><span class="badge badge-<%= row.status %>"></span> <%= row.status %></td>
-              <td><%= row.files.join(', ') %></td>
+              <td>
+                <% if (row.files.length === 0) { %>
+                  <span class="empty-state">нет файлов</span>
+                <% } else { %>
+                  <ul class="file-list">
+                    <% row.files.forEach(function (name, i) { %>
+                      <li><a href="/teacher/assignment/<%= assignment.id %>/submissions/<%= row.id %>/files/<%= i %>"><%= name %></a></li>
+                    <% }) %>
+                  </ul>
+                <% } %>
+              </td>
               <td>
                 <form method="post" action="/teacher/assignment/<%= assignment.id %>/submissions/<%= row.id %>/status" class="inline-form">
                   <select name="status">

@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { parseSummary } = require('./summary-parser');
 const { getAssignments, getSubmissions } = require('../db');
+const { TOPICS } = require('./sql-topics');
 
 const SUMMARY_PATH = path.join(__dirname, '..', '..', 'content', 'SUMMARY.md');
 
@@ -44,7 +45,26 @@ function buildSidebarTree({ role, studentId }) {
       .filter(Boolean);
   }
 
-  return attach(tree);
+  const topicChildren = TOPICS.map((topic) => ({
+    title: topic.label,
+    href: null,
+    children: [
+      { title: 'Теор. мат.', href: `/trainer/theory/${topic.key}`, children: [] },
+      ...(role === 'student' ? [{ title: 'Прак. мат.', href: `/trainer/practice/${topic.key}`, children: [] }] : []),
+    ],
+  }));
+
+  if (role === 'teacher') {
+    topicChildren.push({ title: 'Результаты тренажёра', href: '/teacher/trainer/results', children: [] });
+  }
+
+  const trainerSection = {
+    title: 'SQL DataBase',
+    href: null,
+    children: topicChildren,
+  };
+
+  return [...attach(tree), trainerSection];
 }
 
 module.exports = { buildSidebarTree };

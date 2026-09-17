@@ -28,7 +28,8 @@ const upload = multer({
       cb(null, dir);
     },
     filename: (req, file, cb) => {
-      cb(null, `${Date.now()}-${file.originalname}`);
+      const safeName = path.basename(file.originalname);
+      cb(null, `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safeName}`);
     },
   }),
   fileFilter: (req, file, cb) => {
@@ -117,11 +118,18 @@ router.post('/assignment/:id/submit', requireRole('student'), handleUpload, (req
   }
 
   const files = (req.files || []).map((f) => f.originalname);
+  const storedFiles = (req.files || []).map((f) => f.filename);
   if (files.length > 0) {
     if (!latest || latest.status === 'not_done') {
-      createSubmission({ assignmentId: assignment.id, studentId: user.id, files, parentSubmissionId: latest ? latest.id : null });
+      createSubmission({
+        assignmentId: assignment.id,
+        studentId: user.id,
+        files,
+        storedFiles,
+        parentSubmissionId: latest ? latest.id : null,
+      });
     } else {
-      updateSubmissionFiles(latest.id, files);
+      updateSubmissionFiles(latest.id, files, storedFiles);
     }
   }
 

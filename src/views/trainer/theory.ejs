@@ -1,0 +1,20 @@
+<!-- src/views/trainer/theory.ejs -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <%- include('../partials/head', { pageTitle: topicTitle }) %>
+</head>
+<body>
+  <div class="app-layout">
+    <%- include('../partials/sidebar') %>
+    <main class="content">
+      <nav class="breadcrumbs"><a href="/trainer/theory">Теоретический материал</a> / <%= topicTitle %></nav>
+      <%- html %>
+      <% if (user.role === 'student') { %>
+        <p><a href="/trainer/practice/<%= topicKey %>" class="btn btn-primary">Перейти к практике по этой теме →</a></p>
+      <% } %>
+    </main>
+  </div>
+  <%- include('../partials/scripts') %>
+</body>
+</html>

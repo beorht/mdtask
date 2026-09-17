@@ -1,0 +1,27 @@
+<!-- src/views/trainer/theory-index.ejs -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <%- include('../partials/head', { pageTitle: 'Теоретический материал: SQL' }) %>
+</head>
+<body>
+  <div class="app-layout">
+    <%- include('../partials/sidebar') %>
+    <main class="content">
+      <nav class="breadcrumbs">SQL DataBase / Теоретический материал</nav>
+      <h1>Теоретический материал: SQL (SQLite)</h1>
+      <p class="empty-state">Выберите тему — по каждой из них есть подробный конспект с синтаксисом, примерами и частыми ошибками.</p>
+      <ul class="assignment-list">
+        <% topics.forEach(function (topic) { %>
+          <li>
+            <a class="assignment-card" href="/trainer/theory/<%= topic.key %>">
+              <span class="assignment-card-title"><%= topic.label %></span>
+            </a>
+          </li>
+        <% }) %>
+      </ul>
+    </main>
+  </div>
+  <%- include('../partials/scripts') %>
+</body>
+</html>

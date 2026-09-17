@@ -8,6 +8,21 @@
     <%- include('partials/sidebar') %>
     <main class="content">
       <h1>Мои задания</h1>
+
+      <h2>SQL DataBase</h2>
+      <ul class="assignment-list">
+        <li>
+          <a class="assignment-card" href="/trainer/theory">
+            <span class="assignment-card-title">Теоретический материал</span>
+          </a>
+        </li>
+        <li>
+          <a class="assignment-card" href="/trainer">
+            <span class="assignment-card-title">Практический тренажёр</span>
+          </a>
+        </li>
+      </ul>
+
       <% courses.forEach(function (course) { %>
         <h2><%= course.title %></h2>
         <% const courseAssignments = assignments.filter(function (a) { return a.courseId === course.id; }); %>
@@ -16,11 +31,13 @@
         <% } else { %>
         <ul class="assignment-list">
           <% courseAssignments.forEach(function (a) { %>
-            <li class="assignment-card">
-              <a href="/assignment/<%= a.id %>"><%= a.title %></a>
-              <span class="badge badge-<%= a.status %>"></span>
-              <span class="due-date<%= a.dueSoon ? ' due-soon' : '' %>">до <%= a.dueDate %></span>
-              <% if (a.targetType === 'individual') { %><span class="tag">доп. задание</span><% } %>
+            <li>
+              <a class="assignment-card" href="/assignment/<%= a.id %>">
+                <span class="assignment-card-title"><%= a.title %></span>
+                <span class="badge badge-<%= a.status %>"></span>
+                <span class="due-date<%= a.dueSoon ? ' due-soon' : '' %>">до <%= a.dueDate %></span>
+                <% if (a.targetType === 'individual') { %><span class="tag">доп. задание</span><% } %>
+              </a>
             </li>
           <% }) %>
         </ul>

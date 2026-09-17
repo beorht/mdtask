@@ -1,0 +1,49 @@
+<!-- src/views/trainer/results.ejs -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <%- include('../partials/head', { pageTitle: 'Результаты тренажёра SQL' }) %>
+</head>
+<body>
+  <div class="app-layout">
+    <%- include('../partials/sidebar') %>
+    <main class="content">
+      <nav class="breadcrumbs">SQL DataBase / Результаты тренажёра</nav>
+      <h1>Результаты тренажёра SQL</h1>
+
+      <% if (!rows.length) { %>
+        <p class="empty-state">Нет студентов для отображения.</p>
+      <% } else { %>
+        <div class="table-scroll">
+          <table class="sql-result-table sql-progress-matrix">
+            <thead>
+              <tr>
+                <th>Студент</th>
+                <th>Решено</th>
+                <% exercises.forEach(function (ex) { %>
+                  <th title="<%= ex.title %>"><%= ex.orderIndex %></th>
+                <% }) %>
+              </tr>
+            </thead>
+            <tbody>
+              <% rows.forEach(function (row) { %>
+                <tr>
+                  <td><%= row.student.name %></td>
+                  <td><%= row.solvedCount %> / <%= exercises.length %></td>
+                  <% row.cells.forEach(function (cell) { %>
+                    <td class="<%= cell.solved ? 'cell-solved' : (cell.attempts ? 'cell-attempted' : 'cell-empty') %>"
+                        title="Попыток: <%= cell.attempts %>, ошибок: <%= cell.errors %>">
+                      <% if (cell.solved) { %>✓<% } else if (cell.attempts) { %><%= cell.attempts %><% } else { %>–<% } %>
+                    </td>
+                  <% }) %>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </main>
+  </div>
+  <%- include('../partials/scripts') %>
+</body>
+</html>

@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS submissions (
   assignment_id TEXT NOT NULL REFERENCES assignments(id),
   student_id TEXT NOT NULL REFERENCES users(id),
   files TEXT NOT NULL DEFAULT '[]',
+  stored_files TEXT NOT NULL DEFAULT '[]',
   status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'done', 'not_done')),
   comment TEXT,
   submitted_at TEXT,
@@ -34,6 +35,32 @@ CREATE TABLE IF NOT EXISTS submissions (
   parent_submission_id TEXT REFERENCES submissions(id)
 );
 
+CREATE TABLE IF NOT EXISTS sql_exercises (
+  id TEXT PRIMARY KEY,
+  order_index INTEGER NOT NULL UNIQUE,
+  topic TEXT NOT NULL,
+  title TEXT NOT NULL,
+  description_md TEXT NOT NULL,
+  schema_sql TEXT NOT NULL DEFAULT '',
+  allowed_statement TEXT NOT NULL,
+  check_type TEXT NOT NULL CHECK (check_type IN ('select_match', 'state_check')),
+  checker_sql TEXT,
+  order_matters INTEGER NOT NULL DEFAULT 0,
+  expected_result TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS sql_attempts (
+  id TEXT PRIMARY KEY,
+  exercise_id TEXT NOT NULL REFERENCES sql_exercises(id),
+  student_id TEXT NOT NULL REFERENCES users(id),
+  submitted_sql TEXT NOT NULL,
+  is_error INTEGER NOT NULL DEFAULT 0,
+  error_message TEXT,
+  is_correct INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_assignments_course ON assignments(course_id);
 CREATE INDEX IF NOT EXISTS idx_submissions_assignment ON submissions(assignment_id);
 CREATE INDEX IF NOT EXISTS idx_submissions_student ON submissions(student_id);
+CREATE INDEX IF NOT EXISTS idx_sql_attempts_exercise_student ON sql_attempts(exercise_id, student_id);

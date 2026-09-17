@@ -1,0 +1,37 @@
+<!-- src/views/trainer/practice-index.ejs -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <%- include('../partials/head', { pageTitle: 'Практический тренажёр SQL' }) %>
+</head>
+<body>
+  <div class="app-layout">
+    <%- include('../partials/sidebar') %>
+    <main class="content">
+      <nav class="breadcrumbs">SQL DataBase / Практический тренажёр</nav>
+      <h1>Практический тренажёр SQL</h1>
+      <p class="empty-state">
+        Темы открываются по порядку — следующая тема доступна только после того, как решено последнее задание предыдущей.
+      </p>
+      <ul class="assignment-list">
+        <% topics.forEach(function (topic) { %>
+          <li>
+            <% if (topic.unlocked) { %>
+              <a class="assignment-card" href="/trainer/practice/<%= topic.key %>">
+                <span class="assignment-card-title"><%= topic.label %></span>
+                <span class="badge <%= topic.solvedCount === topic.total ? 'badge-done' : 'badge-pending' %>"></span>
+                <span><%= topic.solvedCount %> / <%= topic.total %></span>
+              </a>
+            <% } else { %>
+              <span class="assignment-card assignment-card-locked">
+                <span class="assignment-card-title">🔒 <%= topic.label %></span>
+              </span>
+            <% } %>
+          </li>
+        <% }) %>
+      </ul>
+    </main>
+  </div>
+  <%- include('../partials/scripts') %>
+</body>
+</html>

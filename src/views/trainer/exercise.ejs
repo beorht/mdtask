@@ -1,0 +1,116 @@
+<!-- src/views/trainer/exercise.ejs -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <%- include('../partials/head', { pageTitle: exercise.title }) %>
+</head>
+<body>
+  <div class="app-layout">
+    <%- include('../partials/sidebar') %>
+    <main class="content">
+      <nav class="breadcrumbs">
+        <a href="/trainer">Практический тренажёр</a> /
+        <a href="/trainer/practice/<%= exercise.topic %>"><%= topicLabel %></a> /
+        <%= exercise.title %>
+      </nav>
+      <h1><%= exercise.title %> <% if (exercise.solved) { %><span class="badge badge-done"></span><% } %></h1>
+      <%- exercise.descriptionHtml %>
+
+      <% if (schema.length) { %>
+        <h3>Структура таблиц</h3>
+        <% schema.forEach(function (table) { %>
+          <div class="sql-schema-table">
+            <strong><%= table.name %></strong>
+            <table class="sql-result-table">
+              <thead><tr><th>Колонка</th><th>Тип</th><th>NOT NULL</th><th>PK</th></tr></thead>
+              <tbody>
+                <% table.columns.forEach(function (c) { %>
+                  <tr>
+                    <td><%= c.name %></td>
+                    <td><%= c.type %></td>
+                    <td><%= c.notnull ? 'да' : 'нет' %></td>
+                    <td><%= c.pk ? 'да' : '' %></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        <% }) %>
+      <% } else { %>
+        <p class="empty-state">В песочнице пока нет таблиц — создайте их своим запросом.</p>
+      <% } %>
+
+      <form method="post" action="/trainer/<%= exercise.id %>/run" class="sql-console-form">
+        <textarea name="sql" class="sql-console" rows="5" placeholder="Введите SQL-запрос..."><%= submittedSql %></textarea>
+        <div class="sql-console-actions">
+          <button type="submit" class="btn-secondary">Выполнить</button>
+          <button type="submit" formaction="/trainer/<%= exercise.id %>/submit" class="btn-primary">Отправить на проверку</button>
+        </div>
+      </form>
+
+      <% function renderResult(result, label) { %>
+        <% if (!result) return; %>
+        <% if (!result.success) { %>
+          <div class="sql-alert sql-alert-error">
+            <strong>Ошибка<%= label ? ' — ' + label : '' %>:</strong> <%= result.error %>
+          </div>
+        <% } else if (result.rows) { %>
+          <% if (typeof result.isCorrect !== 'undefined') { %>
+            <div class="sql-alert <%= result.isCorrect ? 'sql-alert-success' : 'sql-alert-error' %>">
+              <%= result.isCorrect ? '✓ Верно! Задание засчитано.' : '✕ Результат не совпадает с ожидаемым. Попробуйте ещё раз.' %>
+            </div>
+          <% } %>
+          <% if (result.rows.length) { %>
+            <table class="sql-result-table">
+              <thead><tr><% result.columns.forEach(function (c) { %><th><%= c %></th><% }) %></tr></thead>
+              <tbody>
+                <% result.rows.forEach(function (row) { %>
+                  <tr><% result.columns.forEach(function (c) { %><td><%= row[c] %></td><% }) %></tr>
+                <% }) %>
+              </tbody>
+            </table>
+          <% } else { %>
+            <p class="empty-state">Запрос выполнен, результат пуст (0 строк<% if (typeof result.changes !== 'undefined') { %>, изменено строк: <%= result.changes %><% } %>).</p>
+          <% } %>
+        <% } %>
+      <% } %>
+
+      <% renderResult(runResult, null) %>
+      <% renderResult(submitResult, 'проверка') %>
+
+      <% if (submitResult && submitResult.isCorrect && next && next.unlocked) { %>
+        <p><a href="/trainer/<%= next.id %>" class="btn btn-primary">Следующее задание →</a></p>
+      <% } else if (submitResult && submitResult.isCorrect && !next) { %>
+        <p class="empty-state">🎉 Это было последнее задание тренажёра!</p>
+      <% } %>
+
+      <h3>История попыток</h3>
+      <% if (!attempts.length) { %>
+        <p class="empty-state">Вы ещё не отправляли решения по этому заданию.</p>
+      <% } else { %>
+        <table class="sql-result-table sql-history">
+          <thead><tr><th>Время</th><th>Запрос</th><th>Результат</th></tr></thead>
+          <tbody>
+            <% attempts.forEach(function (a) { %>
+              <tr>
+                <td><%= new Date(a.createdAt).toLocaleString('ru-RU') %></td>
+                <td><code><%= a.submittedSql %></code></td>
+                <td>
+                  <% if (a.isError) { %>
+                    <span class="badge badge-not_done"></span> <%= a.errorMessage %>
+                  <% } else if (a.isCorrect) { %>
+                    <span class="badge badge-done"></span> верно
+                  <% } else { %>
+                    <span class="badge badge-pending"></span> неверно
+                  <% } %>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </main>
+  </div>
+  <%- include('../partials/scripts') %>
+</body>
+</html>

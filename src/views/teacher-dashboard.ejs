@@ -8,6 +8,21 @@
     <%- include('partials/sidebar') %>
     <main class="content">
       <h1>Мои курсы</h1>
+
+      <h2>SQL DataBase</h2>
+      <ul class="assignment-list">
+        <li>
+          <a class="assignment-card" href="/trainer/theory">
+            <span class="assignment-card-title">Теоретический материал</span>
+          </a>
+        </li>
+        <li>
+          <a class="assignment-card" href="/teacher/trainer/results">
+            <span class="assignment-card-title">Результаты тренажёра</span>
+          </a>
+        </li>
+      </ul>
+
       <% courses.forEach(function (course) { %>
         <h2><%= course.title %></h2>
         <p><a href="/teacher/courses/<%= course.id %>/assignments/new" class="btn btn-primary">+ Новое задание</a></p>
@@ -18,8 +33,11 @@
         <ul class="assignment-list">
           <% courseAssignments.forEach(function (a) { %>
             <li class="assignment-card">
-              <a href="/teacher/assignment/<%= a.id %>/edit">Редактировать: <%= a.title %></a>
-              <a href="/teacher/assignment/<%= a.id %>/submissions">Сдачи</a>
+              <span class="assignment-card-title"><%= a.title %></span>
+              <span class="assignment-card-actions">
+                <a class="btn btn-secondary" href="/teacher/assignment/<%= a.id %>/edit">Редактировать</a>
+                <a class="btn btn-secondary" href="/teacher/assignment/<%= a.id %>/submissions">Сдачи</a>
+              </span>
             </li>
           <% }) %>
         </ul>

@@ -1,0 +1,35 @@
+<!-- src/views/trainer/practice.ejs -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <%- include('../partials/head', { pageTitle: 'Тренажёр: ' + topicLabel }) %>
+</head>
+<body>
+  <div class="app-layout">
+    <%- include('../partials/sidebar') %>
+    <main class="content">
+      <nav class="breadcrumbs"><a href="/trainer">Практический тренажёр</a> / <%= topicLabel %></nav>
+      <h1><%= topicLabel %></h1>
+      <p><a href="/trainer/theory/<%= topicKey %>">📖 Теория по этой теме</a></p>
+
+      <ul class="assignment-list">
+        <% exercises.forEach(function (ex) { %>
+          <li>
+            <% if (ex.unlocked) { %>
+              <a class="assignment-card" href="/trainer/<%= ex.id %>">
+                <span class="assignment-card-title"><%= ex.title %></span>
+                <span class="badge <%= ex.solved ? 'badge-done' : 'badge-pending' %>"></span>
+              </a>
+            <% } else { %>
+              <span class="assignment-card assignment-card-locked">
+                <span class="assignment-card-title">🔒 <%= ex.title %></span>
+              </span>
+            <% } %>
+          </li>
+        <% }) %>
+      </ul>
+    </main>
+  </div>
+  <%- include('../partials/scripts') %>
+</body>
+</html>

@@ -9,7 +9,8 @@
   "scripts": {
     "start": "node index.js",
     "dev": "node --watch-path=src --watch-path=public --watch-path=index.js index.js",
-    "test": "DB_PATH=:memory: node --test"
+    "pretest": "rm -rf /tmp/mdtask-trainer-test",
+    "test": "DB_PATH=:memory: TRAINER_DB_DIR=/tmp/mdtask-trainer-test node --test"
   },
   "keywords": [],
   "author": "",

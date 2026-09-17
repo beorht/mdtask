@@ -103,7 +103,7 @@
 :root[data-theme="dark"] .badge-not_done { background: color-mix(in srgb, var(--color-status-failed) 20%, transparent); color: var(--color-status-failed); }
 :root[data-theme="dark"] .badge-pending { background: color-mix(in srgb, var(--color-status-pending) 20%, transparent); color: var(--color-status-pending); }
 
-.content { max-width: 800px; margin: 0 auto; padding: 2rem; flex: 1; font-size: 1.1em; }
+.content { max-width: 1300px; margin: 0 auto; padding: 2rem; flex: 1; font-size: 1.1em; }
 .content a { color: var(--accent-text); }
 .content a:hover { color: var(--accent-text-hover); }
 
@@ -224,13 +224,22 @@
     box-shadow var(--duration-fast) var(--ease-standard),
     border-color var(--duration-fast) var(--ease-standard);
 }
-.assignment-card:hover {
+a.assignment-card {
+  color: var(--text);
+  text-decoration: none;
+  cursor: pointer;
+}
+a.assignment-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(43, 38, 34, 0.08);
   border-color: var(--color-peach);
+  background: var(--accent-soft-bg);
 }
-.assignment-card a { color: var(--text); text-decoration: none; font-weight: bold; }
-.assignment-card a:hover { color: var(--accent-text); text-decoration: underline; }
+a.assignment-card:active { transform: translateY(0); box-shadow: none; }
+a.assignment-card:focus-visible { outline: 2px solid var(--color-coral); outline-offset: 2px; }
+.assignment-card-title { font-weight: bold; }
+.assignment-card.assignment-card-locked { color: var(--text-soft); cursor: default; opacity: 0.75; }
+.assignment-card-actions { display: flex; gap: 0.5rem; margin-left: auto; }
 
 .due-date { color: var(--text-soft); font-size: 0.85rem; margin-left: auto; }
 .due-date.due-soon { color: var(--color-status-pending); font-weight: bold; }
@@ -331,6 +340,7 @@ button:focus-visible { outline: 2px solid var(--color-coral); outline-offset: 2p
 }
 .editor-panes .content:hover { border-left-color: var(--color-peach); }
 
+.file-list { list-style: none; margin: 0; padding: 0; }
 .submissions-table { width: 100%; border-collapse: collapse; }
 .submissions-table td, .submissions-table th { border-bottom: 1px solid var(--border); padding: 0.5rem; text-align: left; }
 .inline-form { display: flex; gap: 0.5rem; align-items: center; }
@@ -362,3 +372,40 @@ button:focus-visible { outline: 2px solid var(--color-coral); outline-offset: 2p
 .new-assignment-form fieldset { border: 1px solid var(--border); border-radius: 6px; padding: 0.75rem; }
 .new-assignment-form fieldset label { font-weight: normal; display: block; margin: 0.25rem 0; }
 .new-assignment-form .btn-primary { align-self: flex-start; }
+
+/* SQL trainer */
+.sql-console-form { display: flex; flex-direction: column; gap: 0.5rem; margin: 1rem 0; }
+.sql-console {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.95rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  resize: vertical;
+}
+.sql-console:focus { outline: none; border-color: var(--color-coral); }
+.sql-console-actions { display: flex; gap: 0.5rem; }
+
+.sql-alert { padding: 0.6rem 0.9rem; border-radius: 6px; margin: 0.75rem 0; border: 1px solid var(--border); }
+.sql-alert-error { background: color-mix(in srgb, var(--color-status-failed) 12%, transparent); border-color: var(--color-status-failed); }
+.sql-alert-success { background: color-mix(in srgb, var(--color-status-done) 12%, transparent); border-color: var(--color-status-done); }
+
+.sql-result-table { width: 100%; border-collapse: collapse; margin: 0.5rem 0 1rem; }
+.sql-result-table th, .sql-result-table td {
+  border: 1px solid var(--border);
+  padding: 0.4rem 0.6rem;
+  text-align: left;
+  font-size: 0.9rem;
+}
+.sql-result-table thead { background: var(--accent-soft-bg); }
+.sql-history code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.85rem; }
+.sql-schema-table { margin-bottom: 1rem; }
+
+.table-scroll { overflow-x: auto; }
+.sql-progress-matrix th, .sql-progress-matrix td { text-align: center; }
+.sql-progress-matrix td:first-child, .sql-progress-matrix th:first-child { text-align: left; }
+.cell-solved { background: color-mix(in srgb, var(--color-status-done) 20%, transparent); color: var(--color-status-done); font-weight: bold; }
+.cell-attempted { background: color-mix(in srgb, var(--color-status-pending) 20%, transparent); color: var(--color-status-pending); }
+.cell-empty { color: var(--text-soft); }
