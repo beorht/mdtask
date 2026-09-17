@@ -13,6 +13,16 @@ if (DB_PATH !== ':memory:') {
 const db = new Database(DB_PATH);
 db.pragma('foreign_keys = ON');
 db.exec(fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf-8'));
+
+// One-off migration for databases created before result_columns/result_rows existed.
+for (const column of ['result_columns', 'result_rows']) {
+  try {
+    db.exec(`ALTER TABLE sql_attempts ADD COLUMN ${column} TEXT`);
+  } catch (err) {
+    if (!/duplicate column name/i.test(err.message)) throw err;
+  }
+}
+
 seed(db);
 seedSqlExercises(db);
 
@@ -153,6 +163,8 @@ function rowToSqlAttempt(row) {
     isError: !!row.is_error,
     errorMessage: row.error_message,
     isCorrect: !!row.is_correct,
+    resultColumns: row.result_columns ? JSON.parse(row.result_columns) : null,
+    resultRows: row.result_rows ? JSON.parse(row.result_rows) : null,
     createdAt: row.created_at,
   };
 }
@@ -166,12 +178,23 @@ function getSqlExercise(id) {
   return row ? rowToSqlExercise(row) : null;
 }
 
-function createSqlAttempt({ exerciseId, studentId, submittedSql, isError, errorMessage, isCorrect }) {
+function createSqlAttempt({ exerciseId, studentId, submittedSql, isError, errorMessage, isCorrect, resultColumns, resultRows }) {
   const id = `attempt-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   db.prepare(
-    `INSERT INTO sql_attempts (id, exercise_id, student_id, submitted_sql, is_error, error_message, is_correct, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-  ).run(id, exerciseId, studentId, submittedSql, isError ? 1 : 0, errorMessage || null, isCorrect ? 1 : 0, new Date().toISOString());
+    `INSERT INTO sql_attempts (id, exercise_id, student_id, submitted_sql, is_error, error_message, is_correct, result_columns, result_rows, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(
+    id,
+    exerciseId,
+    studentId,
+    submittedSql,
+    isError ? 1 : 0,
+    errorMessage || null,
+    isCorrect ? 1 : 0,
+    resultColumns ? JSON.stringify(resultColumns) : null,
+    resultRows ? JSON.stringify(resultRows) : null,
+    new Date().toISOString()
+  );
   return rowToSqlAttempt(db.prepare('SELECT * FROM sql_attempts WHERE id = ?').get(id));
 }
 

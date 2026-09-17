@@ -57,6 +57,8 @@ CREATE TABLE IF NOT EXISTS sql_attempts (
   is_error INTEGER NOT NULL DEFAULT 0,
   error_message TEXT,
   is_correct INTEGER NOT NULL DEFAULT 0,
+  result_columns TEXT,
+  result_rows TEXT,
   created_at TEXT NOT NULL
 );
 

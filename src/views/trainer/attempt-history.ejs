@@ -1,0 +1,63 @@
+<!-- src/views/trainer/attempt-history.ejs -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <%- include('../partials/head', { pageTitle: 'История: ' + student.name + ' — ' + exercise.title }) %>
+</head>
+<body>
+  <%- include('../partials/header') %>
+  <div class="app-layout">
+    <%- include('../partials/sidebar') %>
+    <main class="content">
+      <nav class="breadcrumbs">
+        <a href="/teacher/trainer/results">Результаты тренажёра</a> /
+        <%= student.name %> / <%= topicLabel %> / <%= exercise.title %>
+      </nav>
+      <h1><%= student.name %> <span class="empty-state" style="font-style: normal;">— <%= exercise.title %></span></h1>
+
+      <section class="task-panel">
+        <h3 class="task-panel-title">Задание</h3>
+        <%- exercise.descriptionHtml %>
+      </section>
+
+      <section class="task-panel">
+        <h3 class="task-panel-title">История попыток (<%= attempts.length %>)</h3>
+        <% if (!attempts.length) { %>
+          <p class="empty-state">Студент ещё не отправлял решения по этому заданию.</p>
+        <% } else { %>
+          <% attempts.forEach(function (a, i) { %>
+            <div class="submission-card">
+              <div>
+                <span class="badge <%= a.isError ? 'badge-not_done' : (a.isCorrect ? 'badge-done' : 'badge-pending') %>"></span>
+                <strong><%= new Date(a.createdAt).toLocaleString('ru-RU') %></strong>
+                <% if (i === 0) { %><span class="tag">последняя</span><% } %>
+              </div>
+              <pre class="sql-console" style="margin: 0.5rem 0;"><%= a.submittedSql %></pre>
+              <% if (a.isError) { %>
+                <div class="sql-alert sql-alert-error"><strong>Ошибка:</strong> <%= a.errorMessage %></div>
+              <% } else { %>
+                <div class="sql-alert <%= a.isCorrect ? 'sql-alert-success' : 'sql-alert-error' %>">
+                  <%= a.isCorrect ? '✓ Верно' : '✕ Неверно' %>
+                </div>
+                <% if (a.resultRows && a.resultRows.length) { %>
+                  <table class="sql-result-table">
+                    <thead><tr><% a.resultColumns.forEach(function (c) { %><th><%= c %></th><% }) %></tr></thead>
+                    <tbody>
+                      <% a.resultRows.forEach(function (row) { %>
+                        <tr><% a.resultColumns.forEach(function (c) { %><td><%= row[c] %></td><% }) %></tr>
+                      <% }) %>
+                    </tbody>
+                  </table>
+                <% } else if (a.resultRows) { %>
+                  <p class="empty-state">Результат пуст (0 строк).</p>
+                <% } %>
+              <% } %>
+            </div>
+          <% }) %>
+        <% } %>
+      </section>
+    </main>
+  </div>
+  <%- include('../partials/scripts') %>
+</body>
+</html>

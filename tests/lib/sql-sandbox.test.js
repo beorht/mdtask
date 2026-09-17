@@ -35,6 +35,23 @@ test('checkSolution marks a correct SELECT as correct and records the attempt', 
   assert.strictEqual(attempts.length, 1);
   assert.strictEqual(attempts[0].isCorrect, true);
   assert.strictEqual(attempts[0].isError, false);
+  assert.deepStrictEqual(attempts[0].resultRows, selectExercise.expectedResult);
+  assert.ok(Array.isArray(attempts[0].resultColumns) && attempts[0].resultColumns.length > 0);
+});
+
+test('checkSolution persists the resulting table state for a non-SELECT exercise', () => {
+  checkSolution('student-1', createExercise, 'CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price REAL NOT NULL)');
+  const attempts = db.getSqlAttempts(createExercise.id, 'student-1');
+  assert.strictEqual(attempts.length, 1);
+  assert.deepStrictEqual(attempts[0].resultColumns, ['cid', 'name', 'type', 'notnull', 'dflt_value', 'pk']);
+  assert.strictEqual(attempts[0].resultRows.length, 3);
+});
+
+test('checkSolution stores no result rows for an erroring attempt', () => {
+  checkSolution('student-1', selectExercise, 'SELECT * FROM nope');
+  const attempts = db.getSqlAttempts(selectExercise.id, 'student-1');
+  assert.strictEqual(attempts[0].resultRows, null);
+  assert.strictEqual(attempts[0].resultColumns, null);
 });
 
 test('checkSolution marks a wrong-but-valid SELECT as incorrect', () => {

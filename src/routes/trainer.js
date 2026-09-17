@@ -210,4 +210,23 @@ router.get('/teacher/trainer/results', requireRole('teacher'), (req, res) => {
   });
 });
 
+router.get('/teacher/trainer/results/:studentId/:exerciseId', requireRole('teacher'), (req, res) => {
+  const student = getUsers().find((u) => u.id === req.params.studentId && u.role === 'student');
+  const exercise = getSqlExercises().find((e) => e.id === req.params.exerciseId);
+  if (!student || !exercise) return res.status(404).render('404');
+
+  const attempts = getSqlAttempts(exercise.id, student.id);
+
+  res.render('trainer/attempt-history', {
+    user: req.session.user,
+    sidebarTree: sidebarForRequest(req),
+    student,
+    exercise: { ...exercise, descriptionHtml: renderMarkdown(exercise.descriptionMd) },
+    topicLabel: TOPIC_LABELS[exercise.topic],
+    attempts,
+    activeAssignmentId: null,
+    activePath: '/teacher/trainer/results',
+  });
+});
+
 module.exports = router;

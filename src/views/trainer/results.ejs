@@ -34,7 +34,11 @@
                   <% row.cells.forEach(function (cell) { %>
                     <td class="<%= cell.solved ? 'cell-solved' : (cell.attempts ? 'cell-attempted' : 'cell-empty') %>"
                         title="Попыток: <%= cell.attempts %>, ошибок: <%= cell.errors %>">
-                      <% if (cell.solved) { %>✓<% } else if (cell.attempts) { %><%= cell.attempts %><% } else { %>–<% } %>
+                      <% if (cell.attempts) { %>
+                        <a href="/teacher/trainer/results/<%= row.student.id %>/<%= cell.exerciseId %>">
+                          <%= cell.solved ? '✓' : cell.attempts %>
+                        </a>
+                      <% } else { %>–<% } %>
                     </td>
                   <% }) %>
                 </tr>
