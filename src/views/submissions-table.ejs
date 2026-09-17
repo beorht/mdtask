@@ -4,9 +4,11 @@
   <%- include('partials/head', { pageTitle: 'Сдачи: ' + assignment.title }) %>
 </head>
 <body>
+  <%- include('partials/header') %>
   <div class="app-layout">
     <%- include('partials/sidebar') %>
     <main class="content">
+      <nav class="breadcrumbs"><a href="/teacher">Мои курсы</a> / <%= assignment.title %> / Сдачи</nav>
       <h1>Сдачи: <%= assignment.title %></h1>
       <% if (rows.length === 0) { %>
         <p class="empty-state">Пока нет сдач по этому заданию.</p>

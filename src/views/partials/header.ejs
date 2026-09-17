@@ -1,0 +1,17 @@
+<header class="app-header">
+  <button class="sidebar-toggle" id="sidebarToggle" aria-label="Меню" aria-controls="sidebar">☰</button>
+  <a href="<%= user.role === 'teacher' ? '/teacher' : '/' %>" class="app-brand">
+    <span class="app-brand-mark">📚</span><span class="app-brand-name">mdtask</span>
+  </a>
+  <% if (typeof pageTitle !== 'undefined' && pageTitle) { %>
+    <span class="app-header-title"><%= pageTitle %></span>
+  <% } %>
+  <div class="app-header-actions">
+    <button id="themeToggle" class="btn-secondary icon-btn" aria-label="Переключить тему" title="Переключить тему">🌓</button>
+    <div class="app-header-user">
+      <span class="app-header-user-name"><%= user.name %></span>
+      <span class="role-tag role-tag-<%= user.role %>"><%= user.role === 'teacher' ? 'Преподаватель' : 'Студент' %></span>
+    </div>
+    <form method="post" action="/logout"><button type="submit" class="btn-secondary">Выйти</button></form>
+  </div>
+</header>

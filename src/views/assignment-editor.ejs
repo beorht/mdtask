@@ -4,9 +4,11 @@
   <%- include('partials/head', { pageTitle: 'Редактор: ' + assignment.title }) %>
 </head>
 <body>
+  <%- include('partials/header') %>
   <div class="app-layout">
     <%- include('partials/sidebar') %>
     <main class="content editor-layout">
+      <nav class="breadcrumbs"><a href="/teacher">Мои курсы</a> / <%= assignment.title %></nav>
       <h1>Редактирование: <%= assignment.title %></h1>
       <% if (saved) { %><p class="empty-state">Сохранено.</p><% } %>
       <form method="post" action="/teacher/assignment/<%= assignment.id %>/save">

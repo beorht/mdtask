@@ -5,48 +5,58 @@
   <%- include('../partials/head', { pageTitle: exercise.title }) %>
 </head>
 <body>
+  <%- include('../partials/header') %>
   <div class="app-layout">
     <%- include('../partials/sidebar') %>
-    <main class="content">
+    <main class="content task-page">
       <nav class="breadcrumbs">
         <a href="/trainer">Практический тренажёр</a> /
         <a href="/trainer/practice/<%= exercise.topic %>"><%= topicLabel %></a> /
         <%= exercise.title %>
       </nav>
       <h1><%= exercise.title %> <% if (exercise.solved) { %><span class="badge badge-done"></span><% } %></h1>
-      <%- exercise.descriptionHtml %>
 
-      <% if (schema.length) { %>
-        <h3>Структура таблиц</h3>
-        <% schema.forEach(function (table) { %>
-          <div class="sql-schema-table">
-            <strong><%= table.name %></strong>
-            <table class="sql-result-table">
-              <thead><tr><th>Колонка</th><th>Тип</th><th>NOT NULL</th><th>PK</th></tr></thead>
-              <tbody>
-                <% table.columns.forEach(function (c) { %>
-                  <tr>
-                    <td><%= c.name %></td>
-                    <td><%= c.type %></td>
-                    <td><%= c.notnull ? 'да' : 'нет' %></td>
-                    <td><%= c.pk ? 'да' : '' %></td>
-                  </tr>
-                <% }) %>
-              </tbody>
-            </table>
+      <section class="task-panel">
+        <h3 class="task-panel-title">Описание</h3>
+        <%- exercise.descriptionHtml %>
+      </section>
+
+      <section class="task-panel">
+        <h3 class="task-panel-title">Структура базы данных</h3>
+        <% if (schema.length) { %>
+          <% schema.forEach(function (table) { %>
+            <div class="sql-schema-table">
+              <strong><%= table.name %></strong>
+              <table class="sql-result-table">
+                <thead><tr><th>Колонка</th><th>Тип</th><th>NOT NULL</th><th>PK</th></tr></thead>
+                <tbody>
+                  <% table.columns.forEach(function (c) { %>
+                    <tr>
+                      <td><%= c.name %></td>
+                      <td><%= c.type %></td>
+                      <td><%= c.notnull ? 'да' : 'нет' %></td>
+                      <td><%= c.pk ? 'да' : '' %></td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+          <% }) %>
+        <% } else { %>
+          <p class="empty-state">В песочнице пока нет таблиц — создайте их своим запросом.</p>
+        <% } %>
+      </section>
+
+      <section class="task-panel task-panel-editor">
+        <h3 class="task-panel-title">SQL Editor</h3>
+        <form method="post" action="/trainer/<%= exercise.id %>/run" class="sql-console-form">
+          <textarea name="sql" class="sql-console" rows="7" placeholder="Введите SQL-запрос..."><%= submittedSql %></textarea>
+          <div class="sql-console-actions">
+            <button type="submit" class="btn-secondary">▶ Выполнить</button>
+            <button type="submit" formaction="/trainer/<%= exercise.id %>/submit" class="btn-primary">✓ Отправить на проверку</button>
           </div>
-        <% }) %>
-      <% } else { %>
-        <p class="empty-state">В песочнице пока нет таблиц — создайте их своим запросом.</p>
-      <% } %>
-
-      <form method="post" action="/trainer/<%= exercise.id %>/run" class="sql-console-form">
-        <textarea name="sql" class="sql-console" rows="5" placeholder="Введите SQL-запрос..."><%= submittedSql %></textarea>
-        <div class="sql-console-actions">
-          <button type="submit" class="btn-secondary">Выполнить</button>
-          <button type="submit" formaction="/trainer/<%= exercise.id %>/submit" class="btn-primary">Отправить на проверку</button>
-        </div>
-      </form>
+        </form>
+      </section>
 
       <% function renderResult(result, label) { %>
         <% if (!result) return; %>
@@ -75,40 +85,47 @@
         <% } %>
       <% } %>
 
-      <% renderResult(runResult, null) %>
-      <% renderResult(submitResult, 'проверка') %>
+      <% if (runResult || submitResult) { %>
+        <section class="task-panel task-panel-result">
+          <h3 class="task-panel-title">Результат</h3>
+          <% renderResult(runResult, null) %>
+          <% renderResult(submitResult, 'проверка') %>
 
-      <% if (submitResult && submitResult.isCorrect && next && next.unlocked) { %>
-        <p><a href="/trainer/<%= next.id %>" class="btn btn-primary">Следующее задание →</a></p>
-      <% } else if (submitResult && submitResult.isCorrect && !next) { %>
-        <p class="empty-state">🎉 Это было последнее задание тренажёра!</p>
+          <% if (submitResult && submitResult.isCorrect && next && next.unlocked) { %>
+            <p><a href="/trainer/<%= next.id %>" class="btn btn-primary">Следующее задание →</a></p>
+          <% } else if (submitResult && submitResult.isCorrect && !next) { %>
+            <p class="empty-state">🎉 Это было последнее задание тренажёра!</p>
+          <% } %>
+        </section>
       <% } %>
 
-      <h3>История попыток</h3>
-      <% if (!attempts.length) { %>
-        <p class="empty-state">Вы ещё не отправляли решения по этому заданию.</p>
-      <% } else { %>
-        <table class="sql-result-table sql-history">
-          <thead><tr><th>Время</th><th>Запрос</th><th>Результат</th></tr></thead>
-          <tbody>
-            <% attempts.forEach(function (a) { %>
-              <tr>
-                <td><%= new Date(a.createdAt).toLocaleString('ru-RU') %></td>
-                <td><code><%= a.submittedSql %></code></td>
-                <td>
-                  <% if (a.isError) { %>
-                    <span class="badge badge-not_done"></span> <%= a.errorMessage %>
-                  <% } else if (a.isCorrect) { %>
-                    <span class="badge badge-done"></span> верно
-                  <% } else { %>
-                    <span class="badge badge-pending"></span> неверно
-                  <% } %>
-                </td>
-              </tr>
-            <% }) %>
-          </tbody>
-        </table>
-      <% } %>
+      <section class="task-panel">
+        <h3 class="task-panel-title">История попыток</h3>
+        <% if (!attempts.length) { %>
+          <p class="empty-state">Вы ещё не отправляли решения по этому заданию.</p>
+        <% } else { %>
+          <table class="sql-result-table sql-history">
+            <thead><tr><th>Время</th><th>Запрос</th><th>Результат</th></tr></thead>
+            <tbody>
+              <% attempts.forEach(function (a) { %>
+                <tr>
+                  <td><%= new Date(a.createdAt).toLocaleString('ru-RU') %></td>
+                  <td><code><%= a.submittedSql %></code></td>
+                  <td>
+                    <% if (a.isError) { %>
+                      <span class="badge badge-not_done"></span> <%= a.errorMessage %>
+                    <% } else if (a.isCorrect) { %>
+                      <span class="badge badge-done"></span> верно
+                    <% } else { %>
+                      <span class="badge badge-pending"></span> неверно
+                    <% } %>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        <% } %>
+      </section>
     </main>
   </div>
   <%- include('../partials/scripts') %>

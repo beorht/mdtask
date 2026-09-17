@@ -3,6 +3,7 @@ const assert = require('node:assert');
 const request = require('supertest');
 const { createApp } = require('../../src/server');
 const fixtures = require('../../src/db');
+const { seedAssignment } = require('../helpers/fixtures');
 
 async function loginAs(app, studentId) {
   const agent = request.agent(app);
@@ -13,6 +14,15 @@ async function loginAs(app, studentId) {
 test.beforeEach(() => fixtures.__resetForTests());
 
 test('student dashboard lists group and individual assignments with badges', async () => {
+  const group = seedAssignment({ title: 'Задание 1: Настройка репозитория', mdPath: 'a.md' });
+  fixtures.createSubmission({ assignmentId: group.id, studentId: 'student-1', files: ['solution.zip'] });
+  seedAssignment({
+    title: 'Дополнительное задание: Рефакторинг',
+    mdPath: 'individual/student-1/extra.md',
+    targetType: 'individual',
+    targetStudentId: 'student-1',
+  });
+
   const app = createApp();
   const agent = await loginAs(app, 'student-1');
   const res = await agent.get('/');
@@ -23,6 +33,13 @@ test('student dashboard lists group and individual assignments with badges', asy
 });
 
 test('other student does not see student-1 individual assignment', async () => {
+  seedAssignment({
+    title: 'Дополнительное задание: Рефакторинг',
+    mdPath: 'individual/student-1/extra.md',
+    targetType: 'individual',
+    targetStudentId: 'student-1',
+  });
+
   const app = createApp();
   const agent = await loginAs(app, 'student-2');
   const res = await agent.get('/');

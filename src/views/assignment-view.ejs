@@ -5,13 +5,15 @@
   <%- include('partials/head', { pageTitle: assignment.title }) %>
 </head>
 <body>
+  <%- include('partials/header') %>
   <div class="app-layout">
     <%- include('partials/sidebar') %>
     <main class="content">
       <nav class="breadcrumbs">Мои задания / <%= assignment.title %></nav>
       <%- html %>
 
-      <section class="submission-block">
+      <section class="submission-block task-panel">
+        <h3 class="task-panel-title">Сдача</h3>
         <% if (submissions.length > 1) { %>
           <div class="tabs">
             <button class="tab-btn active" data-tab="main">Основная сдача</button>

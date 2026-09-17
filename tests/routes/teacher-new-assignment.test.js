@@ -50,14 +50,14 @@ test(
     const created = assignments.find((a) => a.title === 'Новое тестовое задание');
     assert.ok(created, 'assignment row should exist');
     assert.strictEqual(created.targetType, 'group');
-    assert.strictEqual(created.mdPath, 'section-1/novoe-testovoe-zadanie.md');
+    assert.strictEqual(created.mdPath, 'section-razdel-1/novoe-testovoe-zadanie.md');
 
     const filePath = path.join(CONTENT_DIR, created.mdPath);
     writtenFiles.push(filePath);
     assert.match(fs.readFileSync(filePath, 'utf-8'), /# Новое тестовое задание/);
 
     const summary = fs.readFileSync(SUMMARY_PATH, 'utf-8');
-    assert.match(summary, /\[Новое тестовое задание\]\(section-1\/novoe-testovoe-zadanie\.md\)/);
+    assert.match(summary, /\[Новое тестовое задание\]\(section-razdel-1\/novoe-testovoe-zadanie\.md\)/);
   })
 );
 

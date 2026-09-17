@@ -1,6 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert');
 const db = require('../../src/db');
+const { seedAssignment } = require('../helpers/fixtures');
 
 test.beforeEach(() => db.__resetForTests());
 
@@ -10,31 +11,41 @@ test('getUsers returns seeded student and teacher accounts', () => {
   assert.ok(users.find((u) => u.id === 'teacher-1' && u.role === 'teacher'));
 });
 
-test('getAssignments includes one individual assignment for student-1', () => {
-  const assignments = db.getAssignments();
-  const individual = assignments.find((a) => a.targetType === 'individual');
+test('getAssignments includes an individual assignment scoped to its target student', () => {
+  const created = seedAssignment({
+    title: 'Доп. задание',
+    mdPath: 'individual/student-1/extra.md',
+    targetType: 'individual',
+    targetStudentId: 'student-1',
+  });
+  const individual = db.getAssignments().find((a) => a.id === created.id);
+  assert.strictEqual(individual.targetType, 'individual');
   assert.strictEqual(individual.targetStudentId, 'student-1');
-  assert.strictEqual(individual.mdPath, 'individual/student-1/extra-task.md');
+  assert.strictEqual(individual.mdPath, 'individual/student-1/extra.md');
 });
 
 test('updateSubmissionStatus persists the new status and comment', () => {
-  const before = db.getSubmissions()[0];
-  db.updateSubmissionStatus(before.id, 'done', 'Отлично');
-  const after = db.getSubmissions().find((s) => s.id === before.id);
+  const assignment = seedAssignment({ title: 'A', mdPath: 'a.md' });
+  const submission = db.createSubmission({ assignmentId: assignment.id, studentId: 'student-1', files: ['a.zip'] });
+  db.updateSubmissionStatus(submission.id, 'done', 'Отлично');
+  const after = db.getSubmissions().find((s) => s.id === submission.id);
   assert.strictEqual(after.status, 'done');
   assert.strictEqual(after.comment, 'Отлично');
 });
 
 test('reopenSubmission resets status to pending', () => {
-  const target = db.getSubmissions().find((s) => s.status === 'not_done');
-  db.reopenSubmission(target.id);
-  const after = db.getSubmissions().find((s) => s.id === target.id);
+  const assignment = seedAssignment({ title: 'A', mdPath: 'a.md' });
+  const submission = db.createSubmission({ assignmentId: assignment.id, studentId: 'student-1', files: ['a.zip'] });
+  db.updateSubmissionStatus(submission.id, 'not_done', 'Плохо');
+  db.reopenSubmission(submission.id);
+  const after = db.getSubmissions().find((s) => s.id === submission.id);
   assert.strictEqual(after.status, 'pending');
 });
 
 test('createSubmission inserts a new row linked to its parent', () => {
+  const assignment = seedAssignment({ title: 'A', mdPath: 'a.md' });
   const created = db.createSubmission({
-    assignmentId: 'assign-3',
+    assignmentId: assignment.id,
     studentId: 'student-2',
     files: ['test.zip'],
     parentSubmissionId: null,
@@ -46,8 +57,9 @@ test('createSubmission inserts a new row linked to its parent', () => {
 });
 
 test('__resetForTests wipes and re-seeds so state does not leak between tests', () => {
-  db.createSubmission({ assignmentId: 'assign-3', studentId: 'student-2', files: ['x.zip'] });
+  const assignment = seedAssignment({ title: 'A', mdPath: 'a.md' });
+  db.createSubmission({ assignmentId: assignment.id, studentId: 'student-2', files: ['x.zip'] });
   db.__resetForTests();
-  const submissions = db.getSubmissions();
-  assert.strictEqual(submissions.length, 3);
+  assert.strictEqual(db.getSubmissions().length, 0);
+  assert.strictEqual(db.getAssignments().length, 0);
 });

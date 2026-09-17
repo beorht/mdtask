@@ -1,11 +1,30 @@
+<%
+function countProgress(nodes) {
+  let done = 0;
+  let total = 0;
+  nodes.forEach(function (node) {
+    if (node.assignmentId) {
+      total += 1;
+      if (node.status === 'done') done += 1;
+    }
+    if (node.children && node.children.length) {
+      const child = countProgress(node.children);
+      done += child.done;
+      total += child.total;
+    }
+  });
+  return { done, total };
+}
+const courseProgress = user.role === 'student' ? countProgress(sidebarTree) : null;
+const courseProgressPct = courseProgress && courseProgress.total ? Math.round((courseProgress.done / courseProgress.total) * 100) : 0;
+%>
 <nav class="sidebar" id="sidebar">
-  <button class="sidebar-toggle" id="sidebarToggle" aria-label="Меню">☰</button>
-  <a href="<%= user.role === 'teacher' ? '/teacher' : '/' %>" class="back-home">← На главную</a>
   <ul class="tree">
     <% sidebarTree.forEach(function renderNode(node) { %>
       <li>
         <% if (node.href) { %>
-          <a href="<%= node.href %>" class="<%= typeof activePath !== 'undefined' && activePath === node.href ? 'active' : '' %>">
+          <a href="<%= node.href %>" class="<%= typeof activePath !== 'undefined' && activePath === node.href ? 'active' : '' %> <%= node.navStatus === 'locked' ? 'nav-locked' : '' %>">
+            <% if (node.navStatus) { %><span class="nav-icon nav-icon-<%= node.navStatus %>"></span><% } %>
             <%= node.title %>
           </a>
         <% } else if (node.assignmentId) { %>
@@ -25,8 +44,13 @@
       </li>
     <% }) %>
   </ul>
-  <div class="sidebar-footer">
-    <button id="themeToggle" class="btn-secondary">🌓 Тема</button>
-    <form method="post" action="/logout"><button type="submit" class="btn-secondary"><%= user.name %> · выйти</button></form>
-  </div>
+  <% if (courseProgress && courseProgress.total > 0) { %>
+    <div class="sidebar-progress">
+      <div class="sidebar-progress-label">
+        <span>Прогресс курса</span>
+        <span><%= courseProgress.done %> / <%= courseProgress.total %></span>
+      </div>
+      <div class="progress-bar"><div class="progress-bar__fill" style="width: <%= courseProgressPct %>%"></div></div>
+    </div>
+  <% } %>
 </nav>
