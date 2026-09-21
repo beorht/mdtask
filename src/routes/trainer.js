@@ -76,15 +76,18 @@ router.get('/trainer', requireRole('student'), (req, res) => {
   const solvedIds = getSolvedSqlExerciseIds(req.session.user.id);
   const exercises = withProgress(exercisesForUser(req.session.user), solvedIds);
 
-  const topics = getTopicsForUser(req.session.user).map((topic) => {
-    const topicExercises = exercises.filter((e) => e.topic === topic.key);
-    return {
-      ...topic,
-      solvedCount: topicExercises.filter((e) => e.solved).length,
-      total: topicExercises.length,
-      unlocked: topicExercises.some((e) => e.unlocked),
-    };
-  });
+  const topics = getTopicsForUser(req.session.user)
+    .map((topic) => {
+      const topicExercises = exercises.filter((e) => e.topic === topic.key);
+      return {
+        ...topic,
+        solvedCount: topicExercises.filter((e) => e.solved).length,
+        total: topicExercises.length,
+        unlocked: topicExercises.some((e) => e.unlocked),
+      };
+    })
+    // Theory-only topics have no exercises to practice — leave them out of the practice list.
+    .filter((topic) => topic.total > 0);
 
   res.render('trainer/practice-index', {
     user: req.session.user,
@@ -104,6 +107,7 @@ router.get('/trainer/practice/:topic', requireRole('student'), (req, res) => {
   const exercises = withProgress(exercisesForUser(req.session.user), getSolvedSqlExerciseIds(req.session.user.id)).filter(
     (e) => e.topic === topicKey
   );
+  if (exercises.length === 0) return res.status(404).render('404'); // theory-only topic, no practice list
 
   res.render('trainer/practice', {
     user: req.session.user,
