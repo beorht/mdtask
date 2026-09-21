@@ -3,6 +3,7 @@ const path = require('path');
 const Database = require('better-sqlite3');
 const { seed } = require('./seed');
 const { seedSqlExercises } = require('./seed-sql-exercises');
+const { seedLanguageExercises } = require('./seed-language-exercises');
 const { DEFAULT_PASSWORD, hashPassword, verifyPassword } = require('../lib/password');
 
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, '..', '..', 'data', 'mdtask.db');
@@ -55,6 +56,7 @@ if (legacyAccountsWithoutPassword.length > 0) {
 
 seed(db);
 seedSqlExercises(db);
+seedLanguageExercises(db);
 
 // better-sqlite3 does not cache prepared statements itself — re-preparing the same
 // SQL text on every call re-parses it. Under concurrent load (a class hitting the
@@ -259,6 +261,24 @@ function rowToSqlAttempt(row) {
   };
 }
 
+function rowToLanguageExercise(row) {
+  return {
+    id: row.id,
+    language: row.language,
+    orderIndex: row.order_index,
+    topic: row.topic,
+    topicLabel: row.topic_label,
+    title: row.title,
+    descriptionMd: row.description_md,
+  };
+}
+
+function getLanguageExercises(language) {
+  return prepared('SELECT * FROM language_exercises WHERE language = ? ORDER BY order_index')
+    .all(language)
+    .map(rowToLanguageExercise);
+}
+
 function getSqlExercises() {
   return prepared('SELECT * FROM sql_exercises ORDER BY order_index').all().map(rowToSqlExercise);
 }
@@ -329,6 +349,7 @@ module.exports = {
   createAssignment,
   updateAssignmentTitle,
   setAssignmentDueDateForTests,
+  getLanguageExercises,
   getSqlExercises,
   getSqlExercise,
   createSqlAttempt,

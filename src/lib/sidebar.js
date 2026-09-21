@@ -77,13 +77,18 @@ function buildSidebarTree({ role, studentId, studentGroup }) {
       const topicExercises = exercisesByTopic[topic.key];
       const total = topicExercises.length;
       const solved = topicExercises.filter((e) => solvedIds.has(e.id)).length;
-      let navStatus = 'not_started';
-      if (!prevTopicSolved) navStatus = 'locked';
-      else if (total > 0 && solved === total) navStatus = 'done';
-      else if (solved > 0) navStatus = 'current';
-      prevTopicSolved = prevTopicSolved && total > 0 && solved === total;
 
-      children.push({ title: 'Прак. мат.', href: `/trainer/practice/${topic.key}`, navStatus, children: [] });
+      // Theory-only topics (no exercises yet) have nothing to practice or lock —
+      // skip the practice link and leave the unlock chain untouched.
+      if (total > 0) {
+        let navStatus = 'not_started';
+        if (!prevTopicSolved) navStatus = 'locked';
+        else if (solved === total) navStatus = 'done';
+        else if (solved > 0) navStatus = 'current';
+        prevTopicSolved = prevTopicSolved && solved === total;
+
+        children.push({ title: 'Прак. мат.', href: `/trainer/practice/${topic.key}`, navStatus, children: [] });
+      }
     }
 
     return { title: topic.label, href: null, children };

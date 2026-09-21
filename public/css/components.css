@@ -36,7 +36,10 @@
   border-color: var(--color-coral);
   box-shadow: 0 0 0 3px var(--accent-soft-bg);
 }
-.login-card .btn-primary { margin-top: 0.5rem; font-size: 1.15rem; padding: 0.7rem 1rem; }
+/* Every button in the card (Войти/Сохранить/Выйти) shares one size, since they stack
+   directly above/below each other and should read as the same weight of action. */
+.login-card button { font-size: 1.15rem; padding: 0.7rem 1rem; }
+.login-card .btn-primary { margin-top: 0.5rem; }
 
 @keyframes card-in {
   from { opacity: 0; transform: translateY(8px) scale(0.98); }
@@ -76,7 +79,9 @@
 .app-header-user { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.25; }
 .app-header-user-name { font-weight: bold; font-size: 0.9rem; }
 .role-tag { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.03em; color: var(--text-soft); }
-.icon-btn { padding: 0.4rem 0.55rem; line-height: 1; }
+/* Same vertical padding as the text buttons it sits next to in .app-header-actions,
+   just narrower horizontally since it's icon-only — keeps both the same height. */
+.icon-btn { padding: 0.55rem 0.7rem; line-height: 1; }
 
 @media (min-width: 900px) {
   .app-header-title { display: inline-block; max-width: 30ch; }
@@ -115,7 +120,20 @@
   background: var(--sidebar-active-bg);
 }
 .sidebar .tree { flex: 1; }
-.sidebar-toggle { display: none; background: transparent; border: none; font-size: 1.2rem; padding: 0.2rem 0.4rem; }
+/* Plain hamburger icon toggle, not a CTA button — reset the flat-button treatment. */
+.sidebar-toggle {
+  display: none;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: normal;
+  font-size: 1.2rem;
+  padding: 0.2rem 0.4rem;
+}
+.sidebar-toggle:hover { background: var(--accent-soft-bg); }
+.sidebar-toggle:active { transform: none; }
 
 .nav-icon { display: inline-flex; align-items: center; justify-content: center; width: 0.9rem; margin-right: 0.35rem; font-size: 0.7rem; }
 .nav-icon-done::before { content: '✓'; color: var(--color-status-done); }
@@ -174,10 +192,17 @@
 .toc-level-3 { padding-left: 1.5rem; }
 
 .tabs { display: flex; gap: 0.5rem; border-bottom: 1px solid var(--border); margin-bottom: 1rem; }
+/* Tabs are a distinct control (underline-style), not a CTA button — reset every
+   flat-button property the generic `button` rule sets so they don't pick up its
+   uppercase text, rounded corners or colored bottom edge. */
 .tab-btn {
   background: none;
   border: none;
   border-bottom: 2px solid transparent;
+  border-radius: 0;
+  box-shadow: none;
+  text-transform: none;
+  letter-spacing: normal;
   padding: 0.5rem 0.75rem;
   cursor: pointer;
   color: var(--text);
@@ -187,7 +212,8 @@
     border-color var(--duration-base) var(--ease-standard),
     color var(--duration-fast) var(--ease-standard);
 }
-.tab-btn:hover { opacity: 0.85; }
+.tab-btn:hover { opacity: 0.85; background: none; }
+.tab-btn:active { transform: none; }
 .tab-btn.active { opacity: 1; color: var(--accent-text); border-bottom-color: var(--color-coral); font-weight: bold; }
 
 .submission-card {
@@ -277,61 +303,62 @@ a.assignment-card:focus-visible { outline: 2px solid var(--color-coral); outline
 
 .empty-state { color: var(--text-soft); font-style: italic; padding: 1rem 0; }
 
-/* Buttons */
+/* Buttons — one flat style for every button (primary/secondary/accent/plain),
+   colored with --btn-flat-bg (theme accent: light #E83D2F, dark #2093D6). The
+   bottom edge is a solid darker shade instead of a blurred shadow, giving the
+   flat "pressable" look; pressing flattens it by dropping the edge and nudging
+   the button down. */
 .btn, button, input[type="submit"] {
   font: inherit;
-  border-radius: 4px;
-  padding: 0.4rem 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border-radius: 6px;
+  padding: 0.55rem 1.4rem;
   cursor: pointer;
+  background: var(--btn-flat-bg);
+  color: var(--on-accent-text);
+  border: none;
+  box-shadow: 0 3px 0 var(--btn-flat-edge);
   transition: background-color var(--duration-fast) var(--ease-standard),
-    border-color var(--duration-fast) var(--ease-standard),
     color var(--duration-fast) var(--ease-standard),
     transform var(--duration-fast) var(--ease-standard),
     box-shadow var(--duration-fast) var(--ease-standard);
 }
 a.btn { display: inline-block; text-decoration: none; }
-button { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
-button:hover { background: var(--accent-soft-bg); transform: translateY(-1px); box-shadow: var(--card-shadow-hover); }
-button:active { transform: translateY(0); box-shadow: none; }
-button:focus-visible { outline: 2px solid var(--color-coral); outline-offset: 2px; }
-
-.btn-primary {
-  background: var(--btn-primary-bg);
+button:hover, .btn:hover, input[type="submit"]:hover {
+  background: var(--btn-flat-bg-hover);
   color: var(--on-accent-text);
-  border: 1px solid transparent;
 }
-.btn-primary:hover {
-  background: var(--btn-primary-bg-hover);
-  color: var(--on-accent-text);
-  transform: translateY(-1px);
-  box-shadow: var(--btn-primary-shadow-hover);
+button:active, .btn:active, input[type="submit"]:active {
+  transform: translateY(3px);
+  box-shadow: none;
 }
-.btn-primary:active { transform: translateY(0); box-shadow: none; }
+button:focus-visible, .btn:focus-visible, input[type="submit"]:focus-visible {
+  outline: 2px solid var(--btn-flat-bg);
+  outline-offset: 2px;
+}
 
-.btn-secondary {
-  background: transparent;
-  color: var(--text);
-  border: 1px solid var(--border);
-}
-.btn-secondary:hover { background: var(--accent-soft-bg); }
-
+.btn-primary,
+.btn-secondary,
 .btn-accent {
-  background: var(--btn-accent-bg);
-  background-size: 160% 160%;
-  background-position: 0 0;
+  background: var(--btn-flat-bg);
   color: var(--on-accent-text);
   border: none;
-  transition: background-position var(--duration-base) var(--ease-standard),
-    transform var(--duration-fast) var(--ease-standard),
-    box-shadow var(--duration-fast) var(--ease-standard);
+  box-shadow: 0 3px 0 var(--btn-flat-edge);
 }
+.btn-primary:hover,
+.btn-secondary:hover,
 .btn-accent:hover {
-  background: var(--btn-accent-bg-hover);
-  background-position: 100% 0;
-  transform: translateY(-1px);
-  box-shadow: var(--btn-accent-shadow-hover);
+  background: var(--btn-flat-bg-hover);
+  color: var(--on-accent-text);
 }
-.btn-accent:active { transform: translateY(0); box-shadow: none; }
+.btn-primary:active,
+.btn-secondary:active,
+.btn-accent:active {
+  transform: translateY(3px);
+  box-shadow: none;
+}
 
 @media (max-width: 700px) {
   .sidebar-toggle { display: block; }

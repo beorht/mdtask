@@ -9,6 +9,10 @@ const TOPICS = [
   { key: 'delete', label: 'DELETE' },
   { key: 'drop', label: 'DROP TABLE' },
   { key: 'select_where', label: 'SELECT + WHERE: вывод данных' },
+  // Theory-only topics: no practice exercises exist for these yet, only lecture material.
+  { key: 'primary_key', label: 'ID / Ключи — PRIMARY KEY' },
+  { key: 'foreign_key', label: 'FOREIGN KEY — связи между таблицами' },
+  { key: 'join', label: 'JOIN — соединение таблиц' },
 ];
 
 const TOPIC_LABELS = Object.fromEntries(TOPICS.map((t) => [t.key, t.label]));

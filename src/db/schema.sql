@@ -71,6 +71,20 @@ CREATE INDEX IF NOT EXISTS idx_submissions_assignment ON submissions(assignment_
 CREATE INDEX IF NOT EXISTS idx_submissions_student ON submissions(student_id);
 CREATE INDEX IF NOT EXISTS idx_submissions_assignment_student ON submissions(assignment_id, student_id);
 CREATE INDEX IF NOT EXISTS idx_sql_attempts_exercise_student ON sql_attempts(exercise_id, student_id);
+
+-- Content-only bank of practice tasks for general-purpose languages (Python, JS, ...).
+-- Unlike sql_exercises, these have no execution/checker sandbox — they're reference
+-- material a teacher assigns and reviews manually, not an auto-graded trainer.
+CREATE TABLE IF NOT EXISTS language_exercises (
+  id TEXT PRIMARY KEY,
+  language TEXT NOT NULL CHECK (language IN ('python', 'javascript')),
+  order_index INTEGER NOT NULL,
+  topic TEXT NOT NULL,
+  topic_label TEXT NOT NULL,
+  title TEXT NOT NULL,
+  description_md TEXT NOT NULL,
+  UNIQUE (language, order_index)
+);
 CREATE INDEX IF NOT EXISTS idx_users_student_group ON users(student_group);
 -- idx_assignments_target_group lives in db/index.js, run *after* addColumnIfMissing —
 -- creating it here would fail on a pre-existing database where schema.sql's own

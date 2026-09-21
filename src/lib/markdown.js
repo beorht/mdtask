@@ -1,7 +1,16 @@
 // src/lib/markdown.js
 const MarkdownIt = require('markdown-it');
+const hljs = require('highlight.js');
 
-const md = new MarkdownIt({ html: false, linkify: true, typographer: true });
+function highlightCode(code, lang) {
+  const language = hljs.getLanguage(lang) ? lang : null;
+  const highlighted = language
+    ? hljs.highlight(code, { language }).value
+    : hljs.highlightAuto(code).value;
+  return `<pre><code class="hljs${language ? ` language-${language}` : ''}">${highlighted}</code></pre>`;
+}
+
+const md = new MarkdownIt({ html: false, linkify: true, typographer: true, highlight: highlightCode });
 
 const TRANSLIT_MAP = {
   а: 'a', б: 'b', в: 'v', г: 'g', д: 'd', е: 'e', ё: 'e', ж: 'zh', з: 'z',
