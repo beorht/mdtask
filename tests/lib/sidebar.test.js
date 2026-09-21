@@ -60,6 +60,25 @@ test('teacher tree sees every assignment including individual ones', () => {
   assert.strictEqual(individualSection.children[0].status, null);
 });
 
+test('teacher tree groups per-group assignments into a category per group', () => {
+  const assignGroupOnly = db.createAssignment({
+    courseId: 'course-1',
+    title: 'Только для IT-21',
+    mdPath: 'section-1/only-it21.md',
+    targetType: 'group',
+    targetGroup: 'IT-21',
+    dueDate: '2026-12-31',
+  });
+  const tree = buildSidebarTree({ role: 'teacher' });
+  const category = tree.find((n) => n.title === 'Группа IT-21');
+  assert.ok(category, 'expected a category for IT-21');
+  assert.ok(category.children.some((c) => c.assignmentId === assignGroupOnly.id));
+
+  const otherCategory = tree.find((n) => n.title === 'Группа IT-22');
+  assert.ok(otherCategory);
+  assert.ok(!otherCategory.children.some((c) => c.assignmentId === assignGroupOnly.id));
+});
+
 test('assignment with a resubmission chain reports the latest submission status', () => {
   db.createSubmission({ assignmentId: assignTask2.id, studentId: 'student-1', files: ['v1.zip'] });
   const tree = buildSidebarTree({ role: 'student', studentId: 'student-1' });

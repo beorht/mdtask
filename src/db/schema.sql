@@ -2,7 +2,10 @@ CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY,
   role TEXT NOT NULL CHECK (role IN ('student', 'teacher')),
   name TEXT NOT NULL,
-  student_group TEXT
+  student_group TEXT,
+  password_hash TEXT,
+  password_salt TEXT,
+  must_change_password INTEGER NOT NULL DEFAULT 1
 );
 
 CREATE TABLE IF NOT EXISTS courses (
@@ -18,6 +21,7 @@ CREATE TABLE IF NOT EXISTS assignments (
   md_path TEXT NOT NULL,
   target_type TEXT NOT NULL CHECK (target_type IN ('group', 'individual')),
   target_student_id TEXT REFERENCES users(id),
+  target_group TEXT,
   due_date TEXT NOT NULL
 );
 
@@ -65,4 +69,9 @@ CREATE TABLE IF NOT EXISTS sql_attempts (
 CREATE INDEX IF NOT EXISTS idx_assignments_course ON assignments(course_id);
 CREATE INDEX IF NOT EXISTS idx_submissions_assignment ON submissions(assignment_id);
 CREATE INDEX IF NOT EXISTS idx_submissions_student ON submissions(student_id);
+CREATE INDEX IF NOT EXISTS idx_submissions_assignment_student ON submissions(assignment_id, student_id);
 CREATE INDEX IF NOT EXISTS idx_sql_attempts_exercise_student ON sql_attempts(exercise_id, student_id);
+CREATE INDEX IF NOT EXISTS idx_users_student_group ON users(student_group);
+-- idx_assignments_target_group lives in db/index.js, run *after* addColumnIfMissing —
+-- creating it here would fail on a pre-existing database where schema.sql's own
+-- CREATE TABLE IF NOT EXISTS is a no-op and the column doesn't exist yet.

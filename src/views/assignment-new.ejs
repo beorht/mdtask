@@ -28,6 +28,14 @@
           <datalist id="sectionOptions">
             <% sections.forEach(function (s) { %><option value="<%= s.title %>"><% }) %>
           </datalist>
+
+          <label for="targetGroup">Для какой группы</label>
+          <select id="targetGroup" name="targetGroup">
+            <option value="">Все группы (обе)</option>
+            <% groups.forEach(function (g) { %>
+              <option value="<%= g %>">Только <%= g %></option>
+            <% }) %>
+          </select>
         </div>
 
         <div id="individualFields" hidden>

@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const request = require('supertest');
 const { createApp } = require('../../src/server');
+const { DEFAULT_PASSWORD } = require('../../src/lib/password');
 const db = require('../../src/db');
 
 const CONTENT_DIR = path.join(__dirname, '..', '..', 'content', 'src');
@@ -11,7 +12,7 @@ const SUMMARY_PATH = path.join(__dirname, '..', '..', 'content', 'SUMMARY.md');
 
 async function loginAs(app, id) {
   const agent = request.agent(app);
-  await agent.post('/login').send({ studentId: id });
+  await agent.post('/login').send({ studentId: id, password: DEFAULT_PASSWORD });
   return agent;
 }
 
@@ -83,6 +84,59 @@ test(
     writtenFiles.push(path.join(CONTENT_DIR, created.mdPath));
     const summary = fs.readFileSync(SUMMARY_PATH, 'utf-8');
     assert.match(summary, /Мои доп\. задания[\s\S]*Персональное задание/);
+  })
+);
+
+test(
+  'creating a group assignment scoped to a single group only reaches that group',
+  withCleanContent(async (writtenFiles) => {
+    const app = createApp();
+    const agent = await loginAs(app, 'teacher-1');
+
+    const res = await agent.post('/teacher/courses/course-1/assignments').send({
+      title: 'Задание для IT-21',
+      targetType: 'group',
+      sectionTitle: 'Раздел 1',
+      targetGroup: 'IT-21',
+      dueDate: '2026-12-31',
+    });
+
+    assert.strictEqual(res.status, 302);
+    const created = db.getAssignments().find((a) => a.title === 'Задание для IT-21');
+    assert.strictEqual(created.targetGroup, 'IT-21');
+    writtenFiles.push(path.join(CONTENT_DIR, created.mdPath));
+
+    const inGroup = await loginAs(app, 'student-1'); // IT-21
+    const otherGroup = await loginAs(app, 'student-5'); // IT-22
+
+    assert.match((await inGroup.get('/')).text, /Задание для IT-21/);
+    assert.doesNotMatch((await otherGroup.get('/')).text, /Задание для IT-21/);
+  })
+);
+
+test(
+  'leaving the group field empty targets all groups (both)',
+  withCleanContent(async (writtenFiles) => {
+    const app = createApp();
+    const agent = await loginAs(app, 'teacher-1');
+
+    const res = await agent.post('/teacher/courses/course-1/assignments').send({
+      title: 'Задание для всех',
+      targetType: 'group',
+      sectionTitle: 'Раздел 1',
+      dueDate: '2026-12-31',
+    });
+
+    assert.strictEqual(res.status, 302);
+    const created = db.getAssignments().find((a) => a.title === 'Задание для всех');
+    assert.strictEqual(created.targetGroup, null);
+    writtenFiles.push(path.join(CONTENT_DIR, created.mdPath));
+
+    const it21 = await loginAs(app, 'student-1'); // IT-21
+    const it22 = await loginAs(app, 'student-5'); // IT-22
+
+    assert.match((await it21.get('/')).text, /Задание для всех/);
+    assert.match((await it22.get('/')).text, /Задание для всех/);
   })
 );
 

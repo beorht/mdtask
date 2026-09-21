@@ -3,6 +3,7 @@ const path = require('path');
 const Database = require('better-sqlite3');
 const { seed } = require('./seed');
 const { seedSqlExercises } = require('./seed-sql-exercises');
+const { DEFAULT_PASSWORD, hashPassword, verifyPassword } = require('../lib/password');
 
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, '..', '..', 'data', 'mdtask.db');
 
@@ -12,22 +13,71 @@ if (DB_PATH !== ':memory:') {
 
 const db = new Database(DB_PATH);
 db.pragma('foreign_keys = ON');
+// Tuning for concurrent read-heavy / bursty-write load (a class submitting at once):
+// WAL lets readers proceed while a write is in flight instead of blocking on a single lock.
+if (DB_PATH !== ':memory:') db.pragma('journal_mode = WAL');
+db.pragma('synchronous = NORMAL');
+db.pragma('cache_size = -20000'); // ~20MB page cache
+db.pragma('temp_store = MEMORY');
 db.exec(fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf-8'));
 
-// One-off migration for databases created before result_columns/result_rows existed.
-for (const column of ['result_columns', 'result_rows']) {
+// One-off migrations for databases created before newer columns existed.
+function addColumnIfMissing(table, column, definition) {
   try {
-    db.exec(`ALTER TABLE sql_attempts ADD COLUMN ${column} TEXT`);
+    db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
   } catch (err) {
     if (!/duplicate column name/i.test(err.message)) throw err;
   }
 }
 
+for (const column of ['result_columns', 'result_rows']) {
+  addColumnIfMissing('sql_attempts', column, 'TEXT');
+}
+addColumnIfMissing('users', 'password_hash', 'TEXT');
+addColumnIfMissing('users', 'password_salt', 'TEXT');
+addColumnIfMissing('users', 'must_change_password', "INTEGER NOT NULL DEFAULT 1");
+addColumnIfMissing('assignments', 'target_group', 'TEXT');
+db.exec('CREATE INDEX IF NOT EXISTS idx_assignments_target_group ON assignments(target_group)');
+
+// Any account created before password auth existed (real, already-enrolled students/
+// teachers) is migrated onto the shared default password and must change it on next login.
+const legacyAccountsWithoutPassword = db.prepare('SELECT id FROM users WHERE password_hash IS NULL').all();
+if (legacyAccountsWithoutPassword.length > 0) {
+  const { hash, salt } = hashPassword(DEFAULT_PASSWORD);
+  const migrateStmt = db.prepare(
+    'UPDATE users SET password_hash = ?, password_salt = ?, must_change_password = 1 WHERE id = ?'
+  );
+  const migrateAll = db.transaction((rows) => {
+    for (const row of rows) migrateStmt.run(hash, salt, row.id);
+  });
+  migrateAll(legacyAccountsWithoutPassword);
+}
+
 seed(db);
 seedSqlExercises(db);
 
+// better-sqlite3 does not cache prepared statements itself — re-preparing the same
+// SQL text on every call re-parses it. Under concurrent load (a class hitting the
+// same routes at once) that adds up, so the hot-path queries below reuse one
+// compiled Statement per SQL string instead of calling db.prepare() per request.
+const stmtCache = new Map();
+function prepared(sql) {
+  let stmt = stmtCache.get(sql);
+  if (!stmt) {
+    stmt = db.prepare(sql);
+    stmtCache.set(sql, stmt);
+  }
+  return stmt;
+}
+
 function rowToUser(row) {
-  return { id: row.id, role: row.role, name: row.name, group: row.student_group };
+  return {
+    id: row.id,
+    role: row.role,
+    name: row.name,
+    group: row.student_group,
+    mustChangePassword: !!row.must_change_password,
+  };
 }
 
 function rowToAssignment(row) {
@@ -38,6 +88,7 @@ function rowToAssignment(row) {
     mdPath: row.md_path,
     targetType: row.target_type,
     targetStudentId: row.target_student_id,
+    targetGroup: row.target_group,
     dueDate: row.due_date,
   };
 }
@@ -59,38 +110,77 @@ function rowToSubmission(row) {
 }
 
 function getUsers() {
-  return db.prepare('SELECT * FROM users').all().map(rowToUser);
+  return prepared('SELECT * FROM users').all().map(rowToUser);
+}
+
+function verifyUserCredentials(id, password) {
+  const row = prepared('SELECT * FROM users WHERE id = ?').get(id);
+  if (!row) return null;
+  if (!verifyPassword(password, row.password_hash, row.password_salt)) return null;
+  return rowToUser(row);
+}
+
+function setUserPassword(id, newPassword) {
+  const { hash, salt } = hashPassword(newPassword);
+  prepared('UPDATE users SET password_hash = ?, password_salt = ?, must_change_password = 0 WHERE id = ?').run(
+    hash,
+    salt,
+    id
+  );
+  const row = prepared('SELECT * FROM users WHERE id = ?').get(id);
+  return row ? rowToUser(row) : null;
 }
 
 function getCourses() {
-  return db.prepare('SELECT id, title, teacher_id as teacherId FROM courses').all();
+  return prepared('SELECT id, title, teacher_id as teacherId FROM courses').all();
 }
 
 function getAssignments() {
-  return db.prepare('SELECT * FROM assignments').all().map(rowToAssignment);
+  return prepared('SELECT * FROM assignments').all().map(rowToAssignment);
+}
+
+// Indexed lookup for the per-student dashboard/sidebar instead of loading every
+// assignment row and filtering it in JS on each request.
+function getAssignmentsForStudent(studentId, studentGroup) {
+  return prepared(
+    `SELECT * FROM assignments
+     WHERE (target_type = 'individual' AND target_student_id = ?)
+        OR (target_type = 'group' AND (target_group IS NULL OR target_group = ?))`
+  )
+    .all(studentId, studentGroup || null)
+    .map(rowToAssignment);
+}
+
+function setMustChangePasswordForTests(id) {
+  prepared('UPDATE users SET must_change_password = 1 WHERE id = ?').run(id);
+}
+
+function getDistinctStudentGroups() {
+  return prepared("SELECT DISTINCT student_group FROM users WHERE student_group IS NOT NULL ORDER BY student_group")
+    .all()
+    .map((r) => r.student_group);
 }
 
 function getSubmissions() {
-  return db.prepare('SELECT * FROM submissions').all().map(rowToSubmission);
+  return prepared('SELECT * FROM submissions').all().map(rowToSubmission);
 }
 
 function updateSubmissionStatus(id, status, comment) {
-  const result = db
-    .prepare('UPDATE submissions SET status = ?, comment = ?, checked_at = ? WHERE id = ?')
+  const result = prepared('UPDATE submissions SET status = ?, comment = ?, checked_at = ? WHERE id = ?')
     .run(status, comment || null, new Date().toISOString(), id);
   if (result.changes === 0) return null;
-  return rowToSubmission(db.prepare('SELECT * FROM submissions WHERE id = ?').get(id));
+  return rowToSubmission(prepared('SELECT * FROM submissions WHERE id = ?').get(id));
 }
 
 function reopenSubmission(id) {
-  const result = db.prepare("UPDATE submissions SET status = 'pending' WHERE id = ?").run(id);
+  const result = prepared("UPDATE submissions SET status = 'pending' WHERE id = ?").run(id);
   if (result.changes === 0) return null;
-  return rowToSubmission(db.prepare('SELECT * FROM submissions WHERE id = ?').get(id));
+  return rowToSubmission(prepared('SELECT * FROM submissions WHERE id = ?').get(id));
 }
 
 function createSubmission({ assignmentId, studentId, files, storedFiles, parentSubmissionId }) {
   const id = `sub-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-  db.prepare(
+  prepared(
     'INSERT INTO submissions (id, assignment_id, student_id, files, stored_files, status, submitted_at, parent_submission_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
   ).run(
     id,
@@ -102,40 +192,40 @@ function createSubmission({ assignmentId, studentId, files, storedFiles, parentS
     new Date().toISOString(),
     parentSubmissionId || null
   );
-  return rowToSubmission(db.prepare('SELECT * FROM submissions WHERE id = ?').get(id));
+  return rowToSubmission(prepared('SELECT * FROM submissions WHERE id = ?').get(id));
 }
 
 function getLatestSubmission(assignmentId, studentId) {
-  const row = db
-    .prepare('SELECT * FROM submissions WHERE assignment_id = ? AND student_id = ? ORDER BY rowid DESC LIMIT 1')
-    .get(assignmentId, studentId);
+  const row = prepared(
+    'SELECT * FROM submissions WHERE assignment_id = ? AND student_id = ? ORDER BY rowid DESC LIMIT 1'
+  ).get(assignmentId, studentId);
   return row ? rowToSubmission(row) : null;
 }
 
 function updateSubmissionFiles(id, files, storedFiles) {
-  db.prepare('UPDATE submissions SET files = ?, stored_files = ?, submitted_at = ?, comment = NULL WHERE id = ?').run(
+  prepared('UPDATE submissions SET files = ?, stored_files = ?, submitted_at = ?, comment = NULL WHERE id = ?').run(
     JSON.stringify(files),
     JSON.stringify(storedFiles || files),
     new Date().toISOString(),
     id
   );
-  return rowToSubmission(db.prepare('SELECT * FROM submissions WHERE id = ?').get(id));
+  return rowToSubmission(prepared('SELECT * FROM submissions WHERE id = ?').get(id));
 }
 
-function createAssignment({ courseId, title, mdPath, targetType, targetStudentId, dueDate }) {
+function createAssignment({ courseId, title, mdPath, targetType, targetStudentId, targetGroup, dueDate }) {
   const id = `assign-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-  db.prepare(
-    'INSERT INTO assignments (id, course_id, title, md_path, target_type, target_student_id, due_date) VALUES (?, ?, ?, ?, ?, ?, ?)'
-  ).run(id, courseId, title, mdPath, targetType, targetStudentId || null, dueDate);
-  return rowToAssignment(db.prepare('SELECT * FROM assignments WHERE id = ?').get(id));
+  prepared(
+    'INSERT INTO assignments (id, course_id, title, md_path, target_type, target_student_id, target_group, due_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+  ).run(id, courseId, title, mdPath, targetType, targetStudentId || null, targetGroup || null, dueDate);
+  return rowToAssignment(prepared('SELECT * FROM assignments WHERE id = ?').get(id));
 }
 
 function updateAssignmentTitle(id, title) {
-  db.prepare('UPDATE assignments SET title = ? WHERE id = ?').run(title, id);
+  prepared('UPDATE assignments SET title = ? WHERE id = ?').run(title, id);
 }
 
 function setAssignmentDueDateForTests(id, dueDate) {
-  db.prepare('UPDATE assignments SET due_date = ? WHERE id = ?').run(dueDate, id);
+  prepared('UPDATE assignments SET due_date = ? WHERE id = ?').run(dueDate, id);
 }
 
 function rowToSqlExercise(row) {
@@ -170,17 +260,17 @@ function rowToSqlAttempt(row) {
 }
 
 function getSqlExercises() {
-  return db.prepare('SELECT * FROM sql_exercises ORDER BY order_index').all().map(rowToSqlExercise);
+  return prepared('SELECT * FROM sql_exercises ORDER BY order_index').all().map(rowToSqlExercise);
 }
 
 function getSqlExercise(id) {
-  const row = db.prepare('SELECT * FROM sql_exercises WHERE id = ?').get(id);
+  const row = prepared('SELECT * FROM sql_exercises WHERE id = ?').get(id);
   return row ? rowToSqlExercise(row) : null;
 }
 
 function createSqlAttempt({ exerciseId, studentId, submittedSql, isError, errorMessage, isCorrect, resultColumns, resultRows }) {
   const id = `attempt-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-  db.prepare(
+  prepared(
     `INSERT INTO sql_attempts (id, exercise_id, student_id, submitted_sql, is_error, error_message, is_correct, result_columns, result_rows, created_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).run(
@@ -195,27 +285,25 @@ function createSqlAttempt({ exerciseId, studentId, submittedSql, isError, errorM
     resultRows ? JSON.stringify(resultRows) : null,
     new Date().toISOString()
   );
-  return rowToSqlAttempt(db.prepare('SELECT * FROM sql_attempts WHERE id = ?').get(id));
+  return rowToSqlAttempt(prepared('SELECT * FROM sql_attempts WHERE id = ?').get(id));
 }
 
 function getSqlAttempts(exerciseId, studentId) {
-  return db
-    .prepare('SELECT * FROM sql_attempts WHERE exercise_id = ? AND student_id = ? ORDER BY created_at DESC')
+  return prepared('SELECT * FROM sql_attempts WHERE exercise_id = ? AND student_id = ? ORDER BY created_at DESC')
     .all(exerciseId, studentId)
     .map(rowToSqlAttempt);
 }
 
 function getSolvedSqlExerciseIds(studentId) {
   return new Set(
-    db
-      .prepare('SELECT DISTINCT exercise_id FROM sql_attempts WHERE student_id = ? AND is_correct = 1')
+    prepared('SELECT DISTINCT exercise_id FROM sql_attempts WHERE student_id = ? AND is_correct = 1')
       .all(studentId)
       .map((r) => r.exercise_id)
   );
 }
 
 function getAllSqlAttempts() {
-  return db.prepare('SELECT * FROM sql_attempts ORDER BY created_at DESC').all().map(rowToSqlAttempt);
+  return prepared('SELECT * FROM sql_attempts ORDER BY created_at DESC').all().map(rowToSqlAttempt);
 }
 
 function __resetForTests() {
@@ -225,8 +313,13 @@ function __resetForTests() {
 
 module.exports = {
   getUsers,
+  verifyUserCredentials,
+  setUserPassword,
+  setMustChangePasswordForTests,
+  getDistinctStudentGroups,
   getCourses,
   getAssignments,
+  getAssignmentsForStudent,
   getSubmissions,
   updateSubmissionStatus,
   reopenSubmission,
