@@ -11,6 +11,7 @@ const {
   updateSubmissionStatus,
   reopenSubmission,
   createAssignment,
+  getDistinctStudentGroups,
 } = require('../db');
 const { renderMarkdown, slugify } = require('../lib/markdown');
 const { addEntryToSummary, listGroupSections, INDIVIDUAL_SECTION_TITLE } = require('../lib/summary-writer');
@@ -52,6 +53,7 @@ router.get('/teacher/courses/:courseId/assignments/new', requireRole('teacher'),
   const summaryText = fs.readFileSync(SUMMARY_PATH, 'utf-8');
   const sections = listGroupSections(summaryText);
   const students = getUsers().filter((u) => u.role === 'student');
+  const groups = getDistinctStudentGroups();
   const sidebarTree = buildSidebarTree({ role: 'teacher' });
 
   res.render('assignment-new', {
@@ -60,6 +62,7 @@ router.get('/teacher/courses/:courseId/assignments/new', requireRole('teacher'),
     course,
     sections,
     students,
+    groups,
     error: null,
     activeAssignmentId: null,
   });
@@ -74,6 +77,7 @@ router.post('/teacher/courses/:courseId/assignments', requireRole('teacher'), (r
   const targetType = req.body.targetType === 'individual' ? 'individual' : 'group';
   const sectionTitle = (req.body.sectionTitle || '').trim();
   const targetStudentId = req.body.targetStudentId;
+  const targetGroup = (req.body.targetGroup || '').trim() || null; // empty/unset = all groups (both)
 
   const missingRequired =
     !title || !dueDate || (targetType === 'group' && !sectionTitle) || (targetType === 'individual' && !targetStudentId);
@@ -86,6 +90,7 @@ router.post('/teacher/courses/:courseId/assignments', requireRole('teacher'), (r
       course,
       sections: listGroupSections(summaryText),
       students: getUsers().filter((u) => u.role === 'student'),
+      groups: getDistinctStudentGroups(),
       error: 'Заполните все обязательные поля.',
       activeAssignmentId: null,
     });
@@ -110,6 +115,7 @@ router.post('/teacher/courses/:courseId/assignments', requireRole('teacher'), (r
     mdPath,
     targetType,
     targetStudentId: targetType === 'individual' ? targetStudentId : null,
+    targetGroup: targetType === 'group' ? targetGroup : null,
     dueDate,
   });
 

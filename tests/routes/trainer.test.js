@@ -2,11 +2,12 @@ const test = require('node:test');
 const assert = require('node:assert');
 const request = require('supertest');
 const { createApp } = require('../../src/server');
+const { DEFAULT_PASSWORD } = require('../../src/lib/password');
 const db = require('../../src/db');
 
 async function loginAs(app, id) {
   const agent = request.agent(app);
-  await agent.post('/login').send({ studentId: id });
+  await agent.post('/login').send({ studentId: id, password: DEFAULT_PASSWORD });
   return agent;
 }
 
@@ -154,50 +155,30 @@ test('attempt history 404s for an unknown student/exercise pair', async () => {
   assert.strictEqual(res.status, 404);
 });
 
-test('restricted group (IB/WEB) only sees the select_where topic in theory, practice list and sidebar', async () => {
+test('previously restricted groups (IB/WEB) now see the full trainer curriculum', async () => {
   const app = createApp();
   const agent = await loginAs(app, 'student-8'); // seeded with student_group 'IB'
 
   const theoryIndex = await agent.get('/trainer/theory');
   assert.strictEqual(theoryIndex.status, 200);
   assert.match(theoryIndex.text, /SELECT \+ WHERE/);
-  assert.doesNotMatch(theoryIndex.text, />CREATE TABLE</);
+  assert.match(theoryIndex.text, />CREATE TABLE</);
 
   const practiceIndex = await agent.get('/trainer');
   assert.strictEqual(practiceIndex.status, 200);
   assert.match(practiceIndex.text, /SELECT \+ WHERE/);
-  assert.doesNotMatch(practiceIndex.text, />CREATE TABLE</);
-});
+  assert.match(practiceIndex.text, />CREATE TABLE</);
 
-test('restricted group cannot open theory/practice pages for other topics directly by URL', async () => {
-  const app = createApp();
-  const agent = await loginAs(app, 'student-8');
+  assert.strictEqual((await agent.get('/trainer/theory/create_table')).status, 200);
+  assert.strictEqual((await agent.get('/trainer/practice/create_table')).status, 200);
 
-  assert.strictEqual((await agent.get('/trainer/theory/create_table')).status, 404);
-  assert.strictEqual((await agent.get('/trainer/practice/create_table')).status, 404);
-});
-
-test('restricted group cannot open an exercise from a disallowed topic even by direct URL', async () => {
-  const app = createApp();
-  const agent = await loginAs(app, 'student-8');
   const otherTopicExercise = db.getSqlExercises().find((e) => e.topic === 'create_table');
-
-  const res = await agent.get(`/trainer/${otherTopicExercise.id}`);
-  assert.strictEqual(res.status, 404);
+  assert.strictEqual((await agent.get(`/trainer/${otherTopicExercise.id}`)).status, 200);
 });
 
-test('restricted group starts unlocked on the first select_where exercise, not stuck behind other topics', async () => {
+test('all groups see the full trainer curriculum', async () => {
   const app = createApp();
-  const agent = await loginAs(app, 'student-8');
-  const firstSelectWhere = db.getSqlExercises().find((e) => e.topic === 'select_where');
-
-  const res = await agent.get(`/trainer/${firstSelectWhere.id}`);
-  assert.strictEqual(res.status, 200);
-});
-
-test('non-restricted groups still see the full trainer curriculum', async () => {
-  const app = createApp();
-  const agent = await loginAs(app, 'student-1'); // group IT-21, not restricted
+  const agent = await loginAs(app, 'student-1'); // group IT-21
 
   const theoryIndex = await agent.get('/trainer/theory');
   assert.match(theoryIndex.text, />CREATE TABLE</);

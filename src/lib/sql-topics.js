@@ -13,13 +13,8 @@ const TOPICS = [
 
 const TOPIC_LABELS = Object.fromEntries(TOPICS.map((t) => [t.key, t.label]));
 
-// Some student groups only get the SELECT + WHERE practice track, not the full trainer curriculum.
-// Teachers always see/manage everything regardless of this restriction.
-const RESTRICTED_GROUPS = ['IB', 'WEB'];
-const RESTRICTED_TOPIC_KEYS = ['select_where'];
-
-function getAllowedTopicKeys({ role, group }) {
-  if (role === 'student' && RESTRICTED_GROUPS.includes(group)) return RESTRICTED_TOPIC_KEYS;
+// All groups now get the full trainer curriculum.
+function getAllowedTopicKeys() {
   return TOPICS.map((t) => t.key);
 }
 

@@ -7,6 +7,7 @@ const { buildSidebarTree } = require('../lib/sidebar');
 const {
   getCourses,
   getAssignments,
+  getAssignmentsForStudent,
   getSubmissions,
   getLatestSubmission,
   createSubmission,
@@ -45,6 +46,11 @@ function handleUpload(req, res, next) {
   });
 }
 
+function canAccessAssignment(assignment, user) {
+  if (assignment.targetType === 'individual') return assignment.targetStudentId === user.id;
+  return !assignment.targetGroup || assignment.targetGroup === user.group;
+}
+
 function canSubmit(assignment, latestSubmission) {
   if (!latestSubmission) return Date.now() <= new Date(assignment.dueDate).getTime();
   if (latestSubmission.status === 'done') return false;
@@ -58,8 +64,7 @@ router.get('/', requireRole('student'), (req, res) => {
   const courses = getCourses();
   const submissions = getSubmissions().filter((s) => s.studentId === user.id);
 
-  const assignments = getAssignments()
-    .filter((a) => a.targetType === 'group' || a.targetStudentId === user.id)
+  const assignments = getAssignmentsForStudent(user.id, user.group)
     .map((a) => {
       const related = submissions.filter((s) => s.assignmentId === a.id);
       const status = related.length ? related[related.length - 1].status : 'not_submitted';
@@ -76,7 +81,7 @@ router.get('/assignment/:id', requireRole('student'), (req, res) => {
   const assignment = getAssignments().find((a) => a.id === req.params.id);
 
   if (!assignment) return res.status(404).render('404');
-  if (assignment.targetType === 'individual' && assignment.targetStudentId !== user.id) {
+  if (!canAccessAssignment(assignment, user)) {
     return res.status(404).render('404');
   }
 
@@ -108,7 +113,7 @@ router.post('/assignment/:id/submit', requireRole('student'), handleUpload, (req
   const assignment = getAssignments().find((a) => a.id === req.params.id);
 
   if (!assignment) return res.status(404).render('404');
-  if (assignment.targetType === 'individual' && assignment.targetStudentId !== user.id) {
+  if (!canAccessAssignment(assignment, user)) {
     return res.status(404).render('404');
   }
 

@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { parseSummary } = require('./summary-parser');
-const { getAssignments, getSubmissions, getSqlExercises, getSolvedSqlExerciseIds } = require('../db');
+const { getAssignments, getSubmissions, getSqlExercises, getSolvedSqlExerciseIds, getDistinctStudentGroups } = require('../db');
 const { getTopicsForUser } = require('./sql-topics');
 
 const SUMMARY_PATH = path.join(__dirname, '..', '..', 'content', 'SUMMARY.md');
@@ -25,6 +25,16 @@ function buildSidebarTree({ role, studentId, studentGroup }) {
           assignment &&
           assignment.targetType === 'individual' &&
           assignment.targetStudentId !== studentId
+        ) {
+          return null;
+        }
+
+        if (
+          role === 'student' &&
+          assignment &&
+          assignment.targetType === 'group' &&
+          assignment.targetGroup &&
+          assignment.targetGroup !== studentGroup
         ) {
           return null;
         }
@@ -89,7 +99,20 @@ function buildSidebarTree({ role, studentId, studentGroup }) {
     children: topicChildren,
   };
 
-  return [...attach(tree), trainerSection];
+  const groupCategories = [];
+  if (role === 'teacher') {
+    const groups = getDistinctStudentGroups();
+    for (const group of groups) {
+      const children = assignments
+        .filter((a) => a.targetType === 'group' && (a.targetGroup === group || !a.targetGroup))
+        .map((a) => ({ title: a.title, assignmentId: a.id, children: [] }));
+      if (children.length > 0) {
+        groupCategories.push({ title: `Группа ${group}`, href: null, children });
+      }
+    }
+  }
+
+  return [...attach(tree), ...groupCategories, trainerSection];
 }
 
 module.exports = { buildSidebarTree };

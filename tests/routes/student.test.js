@@ -2,12 +2,13 @@ const test = require('node:test');
 const assert = require('node:assert');
 const request = require('supertest');
 const { createApp } = require('../../src/server');
+const { DEFAULT_PASSWORD } = require('../../src/lib/password');
 const fixtures = require('../../src/db');
 const { seedAssignment } = require('../helpers/fixtures');
 
 async function loginAs(app, studentId) {
   const agent = request.agent(app);
-  await agent.post('/login').send({ studentId });
+  await agent.post('/login').send({ studentId, password: DEFAULT_PASSWORD });
   return agent;
 }
 

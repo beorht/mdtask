@@ -12,6 +12,7 @@
       <span class="app-header-user-name"><%= user.name %></span>
       <span class="role-tag role-tag-<%= user.role %>"><%= user.role === 'teacher' ? 'Преподаватель' : 'Студент' %></span>
     </div>
+    <a href="/change-password" class="btn-secondary">Сменить пароль</a>
     <form method="post" action="/logout"><button type="submit" class="btn-secondary">Выйти</button></form>
   </div>
 </header>

@@ -4,7 +4,7 @@ module.exports = [
     "id": "create_table-1",
     "orderIndex": 1,
     "topic": "create_table",
-    "title": "Создание таблицы products",
+    "title": "Создание таблицы products (товары)",
     "descriptionMd": "Открываем интернет-магазин — начнём с каталога товаров. Создайте таблицу `products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price REAL NOT NULL)`.",
     "schemaSql": "",
     "allowedStatement": "CREATE TABLE",
@@ -42,7 +42,7 @@ module.exports = [
     "id": "create_table-2",
     "orderIndex": 2,
     "topic": "create_table",
-    "title": "Создание таблицы customers",
+    "title": "Создание таблицы customers (покупатели)",
     "descriptionMd": "Чтобы принимать заказы, нужна база покупателей. Создайте таблицу `customers (id INTEGER PRIMARY KEY, name TEXT NOT NULL, email TEXT)`.",
     "schemaSql": "",
     "allowedStatement": "CREATE TABLE",
@@ -80,7 +80,7 @@ module.exports = [
     "id": "create_table-3",
     "orderIndex": 3,
     "topic": "create_table",
-    "title": "Создание таблицы categories",
+    "title": "Создание таблицы categories (категории товаров)",
     "descriptionMd": "Каталог станет удобнее, если разложить товары по категориям. Создайте таблицу `categories (id INTEGER PRIMARY KEY, name TEXT NOT NULL)`.",
     "schemaSql": "",
     "allowedStatement": "CREATE TABLE",
@@ -110,7 +110,7 @@ module.exports = [
     "id": "create_table-4",
     "orderIndex": 4,
     "topic": "create_table",
-    "title": "Создание таблицы orders",
+    "title": "Создание таблицы orders (заказы)",
     "descriptionMd": "Покупатели готовы оформлять заказы — свяжем клиентов и товары. Создайте таблицу `orders (id INTEGER PRIMARY KEY, customer_id INTEGER NOT NULL, product_id INTEGER NOT NULL, quantity INTEGER NOT NULL)`.",
     "schemaSql": "",
     "allowedStatement": "CREATE TABLE",
@@ -156,7 +156,7 @@ module.exports = [
     "id": "create_table-5",
     "orderIndex": 5,
     "topic": "create_table",
-    "title": "Создание таблицы employees",
+    "title": "Создание таблицы employees (сотрудники)",
     "descriptionMd": "Магазином управляет команда сотрудников — заведём их учёт. Создайте таблицу `employees (id INTEGER PRIMARY KEY, name TEXT NOT NULL, position TEXT NOT NULL, salary REAL NOT NULL)`.",
     "schemaSql": "",
     "allowedStatement": "CREATE TABLE",
@@ -291,8 +291,122 @@ module.exports = [
     ]
   },
   {
-    "id": "insert-6",
+    "id": "create_table-70",
     "orderIndex": 8,
+    "topic": "create_table",
+    "title": "Создание таблицы suppliers (поставщики)",
+    "descriptionMd": "Магазин начинает работать напрямую с поставщиками. Создайте таблицу `suppliers (id INTEGER PRIMARY KEY, name TEXT NOT NULL, phone TEXT)`.",
+    "schemaSql": "",
+    "allowedStatement": "CREATE TABLE",
+    "checkType": "state_check",
+    "checkerSql": "PRAGMA table_info(suppliers)",
+    "orderMatters": false,
+    "expectedResult": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt_value": null,
+        "pk": 1
+      },
+      {
+        "cid": 1,
+        "name": "name",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt_value": null,
+        "pk": 0
+      },
+      {
+        "cid": 2,
+        "name": "phone",
+        "type": "TEXT",
+        "notnull": 0,
+        "dflt_value": null,
+        "pk": 0
+      }
+    ]
+  },
+  {
+    "id": "create_table-71",
+    "orderIndex": 9,
+    "topic": "create_table",
+    "title": "Создание таблицы warehouses (склады)",
+    "descriptionMd": "Товары теперь хранятся на нескольких складах. Создайте таблицу `warehouses (id INTEGER PRIMARY KEY, address TEXT NOT NULL, capacity INTEGER NOT NULL)`.",
+    "schemaSql": "",
+    "allowedStatement": "CREATE TABLE",
+    "checkType": "state_check",
+    "checkerSql": "PRAGMA table_info(warehouses)",
+    "orderMatters": false,
+    "expectedResult": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt_value": null,
+        "pk": 1
+      },
+      {
+        "cid": 1,
+        "name": "address",
+        "type": "TEXT",
+        "notnull": 1,
+        "dflt_value": null,
+        "pk": 0
+      },
+      {
+        "cid": 2,
+        "name": "capacity",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt_value": null,
+        "pk": 0
+      }
+    ]
+  },
+  {
+    "id": "create_table-72",
+    "orderIndex": 10,
+    "topic": "create_table",
+    "title": "Создание таблицы discounts (скидки на товары)",
+    "descriptionMd": "Магазин запускает систему скидок. Создайте таблицу `discounts (id INTEGER PRIMARY KEY, product_id INTEGER NOT NULL, percent REAL NOT NULL)`.",
+    "schemaSql": "",
+    "allowedStatement": "CREATE TABLE",
+    "checkType": "state_check",
+    "checkerSql": "PRAGMA table_info(discounts)",
+    "orderMatters": false,
+    "expectedResult": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "INTEGER",
+        "notnull": 0,
+        "dflt_value": null,
+        "pk": 1
+      },
+      {
+        "cid": 1,
+        "name": "product_id",
+        "type": "INTEGER",
+        "notnull": 1,
+        "dflt_value": null,
+        "pk": 0
+      },
+      {
+        "cid": 2,
+        "name": "percent",
+        "type": "REAL",
+        "notnull": 1,
+        "dflt_value": null,
+        "pk": 0
+      }
+    ]
+  },
+  {
+    "id": "insert-6",
+    "orderIndex": 11,
     "topic": "insert",
     "title": "Добавление одной записи",
     "descriptionMd": "Магазин открылся — добавьте в products первый товар. В таблицу `products (id, name, category, price, quantity)` добавьте товар: id=1, name='Ноутбук', category='Электроника', price=55000, quantity=10.",
@@ -313,7 +427,7 @@ module.exports = [
   },
   {
     "id": "insert-7",
-    "orderIndex": 9,
+    "orderIndex": 12,
     "topic": "insert",
     "title": "Добавление записи со значением по умолчанию",
     "descriptionMd": "Ассортимент растёт — добавьте ещё один товар. Добавьте товар id=2, name='Мышь', category='Электроника', price=1200, не указывая quantity явно (используется значение по умолчанию 0).",
@@ -334,7 +448,7 @@ module.exports = [
   },
   {
     "id": "insert-8",
-    "orderIndex": 10,
+    "orderIndex": 13,
     "topic": "insert",
     "title": "Добавление нескольких записей одним запросом",
     "descriptionMd": "Пришла партия мебели — занесите её одним запросом. Одним запросом INSERT добавьте два товара: (3, 'Стол', 'Мебель', 8000, 5) и (4, 'Стул', 'Мебель', 3000, 20).",
@@ -362,7 +476,7 @@ module.exports = [
   },
   {
     "id": "insert-9",
-    "orderIndex": 11,
+    "orderIndex": 14,
     "topic": "insert",
     "title": "Вставка с явным порядком колонок",
     "descriptionMd": "На складе появилась новая книга. Добавьте товар id=5, name='Книга', category='Книги', price=500, quantity=100, указав список колонок в порядке (id, price, quantity, category, name).",
@@ -383,7 +497,7 @@ module.exports = [
   },
   {
     "id": "insert-10",
-    "orderIndex": 12,
+    "orderIndex": 15,
     "topic": "insert",
     "title": "Массовая вставка нескольких записей",
     "descriptionMd": "Пополнение канцтоварами — сразу несколько позиций. Одним запросом добавьте три товара: (6, 'Ручка', 'Канцтовары', 50, 200), (7, 'Карандаш', 'Канцтовары', 30, 300), (8, 'Тетрадь', 'Канцтовары', 40, 150).",
@@ -418,7 +532,7 @@ module.exports = [
   },
   {
     "id": "insert-38",
-    "orderIndex": 13,
+    "orderIndex": 16,
     "topic": "insert",
     "title": "Пополнение ассортимента электроники",
     "descriptionMd": "Магазин продолжает пополнять склад. Добавьте новый товар: id=9, name='Флешка', category='Электроника', price=800, quantity=60.",
@@ -439,7 +553,7 @@ module.exports = [
   },
   {
     "id": "insert-39",
-    "orderIndex": 14,
+    "orderIndex": 17,
     "topic": "insert",
     "title": "Расширение каталога новой категорией",
     "descriptionMd": "Магазин открывает новое направление — одежду. Одним запросом добавьте два товара: (10, 'Футболка', 'Одежда', 1500, 40) и (11, 'Куртка', 'Одежда', 7000, 15).",
@@ -466,8 +580,80 @@ module.exports = [
     ]
   },
   {
+    "id": "insert-73",
+    "orderIndex": 18,
+    "topic": "insert",
+    "title": "Добавление сотрудника",
+    "descriptionMd": "В штат приняли нового кассира. В таблицу `employees (id, name, position, salary)` добавьте сотрудника: id=1, name='Анна Белова', position='Кассир', salary=35000.",
+    "schemaSql": "\nCREATE TABLE employees (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL,\n  position TEXT NOT NULL,\n  salary REAL NOT NULL\n);\n",
+    "allowedStatement": "INSERT",
+    "checkType": "state_check",
+    "checkerSql": "SELECT id, name, position, salary FROM employees ORDER BY id",
+    "orderMatters": false,
+    "expectedResult": [
+      {
+        "id": 1,
+        "name": "Анна Белова",
+        "position": "Кассир",
+        "salary": 35000
+      }
+    ]
+  },
+  {
+    "id": "insert-74",
+    "orderIndex": 19,
+    "topic": "insert",
+    "title": "Добавление нескольких сотрудников",
+    "descriptionMd": "Открывается вторая смена — нужно нанять ещё двух сотрудников. Одним запросом добавьте в `employees (id, name, position, salary)` двух сотрудников: (2, 'Игорь Титов', 'Продавец', 30000) и (3, 'Марина Орлова', 'Продавец', 30000).",
+    "schemaSql": "\nCREATE TABLE employees (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL,\n  position TEXT NOT NULL,\n  salary REAL NOT NULL\n);\nINSERT INTO employees (id, name, position, salary) VALUES (1, 'Анна Белова', 'Кассир', 35000);\n",
+    "allowedStatement": "INSERT",
+    "checkType": "state_check",
+    "checkerSql": "SELECT id, name, position, salary FROM employees ORDER BY id",
+    "orderMatters": false,
+    "expectedResult": [
+      {
+        "id": 1,
+        "name": "Анна Белова",
+        "position": "Кассир",
+        "salary": 35000
+      },
+      {
+        "id": 2,
+        "name": "Игорь Титов",
+        "position": "Продавец",
+        "salary": 30000
+      },
+      {
+        "id": 3,
+        "name": "Марина Орлова",
+        "position": "Продавец",
+        "salary": 30000
+      }
+    ]
+  },
+  {
+    "id": "insert-75",
+    "orderIndex": 20,
+    "topic": "insert",
+    "title": "Добавление заказа поставщику",
+    "descriptionMd": "Магазин оформил заказ поставщику на новую партию товара. В таблицу `supplier_orders (id, supplier_name, amount, status)` добавьте запись: id=1, supplier_name='ТехноПоставка', amount=250000, status='в пути'.",
+    "schemaSql": "\nCREATE TABLE supplier_orders (\n  id INTEGER PRIMARY KEY,\n  supplier_name TEXT NOT NULL,\n  amount REAL NOT NULL,\n  status TEXT NOT NULL\n);\n",
+    "allowedStatement": "INSERT",
+    "checkType": "state_check",
+    "checkerSql": "SELECT id, supplier_name, amount, status FROM supplier_orders ORDER BY id",
+    "orderMatters": false,
+    "expectedResult": [
+      {
+        "id": 1,
+        "supplier_name": "ТехноПоставка",
+        "amount": 250000,
+        "status": "в пути"
+      }
+    ]
+  },
+  {
     "id": "select-11",
-    "orderIndex": 15,
+    "orderIndex": 21,
     "topic": "select",
     "title": "Выбор всех данных",
     "descriptionMd": "Посмотрим на витрину целиком. Выберите все столбцы и все строки из таблицы `products`.",
@@ -523,7 +709,7 @@ module.exports = [
   },
   {
     "id": "select-12",
-    "orderIndex": 16,
+    "orderIndex": 22,
     "topic": "select",
     "title": "Выбор конкретных столбцов",
     "descriptionMd": "Для прайс-листа нужны только название и цена товара. Выберите только столбцы `name` и `price` из таблицы `products`.",
@@ -561,7 +747,7 @@ module.exports = [
   },
   {
     "id": "select-13",
-    "orderIndex": 17,
+    "orderIndex": 23,
     "topic": "select",
     "title": "Псевдонимы столбцов",
     "descriptionMd": "Готовим отчёт для менеджера с понятными названиями колонок. Выберите `name` и `price`, назвав их в результате `product_name` и `product_price` (используйте AS).",
@@ -599,7 +785,7 @@ module.exports = [
   },
   {
     "id": "select-14",
-    "orderIndex": 18,
+    "orderIndex": 24,
     "topic": "select",
     "title": "Сортировка результата",
     "descriptionMd": "Менеджеру нужен список товаров от дешёвых к дорогим. Выберите все товары, отсортировав их по цене (`price`) по возрастанию.",
@@ -655,7 +841,7 @@ module.exports = [
   },
   {
     "id": "select-15",
-    "orderIndex": 19,
+    "orderIndex": 25,
     "topic": "select",
     "title": "Сортировка с ограничением количества строк",
     "descriptionMd": "Для главной страницы нужна подборка самых дорогих товаров. Выберите 3 самых дорогих товара (столбцы id, name, price), отсортировав по убыванию цены.",
@@ -684,7 +870,7 @@ module.exports = [
   },
   {
     "id": "select-40",
-    "orderIndex": 20,
+    "orderIndex": 26,
     "topic": "select",
     "title": "Количество товаров в каталоге",
     "descriptionMd": "После всех пополнений каталог заметно вырос. Посчитайте общее количество товаров в таблице `products`, назвав результат `total` (используйте COUNT(*) и AS).",
@@ -701,7 +887,7 @@ module.exports = [
   },
   {
     "id": "select-41",
-    "orderIndex": 21,
+    "orderIndex": 27,
     "topic": "select",
     "title": "Список уникальных категорий",
     "descriptionMd": "Выберите список уникальных категорий (без повторов) из таблицы `products`, используя DISTINCT.",
@@ -729,8 +915,128 @@ module.exports = [
     ]
   },
   {
+    "id": "select-76",
+    "orderIndex": 28,
+    "topic": "select",
+    "title": "Выбор столбца количества",
+    "descriptionMd": "Нужен быстрый обзор остатков на складе. Выберите только столбец `quantity` из таблицы `products`.",
+    "schemaSql": "\nCREATE TABLE products (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL,\n  category TEXT NOT NULL,\n  price REAL NOT NULL,\n  quantity INTEGER NOT NULL\n);\nINSERT INTO products (id, name, category, price, quantity) VALUES\n  (1, 'Ноутбук', 'Электроника', 55000, 10),\n  (2, 'Мышь', 'Электроника', 1200, 50),\n  (3, 'Стол', 'Мебель', 8000, 5),\n  (4, 'Стул', 'Мебель', 3000, 20),\n  (5, 'Книга', 'Книги', 500, 100),\n  (6, 'Ручка', 'Канцтовары', 50, 200),\n  (7, 'Карандаш', 'Канцтовары', 30, 300),\n  (8, 'Тетрадь', 'Канцтовары', 40, 150),\n  (9, 'Флешка', 'Электроника', 800, 60),\n  (10, 'Футболка', 'Одежда', 1500, 40),\n  (11, 'Куртка', 'Одежда', 7000, 15);\n",
+    "allowedStatement": "SELECT",
+    "checkType": "select_match",
+    "checkerSql": null,
+    "orderMatters": false,
+    "expectedResult": [
+      {
+        "quantity": 10
+      },
+      {
+        "quantity": 50
+      },
+      {
+        "quantity": 5
+      },
+      {
+        "quantity": 20
+      },
+      {
+        "quantity": 100
+      },
+      {
+        "quantity": 200
+      },
+      {
+        "quantity": 300
+      },
+      {
+        "quantity": 150
+      },
+      {
+        "quantity": 60
+      },
+      {
+        "quantity": 40
+      },
+      {
+        "quantity": 15
+      }
+    ]
+  },
+  {
+    "id": "select-77",
+    "orderIndex": 29,
+    "topic": "select",
+    "title": "Сортировка по названию",
+    "descriptionMd": "Каталог должен выглядеть аккуратно в алфавитном порядке. Выберите все товары, отсортировав их по `name` по возрастанию (по алфавиту).",
+    "schemaSql": "\nCREATE TABLE products (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL,\n  category TEXT NOT NULL,\n  price REAL NOT NULL,\n  quantity INTEGER NOT NULL\n);\nINSERT INTO products (id, name, category, price, quantity) VALUES\n  (1, 'Ноутбук', 'Электроника', 55000, 10),\n  (2, 'Мышь', 'Электроника', 1200, 50),\n  (3, 'Стол', 'Мебель', 8000, 5),\n  (4, 'Стул', 'Мебель', 3000, 20),\n  (5, 'Книга', 'Книги', 500, 100),\n  (6, 'Ручка', 'Канцтовары', 50, 200);\n",
+    "allowedStatement": "SELECT",
+    "checkType": "select_match",
+    "checkerSql": null,
+    "orderMatters": true,
+    "expectedResult": [
+      {
+        "id": 5,
+        "name": "Книга",
+        "category": "Книги",
+        "price": 500,
+        "quantity": 100
+      },
+      {
+        "id": 2,
+        "name": "Мышь",
+        "category": "Электроника",
+        "price": 1200,
+        "quantity": 50
+      },
+      {
+        "id": 1,
+        "name": "Ноутбук",
+        "category": "Электроника",
+        "price": 55000,
+        "quantity": 10
+      },
+      {
+        "id": 6,
+        "name": "Ручка",
+        "category": "Канцтовары",
+        "price": 50,
+        "quantity": 200
+      },
+      {
+        "id": 3,
+        "name": "Стол",
+        "category": "Мебель",
+        "price": 8000,
+        "quantity": 5
+      },
+      {
+        "id": 4,
+        "name": "Стул",
+        "category": "Мебель",
+        "price": 3000,
+        "quantity": 20
+      }
+    ]
+  },
+  {
+    "id": "select-78",
+    "orderIndex": 30,
+    "topic": "select",
+    "title": "Средняя цена товара",
+    "descriptionMd": "Для отчёта нужна средняя цена по каталогу. Посчитайте среднюю цену (`price`) всех товаров, назвав результат `avg_price` (используйте AVG и AS).",
+    "schemaSql": "\nCREATE TABLE products (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL,\n  category TEXT NOT NULL,\n  price REAL NOT NULL,\n  quantity INTEGER NOT NULL\n);\nINSERT INTO products (id, name, category, price, quantity) VALUES\n  (1, 'Ноутбук', 'Электроника', 55000, 10),\n  (2, 'Мышь', 'Электроника', 1200, 50),\n  (3, 'Стол', 'Мебель', 8000, 5),\n  (4, 'Стул', 'Мебель', 3000, 20),\n  (5, 'Книга', 'Книги', 500, 100),\n  (6, 'Ручка', 'Канцтовары', 50, 200),\n  (7, 'Карандаш', 'Канцтовары', 30, 300),\n  (8, 'Тетрадь', 'Канцтовары', 40, 150),\n  (9, 'Флешка', 'Электроника', 800, 60),\n  (10, 'Футболка', 'Одежда', 1500, 40),\n  (11, 'Куртка', 'Одежда', 7000, 15);\n",
+    "allowedStatement": "SELECT",
+    "checkType": "select_match",
+    "checkerSql": null,
+    "orderMatters": false,
+    "expectedResult": [
+      {
+        "avg_price": 7010.909090909091
+      }
+    ]
+  },
+  {
     "id": "where-16",
-    "orderIndex": 22,
+    "orderIndex": 31,
     "topic": "where",
     "title": "Фильтр по точному совпадению",
     "descriptionMd": "Покупатель интересуется только электроникой. Выберите все товары категории 'Электроника' (все столбцы).",
@@ -758,7 +1064,7 @@ module.exports = [
   },
   {
     "id": "where-17",
-    "orderIndex": 23,
+    "orderIndex": 32,
     "topic": "where",
     "title": "Фильтр по числовому условию",
     "descriptionMd": "Готовим подборку товаров подороже. Выберите все товары с ценой больше 3000 (все столбцы).",
@@ -786,7 +1092,7 @@ module.exports = [
   },
   {
     "id": "where-18",
-    "orderIndex": 24,
+    "orderIndex": 33,
     "topic": "where",
     "title": "Комбинация условий через AND",
     "descriptionMd": "Ищем недорогую мебель для акции. Выберите товары категории 'Мебель' с ценой меньше 5000 (все столбцы).",
@@ -807,7 +1113,7 @@ module.exports = [
   },
   {
     "id": "where-19",
-    "orderIndex": 25,
+    "orderIndex": 34,
     "topic": "where",
     "title": "Комбинация условий через OR",
     "descriptionMd": "Собираем подборку «Для учёбы». Выберите товары категории 'Книги' или 'Канцтовары' (все столбцы).",
@@ -835,7 +1141,7 @@ module.exports = [
   },
   {
     "id": "where-20",
-    "orderIndex": 26,
+    "orderIndex": 35,
     "topic": "where",
     "title": "Фильтр по шаблону LIKE",
     "descriptionMd": "Покупатель ищет товар по началу названия. Выберите товары, название которых начинается на букву 'С' (используйте LIKE), все столбцы.",
@@ -863,7 +1169,7 @@ module.exports = [
   },
   {
     "id": "where-42",
-    "orderIndex": 27,
+    "orderIndex": 36,
     "topic": "where",
     "title": "Диапазон цен",
     "descriptionMd": "Выберите все товары (все столбцы) с ценой от 500 до 5000 включительно (используйте BETWEEN или сравнения через AND).",
@@ -912,7 +1218,7 @@ module.exports = [
   },
   {
     "id": "where-43",
-    "orderIndex": 28,
+    "orderIndex": 37,
     "topic": "where",
     "title": "Товары не из категории 'Электроника'",
     "descriptionMd": "Выберите все товары (все столбцы), которые НЕ относятся к категории 'Электроника' (используйте <> или !=).",
@@ -981,8 +1287,127 @@ module.exports = [
     ]
   },
   {
+    "id": "where-79",
+    "orderIndex": 38,
+    "topic": "where",
+    "title": "Товары без остатка",
+    "descriptionMd": "Нужно найти позиции, которых совсем нет на складе. Выберите все товары (все столбцы), у которых `quantity` равно 0.",
+    "schemaSql": "\nCREATE TABLE products (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL,\n  category TEXT NOT NULL,\n  price REAL NOT NULL,\n  quantity INTEGER NOT NULL\n);\nINSERT INTO products (id, name, category, price, quantity) VALUES\n  (1, 'Ноутбук', 'Электроника', 55000, 10),\n  (2, 'Мышь', 'Электроника', 1200, 0),\n  (3, 'Стол', 'Мебель', 8000, 5),\n  (4, 'Стул', 'Мебель', 3000, 0),\n  (5, 'Книга', 'Книги', 500, 100),\n  (6, 'Ручка', 'Канцтовары', 50, 200);\n",
+    "allowedStatement": "SELECT",
+    "checkType": "select_match",
+    "checkerSql": null,
+    "orderMatters": false,
+    "expectedResult": [
+      {
+        "id": 2,
+        "name": "Мышь",
+        "category": "Электроника",
+        "price": 1200,
+        "quantity": 0
+      },
+      {
+        "id": 4,
+        "name": "Стул",
+        "category": "Мебель",
+        "price": 3000,
+        "quantity": 0
+      }
+    ]
+  },
+  {
+    "id": "where-80",
+    "orderIndex": 39,
+    "topic": "where",
+    "title": "Поиск по вхождению подстроки",
+    "descriptionMd": "Покупатель ищет товар, но помнит только, что в названии есть буква 'т'. Выберите все товары (все столбцы), в названии которых встречается буква 'т' в любом месте (используйте LIKE с % с обеих сторон).",
+    "schemaSql": "\nCREATE TABLE products (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL,\n  category TEXT NOT NULL,\n  price REAL NOT NULL,\n  quantity INTEGER NOT NULL\n);\nINSERT INTO products (id, name, category, price, quantity) VALUES\n  (1, 'Ноутбук', 'Электроника', 55000, 10),\n  (2, 'Мышь', 'Электроника', 1200, 50),\n  (3, 'Стол', 'Мебель', 8000, 5),\n  (4, 'Стул', 'Мебель', 3000, 20),\n  (5, 'Книга', 'Книги', 500, 100),\n  (6, 'Ручка', 'Канцтовары', 50, 200);\n",
+    "allowedStatement": "SELECT",
+    "checkType": "select_match",
+    "checkerSql": null,
+    "orderMatters": false,
+    "expectedResult": [
+      {
+        "id": 1,
+        "name": "Ноутбук",
+        "category": "Электроника",
+        "price": 55000,
+        "quantity": 10
+      },
+      {
+        "id": 3,
+        "name": "Стол",
+        "category": "Мебель",
+        "price": 8000,
+        "quantity": 5
+      },
+      {
+        "id": 4,
+        "name": "Стул",
+        "category": "Мебель",
+        "price": 3000,
+        "quantity": 20
+      }
+    ]
+  },
+  {
+    "id": "where-81",
+    "orderIndex": 40,
+    "topic": "where",
+    "title": "Категории без канцтоваров и мебели",
+    "descriptionMd": "Готовим подборку без офисных товаров. Выберите все товары (все столбцы), которые НЕ относятся ни к категории 'Канцтовары', ни к категории 'Мебель' (используйте NOT IN).",
+    "schemaSql": "\nCREATE TABLE products (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL,\n  category TEXT NOT NULL,\n  price REAL NOT NULL,\n  quantity INTEGER NOT NULL\n);\nINSERT INTO products (id, name, category, price, quantity) VALUES\n  (1, 'Ноутбук', 'Электроника', 55000, 10),\n  (2, 'Мышь', 'Электроника', 1200, 50),\n  (3, 'Стол', 'Мебель', 8000, 5),\n  (4, 'Стул', 'Мебель', 3000, 20),\n  (5, 'Книга', 'Книги', 500, 100),\n  (6, 'Ручка', 'Канцтовары', 50, 200),\n  (7, 'Карандаш', 'Канцтовары', 30, 300),\n  (8, 'Тетрадь', 'Канцтовары', 40, 150),\n  (9, 'Флешка', 'Электроника', 800, 60),\n  (10, 'Футболка', 'Одежда', 1500, 40),\n  (11, 'Куртка', 'Одежда', 7000, 15);\n",
+    "allowedStatement": "SELECT",
+    "checkType": "select_match",
+    "checkerSql": null,
+    "orderMatters": false,
+    "expectedResult": [
+      {
+        "id": 1,
+        "name": "Ноутбук",
+        "category": "Электроника",
+        "price": 55000,
+        "quantity": 10
+      },
+      {
+        "id": 2,
+        "name": "Мышь",
+        "category": "Электроника",
+        "price": 1200,
+        "quantity": 50
+      },
+      {
+        "id": 5,
+        "name": "Книга",
+        "category": "Книги",
+        "price": 500,
+        "quantity": 100
+      },
+      {
+        "id": 9,
+        "name": "Флешка",
+        "category": "Электроника",
+        "price": 800,
+        "quantity": 60
+      },
+      {
+        "id": 10,
+        "name": "Футболка",
+        "category": "Одежда",
+        "price": 1500,
+        "quantity": 40
+      },
+      {
+        "id": 11,
+        "name": "Куртка",
+        "category": "Одежда",
+        "price": 7000,
+        "quantity": 15
+      }
+    ]
+  },
+  {
     "id": "update-21",
-    "orderIndex": 29,
+    "orderIndex": 41,
     "topic": "update",
     "title": "Обновление одного значения",
     "descriptionMd": "Поставщик поднял закупочную цену на ноутбуки. Измените цену товара с id=1 ('Ноутбук') на 60000.",
@@ -1038,7 +1463,7 @@ module.exports = [
   },
   {
     "id": "update-22",
-    "orderIndex": 30,
+    "orderIndex": 42,
     "topic": "update",
     "title": "Обновление количества",
     "descriptionMd": "Пришла новая партия ручек на склад. Измените quantity товара с id=6 ('Ручка') на 150.",
@@ -1094,7 +1519,7 @@ module.exports = [
   },
   {
     "id": "update-23",
-    "orderIndex": 31,
+    "orderIndex": 43,
     "topic": "update",
     "title": "Обновление по условию для нескольких строк",
     "descriptionMd": "В магазине стартует сезонная распродажа мебели. Установите price = 2500 для всех товаров категории 'Мебель'.",
@@ -1150,7 +1575,7 @@ module.exports = [
   },
   {
     "id": "update-24",
-    "orderIndex": 32,
+    "orderIndex": 44,
     "topic": "update",
     "title": "Изменение текстового значения",
     "descriptionMd": "Реорганизация каталога — часть канцтоваров переезжает в раздел «Офис». Измените category товара 'Ручка' с 'Канцтовары' на 'Офис'.",
@@ -1206,7 +1631,7 @@ module.exports = [
   },
   {
     "id": "update-25",
-    "orderIndex": 33,
+    "orderIndex": 45,
     "topic": "update",
     "title": "Обновление по числовому условию",
     "descriptionMd": "После ревизии склада нужно скорректировать остатки. Обнулите quantity (установите 0) у всех товаров, где quantity больше 100.",
@@ -1262,7 +1687,7 @@ module.exports = [
   },
   {
     "id": "update-44",
-    "orderIndex": 34,
+    "orderIndex": 46,
     "topic": "update",
     "title": "Пополнение склада электроники",
     "descriptionMd": "Прошла инвентаризация — добавьте 5 единиц к `quantity` всех товаров категории 'Электроника' (используйте `quantity = quantity + 5`).",
@@ -1353,7 +1778,7 @@ module.exports = [
   },
   {
     "id": "update-45",
-    "orderIndex": 35,
+    "orderIndex": 47,
     "topic": "update",
     "title": "Снижение цены на канцтовары",
     "descriptionMd": "Канцтовары залежались на складе — снизьте `price` на 10 для всех товаров категории 'Канцтовары' (используйте `price = price - 10`).",
@@ -1443,8 +1868,86 @@ module.exports = [
     ]
   },
   {
+    "id": "update-82",
+    "orderIndex": 48,
+    "topic": "update",
+    "title": "Повышение зарплаты",
+    "descriptionMd": "Кассиру повысили зарплату за хорошую работу. Измените `salary` сотрудника с id=1 на 40000.",
+    "schemaSql": "\nCREATE TABLE employees (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL,\n  position TEXT NOT NULL,\n  salary REAL NOT NULL\n);\nINSERT INTO employees (id, name, position, salary) VALUES\n  (1, 'Анна Белова', 'Кассир', 35000),\n  (2, 'Игорь Титов', 'Продавец', 30000);\n",
+    "allowedStatement": "UPDATE",
+    "checkType": "state_check",
+    "checkerSql": "SELECT id, name, position, salary FROM employees ORDER BY id",
+    "orderMatters": false,
+    "expectedResult": [
+      {
+        "id": 1,
+        "name": "Анна Белова",
+        "position": "Кассир",
+        "salary": 40000
+      },
+      {
+        "id": 2,
+        "name": "Игорь Титов",
+        "position": "Продавец",
+        "salary": 30000
+      }
+    ]
+  },
+  {
+    "id": "update-83",
+    "orderIndex": 49,
+    "topic": "update",
+    "title": "Массовая индексация зарплат",
+    "descriptionMd": "Руководство решило проиндексировать зарплаты всех продавцов. Увеличьте `salary` на 2000 всем сотрудникам с position='Продавец' (используйте `salary = salary + 2000`).",
+    "schemaSql": "\nCREATE TABLE employees (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL,\n  position TEXT NOT NULL,\n  salary REAL NOT NULL\n);\nINSERT INTO employees (id, name, position, salary) VALUES\n  (1, 'Анна Белова', 'Кассир', 35000),\n  (2, 'Игорь Титов', 'Продавец', 30000),\n  (3, 'Марина Орлова', 'Продавец', 30000);\n",
+    "allowedStatement": "UPDATE",
+    "checkType": "state_check",
+    "checkerSql": "SELECT id, name, position, salary FROM employees ORDER BY id",
+    "orderMatters": false,
+    "expectedResult": [
+      {
+        "id": 1,
+        "name": "Анна Белова",
+        "position": "Кассир",
+        "salary": 35000
+      },
+      {
+        "id": 2,
+        "name": "Игорь Титов",
+        "position": "Продавец",
+        "salary": 32000
+      },
+      {
+        "id": 3,
+        "name": "Марина Орлова",
+        "position": "Продавец",
+        "salary": 32000
+      }
+    ]
+  },
+  {
+    "id": "update-84",
+    "orderIndex": 50,
+    "topic": "update",
+    "title": "Смена статуса заказа поставщику",
+    "descriptionMd": "Партия товара прибыла на склад. Измените `status` заказа с id=1 в таблице `supplier_orders` на 'доставлен'.",
+    "schemaSql": "\nCREATE TABLE supplier_orders (\n  id INTEGER PRIMARY KEY,\n  supplier_name TEXT NOT NULL,\n  amount REAL NOT NULL,\n  status TEXT NOT NULL\n);\nINSERT INTO supplier_orders (id, supplier_name, amount, status) VALUES\n  (1, 'ТехноПоставка', 250000, 'в пути');\n",
+    "allowedStatement": "UPDATE",
+    "checkType": "state_check",
+    "checkerSql": "SELECT id, supplier_name, amount, status FROM supplier_orders ORDER BY id",
+    "orderMatters": false,
+    "expectedResult": [
+      {
+        "id": 1,
+        "supplier_name": "ТехноПоставка",
+        "amount": 250000,
+        "status": "доставлен"
+      }
+    ]
+  },
+  {
     "id": "delete-26",
-    "orderIndex": 36,
+    "orderIndex": 51,
     "topic": "delete",
     "title": "Удаление одной записи",
     "descriptionMd": "Ручку сняли с продажи. Удалите товар с id=6 ('Ручка').",
@@ -1493,7 +1996,7 @@ module.exports = [
   },
   {
     "id": "delete-27",
-    "orderIndex": 37,
+    "orderIndex": 52,
     "topic": "delete",
     "title": "Удаление по категории",
     "descriptionMd": "Мебельный отдел магазина закрывается. Удалите все товары категории 'Мебель'.",
@@ -1535,7 +2038,7 @@ module.exports = [
   },
   {
     "id": "delete-28",
-    "orderIndex": 38,
+    "orderIndex": 53,
     "topic": "delete",
     "title": "Удаление по числовому условию",
     "descriptionMd": "Чистим каталог от слишком дешёвых позиций. Удалите все товары с ценой меньше 100.",
@@ -1584,7 +2087,7 @@ module.exports = [
   },
   {
     "id": "delete-29",
-    "orderIndex": 39,
+    "orderIndex": 54,
     "topic": "delete",
     "title": "Удаление по условию количества",
     "descriptionMd": "Убираем из каталога залежавшийся неликвид. Удалите все товары, у которых quantity больше или равно 100.",
@@ -1626,7 +2129,7 @@ module.exports = [
   },
   {
     "id": "delete-30",
-    "orderIndex": 40,
+    "orderIndex": 55,
     "topic": "delete",
     "title": "Полная очистка таблицы",
     "descriptionMd": "Магазин уходит на полную переучёт склада. Удалите все строки из таблицы `products`, сохранив саму таблицу.",
@@ -1639,7 +2142,7 @@ module.exports = [
   },
   {
     "id": "delete-46",
-    "orderIndex": 41,
+    "orderIndex": 56,
     "topic": "delete",
     "title": "Списание невостребованного товара",
     "descriptionMd": "Удалите товары категории 'Одежда', у которых `quantity` меньше 20.",
@@ -1723,7 +2226,7 @@ module.exports = [
   },
   {
     "id": "delete-47",
-    "orderIndex": 42,
+    "orderIndex": 57,
     "topic": "delete",
     "title": "Удаление премиум-товара",
     "descriptionMd": "Удалите все товары с ценой больше 10000.",
@@ -1806,8 +2309,89 @@ module.exports = [
     ]
   },
   {
+    "id": "delete-85",
+    "orderIndex": 58,
+    "topic": "delete",
+    "title": "Увольнение сотрудника",
+    "descriptionMd": "Сотрудник уволился по собственному желанию. Удалите из таблицы `employees` сотрудника с id=2.",
+    "schemaSql": "\nCREATE TABLE employees (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL,\n  position TEXT NOT NULL,\n  salary REAL NOT NULL\n);\nINSERT INTO employees (id, name, position, salary) VALUES\n  (1, 'Анна Белова', 'Кассир', 40000),\n  (2, 'Игорь Титов', 'Продавец', 32000),\n  (3, 'Марина Орлова', 'Продавец', 32000);\n",
+    "allowedStatement": "DELETE",
+    "checkType": "state_check",
+    "checkerSql": "SELECT id, name, position, salary FROM employees ORDER BY id",
+    "orderMatters": false,
+    "expectedResult": [
+      {
+        "id": 1,
+        "name": "Анна Белова",
+        "position": "Кассир",
+        "salary": 40000
+      },
+      {
+        "id": 3,
+        "name": "Марина Орлова",
+        "position": "Продавец",
+        "salary": 32000
+      }
+    ]
+  },
+  {
+    "id": "delete-86",
+    "orderIndex": 59,
+    "topic": "delete",
+    "title": "Удаление выполненных заказов поставщику",
+    "descriptionMd": "Архив заказов пора почистить от уже доставленных. Удалите из `supplier_orders` все записи со `status` = 'доставлен'.",
+    "schemaSql": "\nCREATE TABLE supplier_orders (\n  id INTEGER PRIMARY KEY,\n  supplier_name TEXT NOT NULL,\n  amount REAL NOT NULL,\n  status TEXT NOT NULL\n);\nINSERT INTO supplier_orders (id, supplier_name, amount, status) VALUES\n  (1, 'ТехноПоставка', 250000, 'доставлен'),\n  (2, 'МебельОпт', 90000, 'в пути'),\n  (3, 'КанцСоюз', 15000, 'доставлен');\n",
+    "allowedStatement": "DELETE",
+    "checkType": "state_check",
+    "checkerSql": "SELECT id, supplier_name, amount, status FROM supplier_orders ORDER BY id",
+    "orderMatters": false,
+    "expectedResult": [
+      {
+        "id": 2,
+        "supplier_name": "МебельОпт",
+        "amount": 90000,
+        "status": "в пути"
+      }
+    ]
+  },
+  {
+    "id": "delete-87",
+    "orderIndex": 60,
+    "topic": "delete",
+    "title": "Удаление товаров без остатка",
+    "descriptionMd": "Позиции, которых давно нет в наличии, только засоряют каталог. Удалите из `products` все товары, у которых `quantity` равно 0.",
+    "schemaSql": "\nCREATE TABLE products (\n  id INTEGER PRIMARY KEY,\n  name TEXT NOT NULL,\n  category TEXT NOT NULL,\n  price REAL NOT NULL,\n  quantity INTEGER NOT NULL\n);\nINSERT INTO products (id, name, category, price, quantity) VALUES\n  (1, 'Ноутбук', 'Электроника', 55000, 10),\n  (2, 'Мышь', 'Электроника', 1200, 0),\n  (3, 'Стол', 'Мебель', 8000, 5),\n  (4, 'Стул', 'Мебель', 3000, 0),\n  (5, 'Книга', 'Книги', 500, 100);\n",
+    "allowedStatement": "DELETE",
+    "checkType": "state_check",
+    "checkerSql": "SELECT id, name, category, price, quantity FROM products ORDER BY id",
+    "orderMatters": false,
+    "expectedResult": [
+      {
+        "id": 1,
+        "name": "Ноутбук",
+        "category": "Электроника",
+        "price": 55000,
+        "quantity": 10
+      },
+      {
+        "id": 3,
+        "name": "Стол",
+        "category": "Мебель",
+        "price": 8000,
+        "quantity": 5
+      },
+      {
+        "id": 5,
+        "name": "Книга",
+        "category": "Книги",
+        "price": 500,
+        "quantity": 100
+      }
+    ]
+  },
+  {
     "id": "drop-31",
-    "orderIndex": 43,
+    "orderIndex": 61,
     "topic": "drop",
     "title": "Удаление таблицы products",
     "descriptionMd": "Магазин закрывается — пора убрать за собой таблицы. Удалите таблицу `products` целиком.",
@@ -1820,7 +2404,7 @@ module.exports = [
   },
   {
     "id": "drop-32",
-    "orderIndex": 44,
+    "orderIndex": 62,
     "topic": "drop",
     "title": "Удаление временной таблицы",
     "descriptionMd": "Отладка системы логов завершена, временные данные больше не нужны. Удалите таблицу `temp_logs` целиком.",
@@ -1833,7 +2417,7 @@ module.exports = [
   },
   {
     "id": "drop-33",
-    "orderIndex": 45,
+    "orderIndex": 63,
     "topic": "drop",
     "title": "Удаление устаревшей таблицы заказов",
     "descriptionMd": "Старый архив заказов заменили новой системой. Удалите таблицу `old_orders` целиком.",
@@ -1846,7 +2430,7 @@ module.exports = [
   },
   {
     "id": "drop-34",
-    "orderIndex": 46,
+    "orderIndex": 64,
     "topic": "drop",
     "title": "Удаление резервной таблицы клиентов",
     "descriptionMd": "Резервная копия клиентов больше не нужна. Удалите таблицу `backup_customers` целиком.",
@@ -1859,7 +2443,7 @@ module.exports = [
   },
   {
     "id": "drop-35",
-    "orderIndex": 47,
+    "orderIndex": 65,
     "topic": "drop",
     "title": "Удаление черновой таблицы категорий",
     "descriptionMd": "Черновик категорий согласован и в таблице больше нет необходимости. Удалите таблицу `draft_categories` целиком.",
@@ -1872,7 +2456,7 @@ module.exports = [
   },
   {
     "id": "drop-48",
-    "orderIndex": 48,
+    "orderIndex": 66,
     "topic": "drop",
     "title": "Удаление таблицы отзывов",
     "descriptionMd": "Отзывы перенесли в новый сервис аналитики — удалите таблицу `reviews` целиком.",
@@ -1885,7 +2469,7 @@ module.exports = [
   },
   {
     "id": "drop-49",
-    "orderIndex": 49,
+    "orderIndex": 67,
     "topic": "drop",
     "title": "Удаление таблицы платежей",
     "descriptionMd": "Оплаты теперь обрабатывает внешний платёжный сервис — удалите таблицу `payments` целиком.",
@@ -1897,8 +2481,47 @@ module.exports = [
     "expectedResult": []
   },
   {
+    "id": "drop-88",
+    "orderIndex": 68,
+    "topic": "drop",
+    "title": "Удаление таблицы поставщиков",
+    "descriptionMd": "Работа с поставщиками переехала во внешнюю систему закупок. Удалите таблицу `suppliers` целиком.",
+    "schemaSql": "CREATE TABLE suppliers (id INTEGER PRIMARY KEY, name TEXT, phone TEXT);",
+    "allowedStatement": "DROP TABLE",
+    "checkType": "state_check",
+    "checkerSql": "SELECT name FROM sqlite_master WHERE type='table' AND name='suppliers'",
+    "orderMatters": false,
+    "expectedResult": []
+  },
+  {
+    "id": "drop-89",
+    "orderIndex": 69,
+    "topic": "drop",
+    "title": "Удаление таблицы складов",
+    "descriptionMd": "Компания отказалась от отдельного учёта складов. Удалите таблицу `warehouses` целиком.",
+    "schemaSql": "CREATE TABLE warehouses (id INTEGER PRIMARY KEY, address TEXT, capacity INTEGER);",
+    "allowedStatement": "DROP TABLE",
+    "checkType": "state_check",
+    "checkerSql": "SELECT name FROM sqlite_master WHERE type='table' AND name='warehouses'",
+    "orderMatters": false,
+    "expectedResult": []
+  },
+  {
+    "id": "drop-90",
+    "orderIndex": 70,
+    "topic": "drop",
+    "title": "Удаление таблицы скидок",
+    "descriptionMd": "Программа скидок закрыта, таблица больше не нужна. Удалите таблицу `discounts` целиком.",
+    "schemaSql": "CREATE TABLE discounts (id INTEGER PRIMARY KEY, product_id INTEGER, percent REAL);",
+    "allowedStatement": "DROP TABLE",
+    "checkType": "state_check",
+    "checkerSql": "SELECT name FROM sqlite_master WHERE type='table' AND name='discounts'",
+    "orderMatters": false,
+    "expectedResult": []
+  },
+  {
     "id": "select_where-50",
-    "orderIndex": 50,
+    "orderIndex": 71,
     "topic": "select_where",
     "title": "Полный список товаров",
     "descriptionMd": "Выведите полный список товаров магазина: все столбцы и все позиции каталога, ничего не пропуская.",
@@ -1989,7 +2612,7 @@ module.exports = [
   },
   {
     "id": "select_where-51",
-    "orderIndex": 51,
+    "orderIndex": 72,
     "topic": "select_where",
     "title": "Только названия товаров",
     "descriptionMd": "Выведите только названия всех товаров каталога, без остальных данных.",
@@ -2036,7 +2659,7 @@ module.exports = [
   },
   {
     "id": "select_where-52",
-    "orderIndex": 52,
+    "orderIndex": 73,
     "topic": "select_where",
     "title": "Название и цена",
     "descriptionMd": "Для прайс-листа выведите только название и цену каждого товара.",
@@ -2094,7 +2717,7 @@ module.exports = [
   },
   {
     "id": "select_where-53",
-    "orderIndex": 53,
+    "orderIndex": 74,
     "topic": "select_where",
     "title": "Название, категория и цена",
     "descriptionMd": "Выведите название, категорию и цену каждого товара.",
@@ -2163,7 +2786,7 @@ module.exports = [
   },
   {
     "id": "select_where-54",
-    "orderIndex": 54,
+    "orderIndex": 75,
     "topic": "select_where",
     "title": "Понятные подписи в отчёте",
     "descriptionMd": "Выведите название и цену каждого товара, но в результате назовите эти два столбца «title» и «cost» — так, чтобы менеджеру не пришлось объяснять, что значит «name» и «price».",
@@ -2221,7 +2844,7 @@ module.exports = [
   },
   {
     "id": "select_where-55",
-    "orderIndex": 55,
+    "orderIndex": 76,
     "topic": "select_where",
     "title": "Список категорий без повторов",
     "descriptionMd": "Выведите список категорий товаров так, чтобы каждая категория встретилась в результате только один раз, без повторяющихся строк.",
@@ -2250,7 +2873,7 @@ module.exports = [
   },
   {
     "id": "select_where-56",
-    "orderIndex": 56,
+    "orderIndex": 77,
     "topic": "select_where",
     "title": "Сколько всего товаров",
     "descriptionMd": "Посчитайте, сколько всего товаров в каталоге, и выведите одно число с именем «count».",
@@ -2267,7 +2890,7 @@ module.exports = [
   },
   {
     "id": "select_where-57",
-    "orderIndex": 57,
+    "orderIndex": 78,
     "topic": "select_where",
     "title": "Суммарная цена каталога",
     "descriptionMd": "Сложите цены всех товаров каталога и выведите одно итоговое число с именем «total_price».",
@@ -2284,7 +2907,7 @@ module.exports = [
   },
   {
     "id": "select_where-58",
-    "orderIndex": 58,
+    "orderIndex": 79,
     "topic": "select_where",
     "title": "Самый дорогой товар",
     "descriptionMd": "Найдите цену самого дорогого товара в каталоге и выведите одно число с именем «max_price».",
@@ -2301,7 +2924,7 @@ module.exports = [
   },
   {
     "id": "select_where-59",
-    "orderIndex": 59,
+    "orderIndex": 80,
     "topic": "select_where",
     "title": "Минимальный остаток на складе",
     "descriptionMd": "Найдите наименьший остаток на складе среди всех товаров и выведите одно число с именем «min_quantity».",
@@ -2318,7 +2941,7 @@ module.exports = [
   },
   {
     "id": "select_where-60",
-    "orderIndex": 60,
+    "orderIndex": 81,
     "topic": "select_where",
     "title": "Только категория «Электроника»",
     "descriptionMd": "Выведите все данные о товарах, которые относятся к категории «Электроника».",
@@ -2353,7 +2976,7 @@ module.exports = [
   },
   {
     "id": "select_where-61",
-    "orderIndex": 61,
+    "orderIndex": 82,
     "topic": "select_where",
     "title": "Товары дороже 5000",
     "descriptionMd": "Выведите все данные о товарах, цена которых больше 5000.",
@@ -2388,7 +3011,7 @@ module.exports = [
   },
   {
     "id": "select_where-62",
-    "orderIndex": 62,
+    "orderIndex": 83,
     "topic": "select_where",
     "title": "Товары в средней ценовой категории",
     "descriptionMd": "Выведите все данные о товарах, цена которых не меньше 1000 и не больше 8000 одновременно.",
@@ -2437,7 +3060,7 @@ module.exports = [
   },
   {
     "id": "select_where-63",
-    "orderIndex": 63,
+    "orderIndex": 84,
     "topic": "select_where",
     "title": "Дешёвые канцтовары",
     "descriptionMd": "Выведите все данные о товарах, которые одновременно относятся к категории «Канцтовары» и стоят меньше 50.",
@@ -2465,7 +3088,7 @@ module.exports = [
   },
   {
     "id": "select_where-64",
-    "orderIndex": 64,
+    "orderIndex": 85,
     "topic": "select_where",
     "title": "Книги или одежда",
     "descriptionMd": "Выведите все данные о товарах, которые относятся к категории «Книги» либо к категории «Одежда».",
@@ -2500,7 +3123,7 @@ module.exports = [
   },
   {
     "id": "select_where-65",
-    "orderIndex": 65,
+    "orderIndex": 86,
     "topic": "select_where",
     "title": "Самое дешёвое и самое дорогое",
     "descriptionMd": "Выведите все данные о товарах, цена которых меньше 100 либо больше 10000.",
@@ -2542,7 +3165,7 @@ module.exports = [
   },
   {
     "id": "select_where-66",
-    "orderIndex": 66,
+    "orderIndex": 87,
     "topic": "select_where",
     "title": "Все, кроме мебели",
     "descriptionMd": "Выведите все данные о товарах, которые не относятся к категории «Мебель».",
@@ -2619,7 +3242,7 @@ module.exports = [
   },
   {
     "id": "select_where-67",
-    "orderIndex": 67,
+    "orderIndex": 88,
     "topic": "select_where",
     "title": "Название заканчивается на букву «а»",
     "descriptionMd": "Выведите все данные о товарах, название которых заканчивается на букву «а».",
@@ -2668,7 +3291,7 @@ module.exports = [
   },
   {
     "id": "select_where-68",
-    "orderIndex": 68,
+    "orderIndex": 89,
     "topic": "select_where",
     "title": "Средний остаток на складе",
     "descriptionMd": "Выведите все данные о товарах, у которых остаток на складе не меньше 50 и не больше 200.",
@@ -2717,7 +3340,7 @@ module.exports = [
   },
   {
     "id": "select_where-69",
-    "orderIndex": 69,
+    "orderIndex": 90,
     "topic": "select_where",
     "title": "Три ключевые категории",
     "descriptionMd": "Выведите все данные о товарах, которые относятся к категории «Электроника», «Мебель» либо «Книги».",
