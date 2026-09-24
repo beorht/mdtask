@@ -134,6 +134,7 @@ router.get('/teacher/assignment/:id/edit', requireRole('teacher'), (req, res) =>
     sidebarTree,
     assignment,
     markdown,
+    html: renderMarkdown(markdown),
     saved: req.query.saved === '1',
     activeAssignmentId: assignment.id,
   });
