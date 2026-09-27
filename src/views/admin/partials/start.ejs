@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= pageTitle %> · MDTASK</title>
+  <script>
+    (function () {
+      document.documentElement.classList.add('js');
+      try {
+        var t = localStorage.getItem('theme');
+        if (t) document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {}
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="/css/admin.css">
+  <script src="/js/admin.js" defer></script>
+</head>
+<body class="admin">
+<a class="a-skip" href="#main">К содержимому</a>
+<header class="a-topbar">
+  <div class="a-topbar-left">
+    <button class="a-icon-btn a-menu-btn" type="button" data-sidebar-toggle aria-label="Открыть меню" aria-controls="adminSidebar"><%- icon('menu') %></button>
+    <a href="/admin" class="a-logo" aria-label="MDTASK — главная панели">
+      <span class="a-logo-mark">M</span><span class="a-logo-text">MDTASK</span>
+    </a>
+    <% if (pageTitle && nav !== 'dashboard') { %><span class="a-topbar-section"><%= pageTitle %></span><% } %>
+  </div>
+
+  <form class="a-search" action="/admin/search" method="get" role="search" data-live-search>
+    <%- icon('search', 'a-search-icon') %>
+    <input type="search" name="q" value="<%= searchQuery %>" placeholder="Поиск студентов, заданий..." autocomplete="off" aria-label="Глобальный поиск">
+    <div class="a-search-results" data-search-results hidden></div>
+  </form>
+
+  <div class="a-topbar-right">
+    <button class="a-icon-btn" type="button" data-theme-toggle aria-label="Переключить светлую/тёмную тему" title="Светлая / тёмная тема"><%- icon('theme') %></button>
+    <a class="a-icon-btn a-bell" href="/admin/submissions?tab=review" aria-label="Работ на проверке: <%= reviewCount %>" title="Работы на проверке">
+      <%- icon('bell') %><% if (reviewCount > 0) { %><span class="a-bell-dot"><%= reviewCount > 99 ? '99+' : reviewCount %></span><% } %>
+    </a>
+    <div class="a-user" data-dropdown>
+      <button class="a-user-btn" type="button" data-dropdown-toggle aria-haspopup="true" aria-expanded="false">
+        <span class="a-avatar"><%= view.initials(user.name) %></span>
+        <span class="a-user-name"><%= user.name %></span>
+        <%- icon('chevronDown', 'a-user-caret') %>
+      </button>
+      <div class="a-dropdown" data-dropdown-menu hidden>
+        <div class="a-dropdown-head">
+          <strong><%= user.name %></strong>
+          <span>Преподаватель</span>
+        </div>
+        <a href="/admin/settings"><%- icon('settings') %> Настройки</a>
+        <a href="/change-password"><%- icon('key') %> Сменить пароль</a>
+        <form method="post" action="/logout"><button type="submit"><%- icon('logout') %> Выйти</button></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="a-shell">
+  <%- include('sidebar') %>
+  <div class="a-sidebar-backdrop" data-sidebar-close hidden></div>
+  <main class="a-main" id="main">
+    <div class="a-container">
+      <% if (flash) { %>
+        <div class="a-flash a-flash-<%= flash.type %>" role="status" data-flash>
+          <%- icon(flash.type === 'error' ? 'alert' : 'review') %>
+          <span><%= flash.text %></span>
+          <button type="button" class="a-flash-close" data-flash-close aria-label="Закрыть"><%- icon('close') %></button>
+        </div>
+      <% } %>

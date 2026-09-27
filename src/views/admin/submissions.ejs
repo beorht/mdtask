@@ -1,0 +1,95 @@
+<%- include('partials/start') %>
+<%
+const tabs = [
+  { key: 'all', label: 'Все' },
+  { key: 'review', label: 'На проверке' },
+  { key: 'checked', label: 'Проверенные' },
+  { key: 'resubmissions', label: 'Пересдачи' },
+];
+const filterParams = { q: filters.q, course: filters.course, group: filters.group, status: filters.status, date: filters.date };
+%>
+
+<div class="a-page-head">
+  <div>
+    <h1>Работы студентов</h1>
+    <p class="a-subtitle">Все сданные работы — последняя версия каждой сдачи.</p>
+  </div>
+</div>
+
+<nav class="a-tabs" aria-label="Фильтр по состоянию">
+  <% tabs.forEach(function (t) { %>
+    <a href="/admin/submissions<%= view.queryString(filterParams, { tab: t.key === 'all' ? '' : t.key }) %>" class="a-tab<%= filters.tab === t.key ? ' is-active' : '' %>"<%= filters.tab === t.key ? ' aria-current=page' : '' %>>
+      <%= t.label %> <span class="a-tab-count"><%= counts[t.key] %></span>
+    </a>
+  <% }) %>
+</nav>
+
+<form class="a-filters" method="get" action="/admin/submissions" data-autosubmit>
+  <% if (filters.tab !== 'all') { %><input type="hidden" name="tab" value="<%= filters.tab %>"><% } %>
+  <label class="a-input-search">
+    <%- icon('search') %>
+    <input type="search" name="q" value="<%= filters.q %>" placeholder="Поиск студента или задания" aria-label="Поиск студента или задания">
+  </label>
+  <select name="course" aria-label="Курс">
+    <option value="">Все курсы</option>
+    <% courses.forEach(function (c) { %><option value="<%= c.id %>" <%= filters.course === c.id ? 'selected' : '' %>><%= c.title %></option><% }) %>
+  </select>
+  <select name="group" aria-label="Группа">
+    <option value="">Все группы</option>
+    <% groups.forEach(function (g) { %><option value="<%= g %>" <%= filters.group === g ? 'selected' : '' %>><%= g %></option><% }) %>
+  </select>
+  <select name="status" aria-label="Статус">
+    <option value="">Любой статус</option>
+    <% ['pending', 'resubmitted', 'done', 'not_done', 'sent_back'].forEach(function (k) { %>
+      <option value="<%= k %>" <%= filters.status === k ? 'selected' : '' %>><%= STATUS_META[k].label %></option>
+    <% }) %>
+  </select>
+  <select name="date" aria-label="Дата сдачи">
+    <option value="">За всё время</option>
+    <option value="today" <%= filters.date === 'today' ? 'selected' : '' %>>За сутки</option>
+    <option value="week" <%= filters.date === 'week' ? 'selected' : '' %>>За 7 дней</option>
+    <option value="month" <%= filters.date === 'month' ? 'selected' : '' %>>За 30 дней</option>
+  </select>
+  <button type="submit" class="a-btn a-btn-secondary a-noscript-only">Применить</button>
+  <% if (hasFilters) { %><a class="a-btn a-btn-ghost" href="/admin/submissions<%= view.queryString({ tab: filters.tab === 'all' ? '' : filters.tab }) %>">Сбросить</a><% } %>
+</form>
+
+<section class="a-card a-card-flush">
+  <% if (works.length === 0) { %>
+    <% if (hasFilters) { %>
+      <%- include('partials/empty', { emptyIcon: 'search', emptyTitle: 'Ничего не найдено', emptyText: 'Попробуйте изменить фильтры или поисковый запрос.', emptyHref: '/admin/submissions', emptyAction: 'Сбросить фильтры' }) %>
+    <% } else if (filters.tab === 'review') { %>
+      <%- include('partials/empty', { emptyIcon: 'review', emptyTitle: 'Нет работ для проверки', emptyText: 'Все отправленные работы уже проверены.', emptyHref: '/admin/assignments', emptyAction: 'Перейти к заданиям' }) %>
+    <% } else { %>
+      <%- include('partials/empty', { emptyIcon: 'inbox', emptyTitle: 'Работ пока нет', emptyText: 'Здесь появятся работы, как только студенты начнут сдавать задания.', emptyHref: '/admin/assignments', emptyAction: 'Перейти к заданиям' }) %>
+    <% } %>
+  <% } else { %>
+    <div class="a-table-wrap">
+      <table class="a-table a-table-cards">
+        <thead>
+          <tr><th>Студент</th><th>Задание</th><th>Курс</th><th>Группа</th><th>Дата сдачи</th><th>Статус</th><th class="a-col-action"><span class="a-sr">Действие</span></th></tr>
+        </thead>
+        <tbody>
+          <% works.forEach(function (w) { const needsReview = w.statusKey === 'pending' || w.statusKey === 'resubmitted'; %>
+            <tr data-href="/admin/submissions/<%= w.id %>">
+              <td data-label="Студент"><span class="a-person"><span class="a-avatar a-avatar-sm"><%= view.initials(w.student.name) %></span><%= w.student.name %></span></td>
+              <td data-label="Задание"><%= w.assignment.title %></td>
+              <td data-label="Курс" class="a-muted a-nowrap"><%= w.course ? w.course.title : '—' %></td>
+              <td data-label="Группа" class="a-muted"><%= w.student.group || '—' %></td>
+              <td data-label="Дата сдачи" class="a-nowrap" title="<%= view.formatDateTime(w.submittedAt) %>">
+                <%= view.formatDate(w.submittedAt) %><% if (w.late) { %> <span class="a-tag a-tag-warn">поздно</span><% } %>
+              </td>
+              <td data-label="Статус"><%- include('partials/status', { key: w.statusKey }) %></td>
+              <td class="a-col-action">
+                <a class="a-btn a-btn-sm <%= needsReview ? 'a-btn-primary' : 'a-btn-secondary' %>" href="/admin/submissions/<%= w.id %>"><%= needsReview ? 'Проверить' : 'Открыть' %></a>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <div class="a-card-foot a-muted">Показано: <%= works.length %></div>
+  <% } %>
+</section>
+
+<%- include('partials/end') %>

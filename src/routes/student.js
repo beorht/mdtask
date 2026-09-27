@@ -14,9 +14,9 @@ const {
   updateSubmissionFiles,
 } = require('../db');
 const { renderMarkdown, extractHeadings } = require('../lib/markdown');
+const { UPLOAD_DIR } = require('../lib/submission-files');
 
 const CONTENT_DIR = path.join(__dirname, '..', '..', 'content', 'src');
-const UPLOAD_DIR = path.join(__dirname, '..', '..', 'uploads');
 const ALLOWED_EXTENSIONS = ['.zip', '.rar'];
 
 const router = express.Router();
@@ -55,10 +55,17 @@ function canSubmit(assignment, latestSubmission) {
   if (!latestSubmission) return Date.now() <= new Date(assignment.dueDate).getTime();
   if (latestSubmission.status === 'done') return false;
   if (latestSubmission.status === 'pending') return true;
+  if (latestSubmission.resubmitAllowed) return true;
   return Date.now() <= new Date(assignment.dueDate).getTime();
 }
 
-router.get('/', requireRole('student'), (req, res) => {
+// "/" is the home link everywhere (error pages, brand); a teacher's home is the admin panel.
+function teacherHomeToAdmin(req, res, next) {
+  if (req.session.user && req.session.user.role === 'teacher') return res.redirect('/admin');
+  next();
+}
+
+router.get('/', teacherHomeToAdmin, requireRole('student'), (req, res) => {
   const user = req.session.user;
   const sidebarTree = buildSidebarTree({ role: 'student', studentId: user.id, studentGroup: user.group });
   const courses = getCourses();

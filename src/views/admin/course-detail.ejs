@@ -1,0 +1,43 @@
+<%- include('partials/start') %>
+
+<nav class="a-breadcrumbs" aria-label="Навигация"><a href="/admin/courses">Курсы</a><span>/</span><span><%= detail.course.title %></span></nav>
+
+<div class="a-page-head">
+  <div>
+    <h1><%= detail.course.title %></h1>
+    <p class="a-subtitle"><%= detail.teacher ? 'Преподаватель: ' + detail.teacher.name : '' %></p>
+  </div>
+  <a class="a-btn a-btn-primary" href="/admin/assignments/new?course=<%= detail.course.id %>"><%- icon('plus') %> Создать задание</a>
+</div>
+
+<div class="a-stats a-stats-sm">
+  <div class="a-stat"><span class="a-stat-value"><%= detail.assignments %></span><span class="a-stat-label">Заданий</span></div>
+  <div class="a-stat"><span class="a-stat-value"><%= detail.students %></span><span class="a-stat-label">Студентов</span></div>
+  <a class="a-stat<%= detail.pending ? ' a-stat-accent' : '' %>" href="/admin/submissions?tab=review&course=<%= detail.course.id %>"><span class="a-stat-value"><%= detail.pending %></span><span class="a-stat-label">На проверке</span></a>
+</div>
+
+<section class="a-card a-card-flush">
+  <div class="a-card-head a-card-head-pad"><h2>Задания курса</h2></div>
+  <% if (detail.rows.length === 0) { %>
+    <%- include('partials/empty', { emptyIcon: 'assignments', emptyTitle: 'В курсе пока нет заданий', emptyText: 'Создайте первое задание для этого курса.', emptyHref: '/admin/assignments/new?course=' + detail.course.id, emptyAction: 'Создать задание' }) %>
+  <% } else { %>
+    <div class="a-table-wrap">
+      <table class="a-table a-table-cards">
+        <thead><tr><th>Название</th><th>Назначено</th><th class="a-num">Сдано</th><th class="a-num">Проверено</th><th>Дедлайн</th></tr></thead>
+        <tbody>
+          <% detail.rows.forEach(function (r) { %>
+            <tr data-href="/admin/assignments/<%= r.assignment.id %>">
+              <td data-label="Название"><a class="a-row-title" href="/admin/assignments/<%= r.assignment.id %>"><%= r.assignment.title %></a><% if (r.stats.pending) { %> <span class="a-tag a-tag-accent"><%= r.stats.pending %> на проверке</span><% } %></td>
+              <td data-label="Назначено"><%= r.target.label %></td>
+              <td data-label="Сдано" class="a-num"><%= r.stats.submitted %><span class="a-muted"> / <%= r.stats.assigned %></span></td>
+              <td data-label="Проверено" class="a-num"><%= r.stats.checked %><span class="a-muted"> / <%= r.stats.submitted %></span></td>
+              <td data-label="Дедлайн" class="a-nowrap"><%= view.formatDate(r.assignment.dueDate) %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</section>
+
+<%- include('partials/end') %>

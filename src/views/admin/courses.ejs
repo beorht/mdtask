@@ -1,0 +1,31 @@
+<%- include('partials/start') %>
+
+<div class="a-page-head">
+  <div>
+    <h1>Курсы</h1>
+    <p class="a-subtitle">Курсы, их задания и студенты.</p>
+  </div>
+</div>
+
+<% if (rows.length === 0) { %>
+  <section class="a-card">
+    <%- include('partials/empty', { emptyIcon: 'courses', emptyTitle: 'Курсов пока нет', emptyText: 'Курсы создаются при настройке базы данных платформы.' }) %>
+  </section>
+<% } else { %>
+  <div class="a-course-grid">
+    <% rows.forEach(function (r) { %>
+      <a class="a-card a-course-card" href="/admin/courses/<%= r.course.id %>">
+        <span class="a-course-icon"><%- icon('book') %></span>
+        <h2><%= r.course.title %></h2>
+        <p class="a-muted"><%= r.assignments %> <%= view.plural(r.assignments, 'задание', 'задания', 'заданий') %> · <%= r.students %> <%= view.plural(r.students, 'студент', 'студента', 'студентов') %></p>
+        <% if (r.teacher) { %><p class="a-muted">Преподаватель: <%= r.teacher.name %></p><% } %>
+        <div class="a-course-foot">
+          <% if (r.pending) { %><span class="a-tag a-tag-accent"><%= r.pending %> на проверке</span><% } else { %><span class="a-muted">Нет работ на проверке</span><% } %>
+          <span class="a-link-btn">Открыть курс <%- icon('arrowRight') %></span>
+        </div>
+      </a>
+    <% }) %>
+  </div>
+<% } %>
+
+<%- include('partials/end') %>

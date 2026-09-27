@@ -1,0 +1,85 @@
+<%- include('partials/start') %>
+
+<nav class="a-breadcrumbs" aria-label="Навигация"><a href="/admin/assignments">Задания</a><span>/</span><span>Новое задание</span></nav>
+
+<div class="a-page-head">
+  <div>
+    <h1>Новое задание</h1>
+    <p class="a-subtitle">Задание появится у студентов сразу после создания.</p>
+  </div>
+</div>
+
+<% if (error) { %><div class="a-notice a-notice-error" role="alert"><%- icon('alert') %><span><%= error %></span></div><% } %>
+
+<form class="a-form-layout" method="post" action="/admin/assignments" data-assignment-form>
+  <section class="a-card a-form">
+    <h2>Основное</h2>
+    <label class="a-field">
+      <span class="a-field-label">Название <span class="a-req">*</span></span>
+      <input name="title" required value="<%= form.title || '' %>" placeholder="Например: Задача 16. Словарь покупок">
+    </label>
+
+    <div class="a-field-row">
+      <label class="a-field">
+        <span class="a-field-label">Курс <span class="a-req">*</span></span>
+        <select name="courseId" required>
+          <% courses.forEach(function (c) { %><option value="<%= c.id %>" <%= form.courseId === c.id ? 'selected' : '' %>><%= c.title %></option><% }) %>
+        </select>
+      </label>
+      <label class="a-field">
+        <span class="a-field-label">Дедлайн <span class="a-req">*</span></span>
+        <input type="date" name="dueDate" required value="<%= form.dueDate || '' %>">
+      </label>
+    </div>
+
+    <fieldset class="a-field">
+      <legend class="a-field-label">Кому назначить</legend>
+      <div class="a-segmented">
+        <label><input type="radio" name="targetType" value="group" <%= form.targetType !== 'individual' ? 'checked' : '' %> data-target-type> Группе</label>
+        <label><input type="radio" name="targetType" value="individual" <%= form.targetType === 'individual' ? 'checked' : '' %> data-target-type> Одному студенту</label>
+      </div>
+    </fieldset>
+
+    <div class="a-field-row" data-target-group>
+      <label class="a-field">
+        <span class="a-field-label">Группа</span>
+        <select name="targetGroup">
+          <option value="">Все группы</option>
+          <% groups.forEach(function (g) { %><option value="<%= g %>" <%= form.targetGroup === g ? 'selected' : '' %>><%= g %></option><% }) %>
+        </select>
+      </label>
+      <label class="a-field">
+        <span class="a-field-label">Раздел <span class="a-req">*</span></span>
+        <input name="sectionTitle" list="sectionOptions" value="<%= form.sectionTitle || '' %>" placeholder="Существующий или новый раздел">
+        <datalist id="sectionOptions"><% sections.forEach(function (s) { %><option value="<%= s.title %>"><% }) %></datalist>
+      </label>
+    </div>
+
+    <label class="a-field" data-target-individual hidden>
+      <span class="a-field-label">Студент <span class="a-req">*</span></span>
+      <select name="targetStudentId">
+        <option value="">Выберите студента</option>
+        <% students.forEach(function (s) { %><option value="<%= s.id %>" <%= form.targetStudentId === s.id ? 'selected' : '' %>><%= s.name %><%= s.group ? ' · ' + s.group : '' %></option><% }) %>
+      </select>
+    </label>
+  </section>
+
+  <section class="a-card a-form">
+    <div class="a-card-head">
+      <h2>Условие</h2>
+      <span class="a-muted">Markdown · можно заполнить позже</span>
+    </div>
+    <div class="a-editor">
+      <textarea id="editorSource" name="markdown" placeholder="# Название задания&#10;&#10;Опишите условие, критерии и формат сдачи…"><%= markdown %></textarea>
+      <div id="editorPreview" class="a-markdown a-editor-preview"></div>
+    </div>
+  </section>
+
+  <div class="a-form-actions">
+    <a class="a-btn a-btn-ghost" href="/admin/assignments">Отмена</a>
+    <button type="submit" class="a-btn a-btn-primary">Создать задание</button>
+  </div>
+</form>
+
+<script src="/js/editor-preview.js" defer></script>
+<%- include('partials/end') %>

@@ -2,12 +2,16 @@
 const MarkdownIt = require('markdown-it');
 const hljs = require('highlight.js');
 
+// Highlighted inner HTML only (already HTML-escaped by highlight.js).
+function highlightToHtml(code, lang) {
+  const language = lang && hljs.getLanguage(lang) ? lang : null;
+  const value = language ? hljs.highlight(code, { language }).value : hljs.highlightAuto(code).value;
+  return { value, language };
+}
+
 function highlightCode(code, lang) {
-  const language = hljs.getLanguage(lang) ? lang : null;
-  const highlighted = language
-    ? hljs.highlight(code, { language }).value
-    : hljs.highlightAuto(code).value;
-  return `<pre><code class="hljs${language ? ` language-${language}` : ''}">${highlighted}</code></pre>`;
+  const { value, language } = highlightToHtml(code, lang);
+  return `<pre><code class="hljs${language ? ` language-${language}` : ''}">${value}</code></pre>`;
 }
 
 const md = new MarkdownIt({ html: false, linkify: true, typographer: true, highlight: highlightCode });
@@ -62,4 +66,4 @@ function extractHeadings(text) {
   return headings;
 }
 
-module.exports = { renderMarkdown, extractHeadings, slugify };
+module.exports = { renderMarkdown, extractHeadings, slugify, highlightToHtml };

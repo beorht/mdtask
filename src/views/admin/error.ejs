@@ -1,0 +1,15 @@
+<%- include('partials/start') %>
+
+<section class="a-card a-error">
+  <div class="a-empty">
+    <div class="a-empty-icon a-empty-icon-warn"><%- icon('alert') %></div>
+    <h1><%= errorTitle %></h1>
+    <p><%= errorText %></p>
+    <div class="a-error-actions">
+      <% if (retry) { %><button type="button" class="a-btn a-btn-primary" onclick="location.reload()">Повторить</button><% } %>
+      <a class="a-btn a-btn-secondary" href="/admin">На Dashboard</a>
+    </div>
+  </div>
+</section>
+
+<%- include('partials/end') %>

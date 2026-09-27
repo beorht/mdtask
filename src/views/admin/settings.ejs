@@ -1,0 +1,47 @@
+<%- include('partials/start') %>
+
+<div class="a-page-head">
+  <div>
+    <h1>Настройки</h1>
+    <p class="a-subtitle">Профиль, безопасность и внешний вид панели.</p>
+  </div>
+</div>
+
+<div class="a-settings">
+  <section class="a-card">
+    <h2>Профиль</h2>
+    <div class="a-settings-row">
+      <span class="a-avatar a-avatar-lg"><%= view.initials(user.name) %></span>
+      <div>
+        <strong><%= user.name %></strong>
+        <p class="a-muted">Преподаватель · ID <code><%= user.id %></code></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="a-card">
+    <h2>Безопасность</h2>
+    <p class="a-muted">Пароль хранится в зашифрованном виде. Меняйте его, если кто-то мог его узнать.</p>
+    <a class="a-btn a-btn-secondary" href="/change-password"><%- icon('key') %> Сменить пароль</a>
+  </section>
+
+  <section class="a-card">
+    <h2>Внешний вид</h2>
+    <p class="a-muted">Тема сохраняется в этом браузере и применяется ко всей платформе.</p>
+    <div class="a-segmented" role="radiogroup" aria-label="Тема" data-theme-choice>
+      <label><input type="radio" name="theme" value="light"> Светлая</label>
+      <label><input type="radio" name="theme" value="dark"> Тёмная</label>
+    </div>
+  </section>
+
+  <section class="a-card">
+    <h2>О платформе</h2>
+    <dl class="a-dl">
+      <dt>Студентов</dt><dd><%= counts.students %></dd>
+      <dt>Заданий</dt><dd><%= counts.assignments %></dd>
+      <dt>Курсов</dt><dd><%= counts.courses %></dd>
+    </dl>
+  </section>
+</div>
+
+<%- include('partials/end') %>

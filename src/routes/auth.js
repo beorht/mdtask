@@ -19,7 +19,7 @@ router.post('/login', (req, res) => {
 
   req.session.user = user;
   if (user.mustChangePassword) return res.redirect('/change-password');
-  res.redirect(user.role === 'teacher' ? '/teacher' : '/');
+  res.redirect(user.role === 'teacher' ? '/admin' : '/');
 });
 
 router.get('/change-password', requireAuth, (req, res) => {
@@ -42,7 +42,7 @@ router.post('/change-password', requireAuth, (req, res) => {
 
   const updated = setUserPassword(req.session.user.id, newPassword);
   req.session.user = updated;
-  res.redirect(updated.role === 'teacher' ? '/teacher' : '/');
+  res.redirect(updated.role === 'teacher' ? '/admin' : '/');
 });
 
 router.post('/logout', (req, res) => {

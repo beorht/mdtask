@@ -38,6 +38,9 @@ addColumnIfMissing('users', 'password_hash', 'TEXT');
 addColumnIfMissing('users', 'password_salt', 'TEXT');
 addColumnIfMissing('users', 'must_change_password', "INTEGER NOT NULL DEFAULT 1");
 addColumnIfMissing('assignments', 'target_group', 'TEXT');
+// Set by the admin "На пересдачу" verdict: a not_done submission the student may
+// replace even after the due date (plain not_done only allows it before the deadline).
+addColumnIfMissing('submissions', 'resubmit_allowed', 'INTEGER NOT NULL DEFAULT 0');
 db.exec('CREATE INDEX IF NOT EXISTS idx_assignments_target_group ON assignments(target_group)');
 
 // Any account created before password auth existed (real, already-enrolled students/
@@ -108,6 +111,7 @@ function rowToSubmission(row) {
     checkedAt: row.checked_at,
     checkedBy: row.checked_by,
     parentSubmissionId: row.parent_submission_id,
+    resubmitAllowed: !!row.resubmit_allowed,
   };
 }
 
@@ -164,7 +168,7 @@ function getDistinctStudentGroups() {
 }
 
 function getSubmissions() {
-  return prepared('SELECT * FROM submissions').all().map(rowToSubmission);
+  return prepared('SELECT * FROM submissions ORDER BY rowid').all().map(rowToSubmission);
 }
 
 function updateSubmissionStatus(id, status, comment) {
@@ -172,6 +176,27 @@ function updateSubmissionStatus(id, status, comment) {
     .run(status, comment || null, new Date().toISOString(), id);
   if (result.changes === 0) return null;
   return rowToSubmission(prepared('SELECT * FROM submissions WHERE id = ?').get(id));
+}
+
+// Admin review verdict. 'resubmit' is stored as not_done + resubmit_allowed so the
+// student can upload a new attempt regardless of the due date.
+function reviewSubmission(id, verdict, comment, checkedBy) {
+  const status = verdict === 'done' ? 'done' : 'not_done';
+  const resubmitAllowed = verdict === 'resubmit' ? 1 : 0;
+  const result = prepared(
+    'UPDATE submissions SET status = ?, comment = ?, checked_at = ?, checked_by = ?, resubmit_allowed = ? WHERE id = ?'
+  ).run(status, comment || null, new Date().toISOString(), checkedBy || null, resubmitAllowed, id);
+  if (result.changes === 0) return null;
+  return rowToSubmission(prepared('SELECT * FROM submissions WHERE id = ?').get(id));
+}
+
+function getSubmissionById(id) {
+  const row = prepared('SELECT * FROM submissions WHERE id = ?').get(id);
+  return row ? rowToSubmission(row) : null;
+}
+
+function updateAssignmentMeta(id, { title, dueDate }) {
+  prepared('UPDATE assignments SET title = ?, due_date = ? WHERE id = ?').run(title, dueDate, id);
 }
 
 function reopenSubmission(id) {
@@ -342,6 +367,9 @@ module.exports = {
   getAssignmentsForStudent,
   getSubmissions,
   updateSubmissionStatus,
+  reviewSubmission,
+  getSubmissionById,
+  updateAssignmentMeta,
   reopenSubmission,
   createSubmission,
   getLatestSubmission,

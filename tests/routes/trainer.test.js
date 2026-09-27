@@ -94,16 +94,16 @@ test('teacher can view the results matrix for all students', async () => {
 
   await student.post(`/trainer/${first.id}/submit`).send({ sql: 'CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price REAL NOT NULL)' });
 
-  const res = await teacher.get('/teacher/trainer/results');
+  const res = await teacher.get('/admin/trainer/results');
   assert.strictEqual(res.status, 200);
   assert.match(res.text, /Иван Иванов/);
-  assert.match(res.text, /1 \/ \d+/);
+  assert.match(res.text, /<strong>1<\/strong><span class="a-muted"> \/ \d+/);
 });
 
 test('student cannot access the teacher results page', async () => {
   const app = createApp();
   const agent = await loginAs(app, 'student-1');
-  const res = await agent.get('/teacher/trainer/results');
+  const res = await agent.get('/admin/trainer/results');
   assert.strictEqual(res.status, 403);
 });
 
@@ -116,13 +116,13 @@ test('teacher can drill into a single student/exercise to see submitted queries 
   await student.post(`/trainer/${first.id}/submit`).send({ sql: 'CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT)' });
   await student.post(`/trainer/${first.id}/submit`).send({ sql: 'CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price REAL NOT NULL)' });
 
-  const res = await teacher.get(`/teacher/trainer/results/student-1/${first.id}`);
+  const res = await teacher.get(`/admin/trainer/student-1/${first.id}`);
   assert.strictEqual(res.status, 200);
   assert.match(res.text, /Иван Иванов/);
   assert.match(res.text, /История попыток \(2\)/);
   assert.match(res.text, /CREATE TABLE products \(id INTEGER PRIMARY KEY, name TEXT\)/);
-  assert.match(res.text, /✓ Верно/);
-  assert.match(res.text, /✕ Неверно/);
+  assert.match(res.text, /Верно</);
+  assert.match(res.text, /Неверно</);
 });
 
 test('attempt history shows the actual query result rows for a SELECT exercise', async () => {
@@ -133,7 +133,7 @@ test('attempt history shows the actual query result rows for a SELECT exercise',
 
   checkSolution('student-1', selectExercise, 'SELECT name, price FROM products');
 
-  const res = await teacher.get(`/teacher/trainer/results/student-1/${selectExercise.id}`);
+  const res = await teacher.get(`/admin/trainer/student-1/${selectExercise.id}`);
   assert.strictEqual(res.status, 200);
   assert.match(res.text, /<th>name<\/th>/);
   assert.match(res.text, /<th>price<\/th>/);
@@ -143,7 +143,7 @@ test('student cannot view another student\'s attempt history', async () => {
   const app = createApp();
   const agent = await loginAs(app, 'student-1');
   const first = db.getSqlExercises()[0];
-  const res = await agent.get(`/teacher/trainer/results/student-1/${first.id}`);
+  const res = await agent.get(`/admin/trainer/student-1/${first.id}`);
   assert.strictEqual(res.status, 403);
 });
 
@@ -151,7 +151,7 @@ test('attempt history 404s for an unknown student/exercise pair', async () => {
   const app = createApp();
   const teacher = await loginAs(app, 'teacher-1');
   const first = db.getSqlExercises()[0];
-  const res = await teacher.get(`/teacher/trainer/results/no-such-student/${first.id}`);
+  const res = await teacher.get(`/admin/trainer/no-such-student/${first.id}`);
   assert.strictEqual(res.status, 404);
 });
 

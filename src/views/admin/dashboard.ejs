@@ -1,0 +1,76 @@
+<%- include('partials/start') %>
+
+<div class="a-page-head">
+  <div>
+    <h1>Dashboard</h1>
+    <p class="a-subtitle">Добро пожаловать, <%= user.name.split(' ')[0] %>. Здесь отображается состояние учебного процесса.</p>
+  </div>
+</div>
+
+<div class="a-stats">
+  <a class="a-stat a-stat-accent" href="/admin/submissions?tab=review">
+    <span class="a-stat-value"><%= stats.pending %></span>
+    <span class="a-stat-label">На проверке</span>
+  </a>
+  <a class="a-stat" href="/admin/students">
+    <span class="a-stat-value"><%= stats.students %></span>
+    <span class="a-stat-label">Студентов</span>
+  </a>
+  <a class="a-stat" href="/admin/assignments">
+    <span class="a-stat-value"><%= stats.assignments %></span>
+    <span class="a-stat-label">Заданий</span>
+  </a>
+  <a class="a-stat<%= stats.overdue > 0 ? ' a-stat-warn' : '' %>" href="/admin/assignments?state=closed">
+    <span class="a-stat-value"><%= stats.overdue %></span>
+    <span class="a-stat-label">Просрочено</span>
+  </a>
+</div>
+
+<section class="a-card">
+  <div class="a-card-head">
+    <div>
+      <h2>Требуют проверки</h2>
+      <p class="a-muted"><%= queueTotal %> <%= view.plural(queueTotal, 'работа ждёт', 'работы ждут', 'работ ждут') %> проверки · сначала самые давние</p>
+    </div>
+    <a class="a-link-btn" href="/admin/submissions?tab=review">Все работы <%- icon('arrowRight') %></a>
+  </div>
+
+  <% if (queue.length === 0) { %>
+    <%- include('partials/empty', {
+      emptyIcon: 'review',
+      emptyTitle: 'Нет работ для проверки',
+      emptyText: 'Все отправленные работы уже проверены.',
+      emptyHref: '/admin/assignments',
+      emptyAction: 'Перейти к заданиям',
+    }) %>
+  <% } else { %>
+    <div class="a-table-wrap">
+      <table class="a-table a-table-cards">
+        <thead>
+          <tr><th>Студент</th><th>Задание</th><th>Курс</th><th>Отправлено</th><th>Статус</th><th class="a-col-action"><span class="a-sr">Действие</span></th></tr>
+        </thead>
+        <tbody>
+          <% queue.forEach(function (w) { %>
+            <tr data-href="/admin/submissions/<%= w.id %>">
+              <td data-label="Студент">
+                <span class="a-person"><span class="a-avatar a-avatar-sm"><%= view.initials(w.student.name) %></span><%= view.shortName(w.student.name) %></span>
+              </td>
+              <td data-label="Задание"><%= w.assignment.title %></td>
+              <td data-label="Курс" class="a-muted a-nowrap"><%= w.course ? w.course.title : '—' %></td>
+              <td data-label="Отправлено" class="a-muted" title="<%= view.formatDateTime(w.submittedAt) %>">
+                <%= view.relativeTime(w.submittedAt) %><% if (w.late) { %> <span class="a-tag a-tag-warn">после дедлайна</span><% } %>
+              </td>
+              <td data-label="Статус"><%- include('partials/status', { key: w.statusKey }) %></td>
+              <td class="a-col-action"><a class="a-btn a-btn-primary a-btn-sm" href="/admin/submissions/<%= w.id %>">Проверить</a></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <% if (queueTotal > queue.length) { %>
+      <div class="a-card-foot"><a class="a-link-btn" href="/admin/submissions?tab=review">Показать все <%= queueTotal %> <%- icon('arrowRight') %></a></div>
+    <% } %>
+  <% } %>
+</section>
+
+<%- include('partials/end') %>

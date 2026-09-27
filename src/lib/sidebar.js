@@ -95,7 +95,7 @@ function buildSidebarTree({ role, studentId, studentGroup }) {
   });
 
   if (role === 'teacher') {
-    topicChildren.push({ title: 'Результаты тренажёра', href: '/teacher/trainer/results', children: [] });
+    topicChildren.push({ title: 'Результаты тренажёра', href: '/admin/trainer/results', children: [] });
   }
 
   const trainerSection = {

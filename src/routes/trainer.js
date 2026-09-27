@@ -2,7 +2,7 @@ const express = require('express');
 const { requireRole, requireAuth } = require('../middleware/auth');
 const { buildSidebarTree } = require('../lib/sidebar');
 const { runPreview, checkSolution, getTableSchema, getTableData } = require('../lib/sql-sandbox');
-const { getSqlExercises, getSqlAttempts, getSolvedSqlExerciseIds, getUsers, getAllSqlAttempts } = require('../db');
+const { getSqlExercises, getSqlAttempts, getSolvedSqlExerciseIds } = require('../db');
 const { renderMarkdown } = require('../lib/markdown');
 const { TOPIC_THEORY } = require('../content/sql-theory');
 const { TOPIC_LABELS, getAllowedTopicKeys, getTopicsForUser } = require('../lib/sql-topics');
@@ -204,52 +204,11 @@ router.post('/trainer/:id/submit', requireRole('student'), findExerciseWithProgr
   });
 });
 
-// --- Teacher: results across all students/exercises ---
+// --- Teacher views moved to the admin panel; old links keep working ---
 
-router.get('/teacher/trainer/results', requireRole('teacher'), (req, res) => {
-  const exercises = getSqlExercises();
-  const students = getUsers().filter((u) => u.role === 'student');
-  const attempts = getAllSqlAttempts();
-
-  const rows = students.map((student) => {
-    const studentAttempts = attempts.filter((a) => a.studentId === student.id);
-    const cells = exercises.map((ex) => {
-      const forExercise = studentAttempts.filter((a) => a.exerciseId === ex.id);
-      const solved = forExercise.some((a) => a.isCorrect);
-      const errors = forExercise.filter((a) => a.isError).length;
-      return { exerciseId: ex.id, attempts: forExercise.length, errors, solved };
-    });
-    const solvedCount = cells.filter((c) => c.solved).length;
-    return { student, cells, solvedCount };
-  });
-
-  res.render('trainer/results', {
-    user: req.session.user,
-    sidebarTree: sidebarForRequest(req),
-    exercises,
-    rows,
-    activeAssignmentId: null,
-    activePath: '/teacher/trainer/results',
-  });
-});
-
-router.get('/teacher/trainer/results/:studentId/:exerciseId', requireRole('teacher'), (req, res) => {
-  const student = getUsers().find((u) => u.id === req.params.studentId && u.role === 'student');
-  const exercise = getSqlExercises().find((e) => e.id === req.params.exerciseId);
-  if (!student || !exercise) return res.status(404).render('404');
-
-  const attempts = getSqlAttempts(exercise.id, student.id);
-
-  res.render('trainer/attempt-history', {
-    user: req.session.user,
-    sidebarTree: sidebarForRequest(req),
-    student,
-    exercise: { ...exercise, descriptionHtml: renderMarkdown(exercise.descriptionMd) },
-    topicLabel: TOPIC_LABELS[exercise.topic],
-    attempts,
-    activeAssignmentId: null,
-    activePath: '/teacher/trainer/results',
-  });
-});
+router.get('/teacher/trainer/results', requireRole('teacher'), (req, res) => res.redirect('/admin/trainer/results'));
+router.get('/teacher/trainer/results/:studentId/:exerciseId', requireRole('teacher'), (req, res) =>
+  res.redirect(`/admin/trainer/${encodeURIComponent(req.params.studentId)}/${encodeURIComponent(req.params.exerciseId)}`)
+);
 
 module.exports = router;

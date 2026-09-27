@@ -1,0 +1,180 @@
+<%- include('partials/start') %>
+<%
+const checked = submission.status !== 'pending';
+const currentVerdict = submission.status === 'done' ? 'done' : submission.status === 'not_done' ? (submission.resubmitAllowed ? 'resubmit' : 'not_done') : '';
+%>
+
+<div class="a-review-bar">
+  <a class="a-btn a-btn-ghost" href="/admin/submissions<%= statusKey === 'pending' || statusKey === 'resubmitted' ? '?tab=review' : '' %>"><%- icon('arrowLeft') %> Назад</a>
+  <div class="a-review-bar-title">
+    <h1>Проверка работы</h1>
+    <% if (queuePosition) { %><span class="a-muted">Работа <%= queuePosition %> из <%= queueLength %> в очереди</span><% } else if (queueLength) { %><span class="a-muted">В очереди: <%= queueLength %></span><% } %>
+  </div>
+  <% if (next) { %>
+    <a class="a-btn a-btn-secondary" href="/admin/submissions/<%= next.id %>" title="<%= next.student.name %> — <%= next.assignment.title %>">Следующая работа <%- icon('arrowRight') %></a>
+  <% } else { %>
+    <span class="a-btn a-btn-secondary is-disabled" aria-disabled="true">Следующая работа <%- icon('arrowRight') %></span>
+  <% } %>
+</div>
+
+<% if (!isLatest) { %>
+  <div class="a-notice a-notice-warn">
+    <%- icon('alert') %>
+    <span>Это старая версия сдачи. Студент уже отправил более новую.</span>
+    <a href="/admin/submissions/<%= latestId %>">Открыть актуальную →</a>
+  </div>
+<% } %>
+
+<div class="a-review">
+  <div class="a-review-work">
+    <section class="a-card">
+      <div class="a-info-grid">
+        <div class="a-info">
+          <span class="a-info-label">Студент</span>
+          <a class="a-info-value a-person" href="/admin/students/<%= student.id %>"><span class="a-avatar a-avatar-sm"><%= view.initials(student.name) %></span><%= student.name %></a>
+          <span class="a-muted"><%= student.group ? 'Группа ' + student.group : 'Без группы' %></span>
+        </div>
+        <div class="a-info">
+          <span class="a-info-label">Задание</span>
+          <a class="a-info-value" href="/admin/assignments/<%= assignment.id %>"><%= assignment.title %></a>
+          <span class="a-muted"><%= course ? course.title : '' %></span>
+        </div>
+        <div class="a-info">
+          <span class="a-info-label">Дата сдачи</span>
+          <span class="a-info-value"><%= view.formatDateTime(submission.submittedAt) %></span>
+          <span class="<%= late ? 'a-text-warn' : 'a-muted' %>">Дедлайн <%= view.formatDate(assignment.dueDate) %><%= late ? ' · сдано позже' : '' %></span>
+        </div>
+        <div class="a-info">
+          <span class="a-info-label">Статус</span>
+          <span class="a-info-value"><%- include('partials/status', { key: statusKey }) %></span>
+          <% if (submission.checkedAt) { %><span class="a-muted">Проверено <%= view.formatDateTime(submission.checkedAt) %></span><% } %>
+        </div>
+      </div>
+    </section>
+
+    <section class="a-card">
+      <div class="a-card-head">
+        <h2>Файлы</h2>
+        <span class="a-muted"><%= files.length %> <%= view.plural(files.length, 'файл', 'файла', 'файлов') %></span>
+      </div>
+      <% if (files.length === 0) { %>
+        <%- include('partials/empty', { emptyIcon: 'file', emptyTitle: 'Файлов нет', emptyText: 'Студент отправил работу без файлов.' }) %>
+      <% } else { %>
+        <ul class="a-files">
+          <% files.forEach(function (f) { %>
+            <li class="a-file<%= f.selected ? ' is-open' : '' %>">
+              <div class="a-file-row">
+                <span class="a-file-icon"><%- icon(f.zip ? 'archive' : 'file') %></span>
+                <span class="a-file-name"><%= f.name %></span>
+                <% if (!f.available) { %>
+                  <span class="a-tag a-tag-warn">нет на сервере</span>
+                <% } else { %>
+                  <% if (f.zip && f.entries && f.entries.length) { %><span class="a-muted"><%= f.entries.length %> <%= view.plural(f.entries.length, 'файл', 'файла', 'файлов') %> внутри</span><% } %>
+                  <a class="a-btn a-btn-secondary a-btn-sm" href="/admin/submissions/<%= submission.id %>/files/<%= f.index %>" download><%- icon('download') %> Скачать</a>
+                <% } %>
+              </div>
+              <% if (f.available && f.zip) { %>
+                <% if (f.listError) { %>
+                  <p class="a-muted a-file-note"><%= f.listError %> — скачайте файл, чтобы открыть его локально.</p>
+                <% } else if (f.entries.length) { %>
+                  <ul class="a-tree">
+                    <% f.entries.forEach(function (e) { %>
+                      <li>
+                        <% if (e.previewable) { %>
+                          <a href="/admin/submissions/<%= submission.id %>?file=<%= f.index %>&entry=<%= e.index %>#preview" class="<%= f.selected && f.selectedEntry === e.index ? 'is-active' : '' %>"><%- icon('file') %><span><%= e.name %></span></a>
+                        <% } else { %>
+                          <span class="a-tree-disabled" title="Этот файл нельзя просмотреть в браузере"><%- icon('file') %><span><%= e.name %></span></span>
+                        <% } %>
+                        <span class="a-tree-size"><%= view.formatSize(e.size) %></span>
+                      </li>
+                    <% }) %>
+                  </ul>
+                <% } %>
+              <% } else if (f.available) { %>
+                <p class="a-muted a-file-note">RAR-архивы нельзя открыть в браузере — скачайте файл.</p>
+              <% } %>
+            </li>
+          <% }) %>
+        </ul>
+      <% } %>
+    </section>
+
+    <section class="a-card a-card-flush" id="preview">
+      <% if (preview && preview.html !== undefined) { %>
+        <div class="a-code-head">
+          <span class="a-code-name"><%- icon('file') %><%= preview.entry.name %></span>
+          <span class="a-muted"><%= preview.lineCount %> <%= view.plural(preview.lineCount, 'строка', 'строки', 'строк') %> · <%= view.formatSize(preview.entry.size) %></span>
+        </div>
+        <div class="a-code">
+          <pre class="a-code-gutter" aria-hidden="true"><% for (let i = 1; i <= preview.lineCount; i++) { %><%= i %>
+<% } %></pre>
+          <pre class="a-code-body"><code class="hljs"><%- preview.html %></code></pre>
+        </div>
+      <% } else if (preview && preview.error) { %>
+        <%- include('partials/empty', { emptyIcon: 'eye', emptyTitle: 'Не удалось показать файл', emptyText: preview.error }) %>
+      <% } else { %>
+        <%- include('partials/empty', { emptyIcon: 'eye', emptyTitle: 'Просмотр работы', emptyText: files.some(function (f) { return f.zip; }) ? 'Выберите файл в архиве, чтобы посмотреть его содержимое.' : 'В работе нет файлов, которые можно открыть в браузере. Скачайте архив для проверки.' }) %>
+      <% } %>
+    </section>
+
+    <details class="a-card a-collapse">
+      <summary><h2>Условие задания</h2><%- icon('chevronDown') %></summary>
+      <div class="a-markdown"><%- conditionHtml %></div>
+    </details>
+
+    <% if (history.length > 1) { %>
+      <section class="a-card">
+        <div class="a-card-head"><h2>История сдач</h2></div>
+        <ul class="a-timeline">
+          <% history.forEach(function (h) { %>
+            <li class="<%= h.submission.id === submission.id ? 'is-current' : '' %>">
+              <a href="/admin/submissions/<%= h.submission.id %>"><%= view.formatDateTime(h.submission.submittedAt) %></a>
+              <%- include('partials/status', { key: h.statusKey }) %>
+              <% if (h.submission.comment) { %><p class="a-muted">«<%= h.submission.comment %>»</p><% } %>
+            </li>
+          <% }) %>
+        </ul>
+      </section>
+    <% } %>
+  </div>
+
+  <aside class="a-review-panel">
+    <form class="a-card a-panel" method="post" action="/admin/submissions/<%= submission.id %>/review" data-review-form data-checked="<%= checked ? '1' : '' %>" data-current-verdict="<%= currentVerdict %>">
+      <h2>Результат проверки</h2>
+
+      <fieldset class="a-verdicts">
+        <legend>Статус</legend>
+        <label class="a-verdict a-verdict-done">
+          <input type="radio" name="verdict" value="done" <%= currentVerdict === 'done' ? 'checked' : '' %> required>
+          <span class="a-verdict-icon">✓</span><span>Выполнено</span>
+        </label>
+        <label class="a-verdict a-verdict-failed">
+          <input type="radio" name="verdict" value="not_done" <%= currentVerdict === 'not_done' ? 'checked' : '' %>>
+          <span class="a-verdict-icon">×</span><span>Не выполнено</span>
+        </label>
+        <label class="a-verdict a-verdict-warning">
+          <input type="radio" name="verdict" value="resubmit" <%= currentVerdict === 'resubmit' ? 'checked' : '' %>>
+          <span class="a-verdict-icon">↻</span><span>На пересдачу</span>
+        </label>
+      </fieldset>
+      <p class="a-hint" data-verdict-hint></p>
+
+      <label class="a-field">
+        <span class="a-field-label">Комментарий</span>
+        <textarea name="comment" rows="6" placeholder="Что хорошо, что исправить…"><%= submission.comment || '' %></textarea>
+      </label>
+
+      <div class="a-panel-actions">
+        <% if (next) { %>
+          <button type="submit" name="next" value="1" class="a-btn a-btn-primary a-btn-block" data-primary-submit>Сохранить и открыть следующую</button>
+          <button type="submit" name="next" value="0" class="a-btn a-btn-secondary a-btn-block">Сохранить и остаться</button>
+        <% } else { %>
+          <button type="submit" name="next" value="0" class="a-btn a-btn-primary a-btn-block" data-primary-submit>Сохранить результат</button>
+        <% } %>
+      </div>
+      <p class="a-hint"><kbd>Ctrl</kbd> + <kbd>Enter</kbd> — <%= next ? 'сохранить и перейти к следующей' : 'сохранить' %></p>
+    </form>
+  </aside>
+</div>
+
+<%- include('partials/end') %>
