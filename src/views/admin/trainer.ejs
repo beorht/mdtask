@@ -1,0 +1,58 @@
+<%- include('partials/start') %>
+
+<div class="a-page-head">
+  <div>
+    <h1>Тренажёр SQL</h1>
+    <p class="a-subtitle"><%= overview.totalExercises %> <%= view.plural(overview.totalExercises, 'упражнение', 'упражнения', 'упражнений') %> в <%= overview.topics.length %> темах · <%= overview.attemptCount %> <%= view.plural(overview.attemptCount, 'попытка', 'попытки', 'попыток') %> всего</p>
+  </div>
+  <div class="a-head-actions">
+    <a class="a-btn a-btn-secondary" href="/trainer/theory"><%- icon('book') %> Теория</a>
+    <a class="a-btn a-btn-secondary" href="/admin/trainer/results">Результаты по упражнениям</a>
+  </div>
+</div>
+
+<form class="a-filters" method="get" action="/admin/trainer" data-autosubmit>
+  <label class="a-input-search">
+    <%- icon('search') %>
+    <input type="search" name="q" value="<%= filters.q %>" placeholder="Поиск студента" aria-label="Поиск студента">
+  </label>
+  <select name="group" aria-label="Группа">
+    <option value="">Все группы</option>
+    <% groups.forEach(function (g) { %><option value="<%= g %>" <%= filters.group === g ? 'selected' : '' %>><%= g %></option><% }) %>
+  </select>
+  <button type="submit" class="a-btn a-btn-secondary a-noscript-only">Применить</button>
+  <% if (filters.q || filters.group) { %><a class="a-btn a-btn-ghost" href="/admin/trainer">Сбросить</a><% } %>
+</form>
+
+<section class="a-card a-card-flush">
+  <% if (overview.rows.length === 0) { %>
+    <%- include('partials/empty', { emptyIcon: 'trainer', emptyTitle: 'Нет данных', emptyText: 'Нет студентов под выбранный фильтр.', emptyHref: '/admin/trainer', emptyAction: 'Сбросить фильтры' }) %>
+  <% } else { %>
+    <div class="a-table-wrap">
+      <table class="a-table a-trainer-table">
+        <thead>
+          <tr>
+            <th>Студент</th>
+            <th class="a-num">Решено</th>
+            <% overview.topics.forEach(function (t) { %><th class="a-num a-th-topic" title="<%= t.label %>"><%= t.label %></th><% }) %>
+            <th>Активность</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% overview.rows.forEach(function (r) { const pct = overview.totalExercises ? Math.round((r.solved / overview.totalExercises) * 100) : 0; %>
+            <tr data-href="/admin/students/<%= r.student.id %>">
+              <td><a class="a-person" href="/admin/students/<%= r.student.id %>"><span class="a-avatar a-avatar-sm"><%= view.initials(r.student.name) %></span><%= r.student.name %></a> <span class="a-muted"><%= r.student.group || '' %></span></td>
+              <td class="a-num"><strong><%= r.solved %></strong><span class="a-muted"> · <%= pct %>%</span></td>
+              <% r.byTopic.forEach(function (c) { const full = c.total && c.solved === c.total; %>
+                <td class="a-num"><span class="a-cell-progress<%= full ? ' is-full' : c.solved ? ' is-part' : '' %>"><%= c.solved %>/<%= c.total %></span></td>
+              <% }) %>
+              <td class="a-muted a-nowrap"><%= r.lastActivity ? view.relativeTime(r.lastActivity) : '—' %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</section>
+
+<%- include('partials/end') %>

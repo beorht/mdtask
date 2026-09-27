@@ -1,0 +1,60 @@
+<%- include('partials/start') %>
+<% const total = result.students.length + result.assignments.length + result.courses.length + result.works.length; %>
+
+<div class="a-page-head">
+  <div>
+    <h1>Поиск</h1>
+    <p class="a-subtitle"><%= result.query ? 'По запросу «' + result.query + '» найдено: ' + total : 'Введите имя студента, название задания или курса.' %></p>
+  </div>
+</div>
+
+<% if (!result.query) { %>
+  <section class="a-card"><%- include('partials/empty', { emptyIcon: 'search', emptyTitle: 'Начните поиск', emptyText: 'Поиск работает одновременно по студентам, заданиям, курсам и сданным работам.' }) %></section>
+<% } else if (total === 0) { %>
+  <section class="a-card"><%- include('partials/empty', { emptyIcon: 'search', emptyTitle: 'Ничего не найдено', emptyText: 'Проверьте написание или попробуйте часть имени/названия.', emptyHref: '/admin/submissions', emptyAction: 'Все работы студентов' }) %></section>
+<% } else { %>
+  <div class="a-search-page">
+    <% if (result.works.length) { %>
+      <section class="a-card">
+        <h2>Работы</h2>
+        <ul class="a-result-list">
+          <% result.works.forEach(function (w) { %>
+            <li><a href="/admin/submissions/<%= w.id %>"><span><%= w.student.name %> — <%= w.assignment.title %></span><%- include('partials/status', { key: w.statusKey }) %></a></li>
+          <% }) %>
+        </ul>
+      </section>
+    <% } %>
+    <% if (result.students.length) { %>
+      <section class="a-card">
+        <h2>Студенты</h2>
+        <ul class="a-result-list">
+          <% result.students.forEach(function (s) { %>
+            <li><a href="/admin/students/<%= s.id %>"><span class="a-person"><span class="a-avatar a-avatar-sm"><%= view.initials(s.name) %></span><%= s.name %></span><span class="a-muted"><%= s.group || '' %></span></a></li>
+          <% }) %>
+        </ul>
+      </section>
+    <% } %>
+    <% if (result.assignments.length) { %>
+      <section class="a-card">
+        <h2>Задания</h2>
+        <ul class="a-result-list">
+          <% result.assignments.forEach(function (a) { %>
+            <li><a href="/admin/assignments/<%= a.id %>"><span><%= a.title %></span><span class="a-muted">до <%= view.formatDate(a.dueDate) %></span></a></li>
+          <% }) %>
+        </ul>
+      </section>
+    <% } %>
+    <% if (result.courses.length) { %>
+      <section class="a-card">
+        <h2>Курсы</h2>
+        <ul class="a-result-list">
+          <% result.courses.forEach(function (c) { %>
+            <li><a href="/admin/courses/<%= c.id %>"><span><%= c.title %></span></a></li>
+          <% }) %>
+        </ul>
+      </section>
+    <% } %>
+  </div>
+<% } %>
+
+<%- include('partials/end') %>

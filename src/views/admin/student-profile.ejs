@@ -1,0 +1,76 @@
+<%- include('partials/start') %>
+<%
+const p = profile;
+const pct = p.total ? Math.round((p.done / p.total) * 100) : 0;
+const trainerPct = p.trainer.total ? Math.round((p.trainer.solved / p.trainer.total) * 100) : 0;
+const pendingCount = p.assignments.filter(function (a) { return a.statusKey === 'pending' || a.statusKey === 'resubmitted'; }).length;
+const overdueCount = p.assignments.filter(function (a) { return a.statusKey === 'overdue'; }).length;
+%>
+
+<nav class="a-breadcrumbs" aria-label="Навигация"><a href="/admin/students">Студенты</a><span>/</span><span><%= p.student.name %></span></nav>
+
+<div class="a-profile-head a-card">
+  <span class="a-avatar a-avatar-lg"><%= view.initials(p.student.name) %></span>
+  <div class="a-profile-main">
+    <h1><%= p.student.name %></h1>
+    <p class="a-muted">ID <code><%= p.student.id %></code> · <%= p.student.group ? 'группа ' + p.student.group : 'без группы' %></p>
+  </div>
+  <div class="a-profile-progress">
+    <div class="a-progress-label"><span>Задания</span><strong><%= p.done %> / <%= p.total %></strong></div>
+    <div class="a-progress a-progress-lg"><span style="width: <%= pct %>%"></span></div>
+    <div class="a-progress-label"><span>Тренажёр SQL</span><strong><%= p.trainer.solved %> / <%= p.trainer.total %></strong></div>
+    <div class="a-progress a-progress-lg"><span style="width: <%= trainerPct %>%"></span></div>
+  </div>
+</div>
+
+<div class="a-stats a-stats-sm">
+  <div class="a-stat"><span class="a-stat-value"><%= p.total %></span><span class="a-stat-label">Назначено</span></div>
+  <div class="a-stat"><span class="a-stat-value"><%= p.done %></span><span class="a-stat-label">Выполнено</span></div>
+  <div class="a-stat<%= pendingCount ? ' a-stat-accent' : '' %>"><span class="a-stat-value"><%= pendingCount %></span><span class="a-stat-label">На проверке</span></div>
+  <div class="a-stat<%= overdueCount ? ' a-stat-warn' : '' %>"><span class="a-stat-value"><%= overdueCount %></span><span class="a-stat-label">Просрочено</span></div>
+</div>
+
+<section class="a-card a-card-flush">
+  <div class="a-card-head a-card-head-pad"><h2>Задания</h2></div>
+  <% if (p.assignments.length === 0) { %>
+    <%- include('partials/empty', { emptyIcon: 'assignments', emptyTitle: 'Заданий нет', emptyText: 'Студенту пока не назначено ни одного задания.' }) %>
+  <% } else { %>
+    <div class="a-table-wrap">
+      <table class="a-table a-table-cards">
+        <thead><tr><th>Задание</th><th>Курс</th><th>Дедлайн</th><th>Сдано</th><th>Статус</th><th class="a-col-action"><span class="a-sr">Действие</span></th></tr></thead>
+        <tbody>
+          <% p.assignments.forEach(function (row) { %>
+            <tr<% if (row.submission) { %> data-href="/admin/submissions/<%= row.submission.id %>"<% } %>>
+              <td data-label="Задание"><a href="/admin/assignments/<%= row.assignment.id %>"><%= row.assignment.title %></a></td>
+              <td data-label="Курс" class="a-muted a-nowrap"><%= row.course ? row.course.title : '—' %></td>
+              <td data-label="Дедлайн" class="a-nowrap"><%= view.formatDate(row.assignment.dueDate) %></td>
+              <td data-label="Сдано" class="a-nowrap a-muted"><%= row.submission ? view.formatDateTime(row.submission.submittedAt) : '—' %></td>
+              <td data-label="Статус"><%- include('partials/status', { key: row.statusKey }) %></td>
+              <td class="a-col-action"><% if (row.submission) { %><a class="a-btn a-btn-sm <%= row.submission.status === 'pending' ? 'a-btn-primary' : 'a-btn-secondary' %>" href="/admin/submissions/<%= row.submission.id %>"><%= row.submission.status === 'pending' ? 'Проверить' : 'Открыть' %></a><% } %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</section>
+
+<section class="a-card">
+  <div class="a-card-head"><h2>История сдач</h2></div>
+  <% if (p.history.length === 0) { %>
+    <%- include('partials/empty', { emptyIcon: 'clock', emptyTitle: 'Сдач пока нет', emptyText: 'Студент ещё не отправил ни одной работы.' }) %>
+  <% } else { %>
+    <ul class="a-timeline">
+      <% p.history.forEach(function (h) { %>
+        <li>
+          <span class="a-muted a-nowrap"><%= view.formatDateTime(h.submission.submittedAt) %></span>
+          <a href="/admin/submissions/<%= h.submission.id %>"><%= h.assignment.title %></a>
+          <%- include('partials/status', { key: h.statusKey }) %>
+          <% if (h.submission.comment) { %><p class="a-muted">«<%= h.submission.comment %>»</p><% } %>
+        </li>
+      <% }) %>
+    </ul>
+  <% } %>
+</section>
+
+<%- include('partials/end') %>

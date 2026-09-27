@@ -1,0 +1,31 @@
+<%
+const navItem = function (key, href, label, iconName, badge) {
+  const active = nav === key;
+  return `<a href="${href}" class="a-nav-item${active ? ' is-active' : ''}"${active ? ' aria-current="page"' : ''}>`
+    + icon(iconName) + `<span>${label}</span>`
+    + (badge ? `<span class="a-nav-badge">${badge}</span>` : '')
+    + '</a>';
+};
+%>
+<nav class="a-sidebar" id="adminSidebar" aria-label="Разделы панели">
+  <div class="a-nav-group">
+    <%- navItem('dashboard', '/admin', 'Dashboard', 'dashboard') %>
+  </div>
+  <div class="a-nav-group">
+    <div class="a-nav-label">Обучение</div>
+    <%- navItem('courses', '/admin/courses', 'Курсы', 'courses') %>
+    <%- navItem('assignments', '/admin/assignments', 'Задания', 'assignments') %>
+    <%- navItem('students', '/admin/students', 'Студенты', 'students') %>
+  </div>
+  <div class="a-nav-group">
+    <div class="a-nav-label">Проверка</div>
+    <%- navItem('submissions', '/admin/submissions', 'Работы студентов', 'review', reviewCount > 0 ? reviewCount : '') %>
+  </div>
+  <div class="a-nav-group">
+    <%- navItem('trainer', '/admin/trainer', 'Тренажёр', 'trainer') %>
+  </div>
+  <div class="a-nav-spacer"></div>
+  <div class="a-nav-group">
+    <%- navItem('settings', '/admin/settings', 'Настройки', 'settings') %>
+  </div>
+</nav>

@@ -34,11 +34,12 @@ function seedAssignment({
   mdPath,
   targetType = 'group',
   targetStudentId = null,
+  targetGroup = null,
   dueDate = '2026-12-31',
   markdown,
 }) {
   if (markdown !== undefined) writeAssignmentMd(mdPath, markdown);
-  return db.createAssignment({ courseId, title, mdPath, targetType, targetStudentId, dueDate });
+  return db.createAssignment({ courseId, title, mdPath, targetType, targetStudentId, targetGroup, dueDate });
 }
 
 function seedSubmission(opts) {

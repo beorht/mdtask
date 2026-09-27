@@ -1,0 +1,6 @@
+<div class="a-empty">
+  <div class="a-empty-icon"><%- icon(typeof emptyIcon !== 'undefined' ? emptyIcon : 'inbox') %></div>
+  <h3><%= emptyTitle %></h3>
+  <% if (typeof emptyText !== 'undefined' && emptyText) { %><p><%= emptyText %></p><% } %>
+  <% if (typeof emptyHref !== 'undefined' && emptyHref) { %><a class="a-btn a-btn-secondary" href="<%= emptyHref %>"><%= emptyAction %></a><% } %>
+</div>

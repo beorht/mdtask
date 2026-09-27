@@ -48,4 +48,10 @@ function listGroupSections(summaryText) {
     .filter(Boolean);
 }
 
-module.exports = { addEntryToSummary, listGroupSections, INDIVIDUAL_SECTION_TITLE };
+// Renames the entry pointing at `mdPath`, keeping its indentation and position.
+function renameEntryInSummary(summaryText, { mdPath, title }) {
+  const pattern = new RegExp(`^(\\s*-\\s*\\[)[^\\]]*(\\]\\(${escapeRegExp(mdPath)}\\))`, 'm');
+  return summaryText.replace(pattern, (_, before, after) => `${before}${title.replace(/[\[\]]/g, '')}${after}`);
+}
+
+module.exports = { addEntryToSummary, renameEntryInSummary, listGroupSections, INDIVIDUAL_SECTION_TITLE };

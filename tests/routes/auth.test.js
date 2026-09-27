@@ -37,11 +37,11 @@ test('POST /login with a valid student id and password redirects to student dash
   assert.strictEqual(res.headers.location, '/');
 });
 
-test('POST /login with a valid teacher id and password redirects to teacher dashboard', async () => {
+test('POST /login with a valid teacher id and password redirects to the admin panel', async () => {
   const app = createApp();
   const res = await request(app).post('/login').send({ studentId: 'teacher-1', password: DEFAULT_PASSWORD });
   assert.strictEqual(res.status, 302);
-  assert.strictEqual(res.headers.location, '/teacher');
+  assert.strictEqual(res.headers.location, '/admin');
 });
 
 test('a user who must change their password is redirected to /change-password on login and blocked elsewhere', async () => {
@@ -76,7 +76,7 @@ test('changing the password clears the forced flag and unlocks the dashboard', a
 
 test('requireRole blocks access without a session', async () => {
   const app = createApp();
-  const res = await request(app).get('/teacher');
+  const res = await request(app).get('/admin');
   assert.strictEqual(res.status, 302);
   assert.strictEqual(res.headers.location, '/login');
 });

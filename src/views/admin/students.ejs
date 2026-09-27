@@ -1,0 +1,51 @@
+<%- include('partials/start') %>
+
+<div class="a-page-head">
+  <div>
+    <h1>Студенты</h1>
+    <p class="a-subtitle">Прогресс по заданиям и последняя активность.</p>
+  </div>
+</div>
+
+<form class="a-filters" method="get" action="/admin/students" data-autosubmit>
+  <label class="a-input-search">
+    <%- icon('search') %>
+    <input type="search" name="q" value="<%= filters.q %>" placeholder="Поиск по имени или ID" aria-label="Поиск студента">
+  </label>
+  <select name="group" aria-label="Группа">
+    <option value="">Все группы</option>
+    <% groups.forEach(function (g) { %><option value="<%= g %>" <%= filters.group === g ? 'selected' : '' %>><%= g %></option><% }) %>
+  </select>
+  <button type="submit" class="a-btn a-btn-secondary a-noscript-only">Применить</button>
+  <% if (hasFilters) { %><a class="a-btn a-btn-ghost" href="/admin/students">Сбросить</a><% } %>
+</form>
+
+<section class="a-card a-card-flush">
+  <% if (rows.length === 0) { %>
+    <%- include('partials/empty', hasFilters
+      ? { emptyIcon: 'search', emptyTitle: 'Никого не нашли', emptyText: 'Проверьте написание или сбросьте фильтр группы.', emptyHref: '/admin/students', emptyAction: 'Сбросить фильтры' }
+      : { emptyIcon: 'students', emptyTitle: 'Студентов пока нет', emptyText: 'Аккаунты студентов создаются администратором базы данных.' }) %>
+  <% } else { %>
+    <div class="a-table-wrap">
+      <table class="a-table a-table-cards">
+        <thead><tr><th>Студент</th><th>Группа</th><th>Прогресс</th><th class="a-num">Заданий</th><th class="a-num">Выполнено</th><th class="a-num">На проверке</th><th>Последняя активность</th></tr></thead>
+        <tbody>
+          <% rows.forEach(function (r) { const pct = r.assigned ? Math.round((r.done / r.assigned) * 100) : 0; %>
+            <tr data-href="/admin/students/<%= r.student.id %>">
+              <td data-label="Студент"><a class="a-person" href="/admin/students/<%= r.student.id %>"><span class="a-avatar a-avatar-sm"><%= view.initials(r.student.name) %></span><%= r.student.name %></a></td>
+              <td data-label="Группа" class="a-muted"><%= r.student.group || '—' %></td>
+              <td data-label="Прогресс"><div class="a-progress" title="<%= pct %>%"><span style="width: <%= pct %>%"></span></div></td>
+              <td data-label="Заданий" class="a-num"><%= r.assigned %></td>
+              <td data-label="Выполнено" class="a-num"><%= r.done %></td>
+              <td data-label="На проверке" class="a-num"><% if (r.pending) { %><span class="a-tag a-tag-accent"><%= r.pending %></span><% } else { %><span class="a-muted">0</span><% } %></td>
+              <td data-label="Активность" class="a-muted a-nowrap" title="<%= view.formatDateTime(r.lastActivity) %>"><%= r.lastActivity ? view.relativeTime(r.lastActivity) : 'нет активности' %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <div class="a-card-foot a-muted">Показано: <%= rows.length %></div>
+  <% } %>
+</section>
+
+<%- include('partials/end') %>

@@ -34,23 +34,18 @@ test('full student journey: dashboard -> assignment -> logout', async () => {
   assert.strictEqual(afterLogout.status, 302);
 });
 
-test('full teacher journey: dashboard -> editor -> submissions -> status update', async () => {
+test('full teacher journey: dashboard -> editor -> works -> review', async () => {
   const assignment = seedAssignment({ title: 'A', mdPath: 'test-smoke/teacher.md', markdown: '# A\n' });
   const submission = fixtures.createSubmission({ assignmentId: assignment.id, studentId: 'student-1', files: ['a.zip'] });
   const app = createApp();
   const agent = await loginAs(app, 'teacher-1');
 
-  const dashboard = await agent.get('/teacher');
-  assert.strictEqual(dashboard.status, 200);
+  assert.strictEqual((await agent.get('/admin')).status, 200);
+  assert.strictEqual((await agent.get(`/admin/assignments/${assignment.id}/edit`)).status, 200);
+  assert.strictEqual((await agent.get('/admin/submissions?tab=review')).status, 200);
+  assert.strictEqual((await agent.get(`/admin/submissions/${submission.id}`)).status, 200);
 
-  const editor = await agent.get(`/teacher/assignment/${assignment.id}/edit`);
-  assert.strictEqual(editor.status, 200);
-
-  const submissions = await agent.get(`/teacher/assignment/${assignment.id}/submissions`);
-  assert.strictEqual(submissions.status, 200);
-
-  const update = await agent
-    .post(`/teacher/assignment/${assignment.id}/submissions/${submission.id}/status`)
-    .send({ status: 'done', comment: 'Готово' });
+  const update = await agent.post(`/admin/submissions/${submission.id}/review`).send({ verdict: 'done', comment: 'Готово' });
   assert.strictEqual(update.status, 302);
+  assert.strictEqual(fixtures.getSubmissionById(submission.id).status, 'done');
 });

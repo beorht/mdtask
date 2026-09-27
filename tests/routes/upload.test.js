@@ -1,7 +1,5 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const fs = require('node:fs');
-const path = require('node:path');
 const request = require('supertest');
 const { createApp } = require('../../src/server');
 const { DEFAULT_PASSWORD } = require('../../src/lib/password');
@@ -123,8 +121,3 @@ test('student cannot submit for an assignment they cannot see', async () => {
   assert.strictEqual(res.status, 404);
 });
 
-test.after(() => {
-  // best-effort cleanup of any files this suite wrote to disk
-  const dir = path.join(__dirname, '..', '..', 'uploads');
-  fs.rmSync(dir, { recursive: true, force: true });
-});

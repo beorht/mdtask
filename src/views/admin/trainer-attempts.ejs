@@ -1,0 +1,56 @@
+<%- include('partials/start') %>
+
+<nav class="a-breadcrumbs" aria-label="Навигация">
+  <a href="/admin/trainer">Тренажёр</a><span>/</span><a href="/admin/trainer/results">Результаты</a><span>/</span><span><%= student.name %></span>
+</nav>
+
+<div class="a-page-head">
+  <div>
+    <h1><%= exercise.title %></h1>
+    <p class="a-subtitle"><a href="/admin/students/<%= student.id %>"><%= student.name %></a> · <%= topicLabel %> · упражнение №<%= exercise.orderIndex %></p>
+  </div>
+</div>
+
+<details class="a-card a-collapse">
+  <summary><h2>Условие упражнения</h2><%- icon('chevronDown') %></summary>
+  <div class="a-markdown"><%- descriptionHtml %></div>
+</details>
+
+<section class="a-card">
+  <div class="a-card-head"><h2>История попыток (<%= attempts.length %>)</h2></div>
+  <% if (!attempts.length) { %>
+    <%- include('partials/empty', { emptyIcon: 'trainer', emptyTitle: 'Попыток нет', emptyText: 'Студент ещё не отправлял решения по этому упражнению.' }) %>
+  <% } else { %>
+    <ol class="a-attempts">
+      <% attempts.forEach(function (a, i) { const tone = a.isError ? 'failed' : a.isCorrect ? 'done' : 'warning'; %>
+        <li class="a-attempt">
+          <div class="a-attempt-head">
+            <span class="a-status a-status-<%= tone %>"><span class="a-status-icon" aria-hidden="true"><%= a.isError ? '!' : a.isCorrect ? '✓' : '×' %></span><%= a.isError ? 'Ошибка' : a.isCorrect ? 'Верно' : 'Неверно' %></span>
+            <span class="a-muted"><%= view.formatDateTime(a.createdAt) %></span>
+            <% if (i === 0) { %><span class="a-tag a-tag-accent">последняя</span><% } %>
+          </div>
+          <pre class="a-sql"><code><%= a.submittedSql %></code></pre>
+          <% if (a.isError) { %>
+            <p class="a-attempt-error"><strong>Ошибка SQLite:</strong> <%= a.errorMessage %></p>
+          <% } else if (a.resultRows && a.resultRows.length) { %>
+            <div class="a-table-wrap a-result-wrap">
+              <table class="a-table a-result-table">
+                <thead><tr><% a.resultColumns.forEach(function (c) { %><th><%= c %></th><% }) %></tr></thead>
+                <tbody>
+                  <% a.resultRows.slice(0, 50).forEach(function (row) { %>
+                    <tr><% a.resultColumns.forEach(function (c) { %><td><%= row[c] %></td><% }) %></tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+            <% if (a.resultRows.length > 50) { %><p class="a-muted">Показаны первые 50 строк из <%= a.resultRows.length %>.</p><% } %>
+          <% } else if (a.resultRows) { %>
+            <p class="a-muted">Результат пуст (0 строк).</p>
+          <% } %>
+        </li>
+      <% }) %>
+    </ol>
+  <% } %>
+</section>
+
+<%- include('partials/end') %>

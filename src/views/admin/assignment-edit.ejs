@@ -1,0 +1,45 @@
+<%- include('partials/start') %>
+
+<nav class="a-breadcrumbs" aria-label="Навигация">
+  <a href="/admin/assignments">Задания</a><span>/</span><a href="/admin/assignments/<%= assignment.id %>"><%= assignment.title %></a><span>/</span><span>Редактирование</span>
+</nav>
+
+<div class="a-page-head">
+  <div>
+    <h1>Редактирование задания</h1>
+    <p class="a-subtitle">Слева — Markdown, справа — как это увидит студент.</p>
+  </div>
+</div>
+
+<% if (error) { %><div class="a-notice a-notice-error" role="alert"><%- icon('alert') %><span><%= error %></span></div><% } %>
+
+<form class="a-form-layout" method="post" action="/admin/assignments/<%= assignment.id %>/edit">
+  <section class="a-card a-form">
+    <div class="a-field-row">
+      <label class="a-field a-field-grow">
+        <span class="a-field-label">Название <span class="a-req">*</span></span>
+        <input name="title" required value="<%= form.title %>">
+      </label>
+      <label class="a-field">
+        <span class="a-field-label">Дедлайн <span class="a-req">*</span></span>
+        <input type="date" name="dueDate" required value="<%= form.dueDate %>">
+      </label>
+    </div>
+  </section>
+
+  <section class="a-card a-form">
+    <div class="a-card-head"><h2>Условие</h2><span class="a-muted">Markdown</span></div>
+    <div class="a-editor">
+      <textarea id="editorSource" name="markdown"><%= markdown %></textarea>
+      <div id="editorPreview" class="a-markdown a-editor-preview"></div>
+    </div>
+  </section>
+
+  <div class="a-form-actions">
+    <a class="a-btn a-btn-ghost" href="/admin/assignments/<%= assignment.id %>">Отмена</a>
+    <button type="submit" class="a-btn a-btn-primary">Сохранить изменения</button>
+  </div>
+</form>
+
+<script src="/js/editor-preview.js" defer></script>
+<%- include('partials/end') %>

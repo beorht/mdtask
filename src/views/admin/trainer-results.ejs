@@ -1,0 +1,72 @@
+<%- include('partials/start') %>
+
+<nav class="a-breadcrumbs" aria-label="Навигация"><a href="/admin/trainer">Тренажёр</a><span>/</span><span>Результаты</span></nav>
+
+<div class="a-page-head">
+  <div>
+    <h1>Результаты тренажёра</h1>
+    <p class="a-subtitle">Каждое упражнение по отдельности. Нажмите на ячейку, чтобы открыть историю попыток.</p>
+  </div>
+</div>
+
+<form class="a-filters" method="get" action="/admin/trainer/results" data-autosubmit>
+  <label class="a-input-search">
+    <%- icon('search') %>
+    <input type="search" name="q" value="<%= filters.q %>" placeholder="Поиск студента" aria-label="Поиск студента">
+  </label>
+  <select name="group" aria-label="Группа">
+    <option value="">Все группы</option>
+    <% groups.forEach(function (g) { %><option value="<%= g %>" <%= filters.group === g ? 'selected' : '' %>><%= g %></option><% }) %>
+  </select>
+  <button type="submit" class="a-btn a-btn-secondary a-noscript-only">Применить</button>
+  <% if (filters.q || filters.group) { %><a class="a-btn a-btn-ghost" href="/admin/trainer/results">Сбросить</a><% } %>
+</form>
+
+<div class="a-legend">
+  <span><span class="a-mcell is-solved">✓</span> решено</span>
+  <span><span class="a-mcell is-tried">3</span> попыток без верного решения</span>
+  <span><span class="a-mcell">–</span> не начато</span>
+</div>
+
+<section class="a-card a-card-flush">
+  <% if (matrix.rows.length === 0) { %>
+    <%- include('partials/empty', { emptyIcon: 'students', emptyTitle: 'Нет студентов', emptyText: 'Под выбранный фильтр никто не подходит.', emptyHref: '/admin/trainer/results', emptyAction: 'Сбросить фильтры' }) %>
+  <% } else { %>
+    <div class="a-table-wrap">
+      <table class="a-table a-matrix">
+        <thead>
+          <tr>
+            <th rowspan="2" class="a-matrix-sticky">Студент</th>
+            <th rowspan="2" class="a-num">Решено</th>
+            <% matrix.topics.forEach(function (t) { %><th colspan="<%= t.exercises.length %>" class="a-matrix-topic"><%= t.label %></th><% }) %>
+          </tr>
+          <tr>
+            <% matrix.topics.forEach(function (t) { t.exercises.forEach(function (ex, i) { %>
+              <th class="a-matrix-num<%= i === 0 ? ' a-matrix-first' : '' %>" title="<%= ex.title %>"><%= ex.orderIndex %></th>
+            <% }) }) %>
+          </tr>
+        </thead>
+        <tbody>
+          <% const firstIds = new Set(matrix.topics.map(function (t) { return t.exercises[0].id; })); %>
+          <% matrix.rows.forEach(function (row) { %>
+            <tr>
+              <td class="a-matrix-sticky"><a class="a-person" href="/admin/students/<%= row.student.id %>" title="<%= row.student.name %>"><%= view.shortName(row.student.name) %></a></td>
+              <td class="a-num"><strong><%= row.solved %></strong><span class="a-muted"> / <%= matrix.exercises.length %></span></td>
+              <% row.cells.forEach(function (cell) { const cls = cell.solved ? ' is-solved' : cell.attempts ? ' is-tried' : ''; const first = firstIds.has(cell.exercise.id) ? ' a-matrix-first' : ''; %>
+                <td class="a-matrix-cell<%= first %>">
+                  <% if (cell.attempts) { %>
+                    <a class="a-mcell<%= cls %>" href="/admin/trainer/<%= row.student.id %>/<%= cell.exercise.id %>" title="<%= cell.exercise.title %> · попыток: <%= cell.attempts %>, ошибок: <%= cell.errors %>"><%= cell.solved ? '✓' : cell.attempts %></a>
+                  <% } else { %>
+                    <span class="a-mcell" title="<%= cell.exercise.title %> · не начато">–</span>
+                  <% } %>
+                </td>
+              <% }) %>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</section>
+
+<%- include('partials/end') %>

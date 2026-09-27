@@ -1,0 +1,62 @@
+<%- include('partials/start') %>
+<% const a = detail.assignment; const s = detail.stats; %>
+
+<nav class="a-breadcrumbs" aria-label="Навигация"><a href="/admin/assignments">Задания</a><span>/</span><span><%= a.title %></span></nav>
+
+<div class="a-page-head">
+  <div>
+    <h1><%= a.title %></h1>
+    <p class="a-subtitle">
+      <%= detail.course ? detail.course.title : '' %> · <%= detail.target.type %> · <%= detail.target.label %> ·
+      <span class="<%= detail.pastDue ? 'a-text-warn' : '' %>">дедлайн <%= view.formatDate(a.dueDate) %><%= detail.pastDue ? ' (прошёл)' : '' %></span>
+    </p>
+  </div>
+  <div class="a-head-actions">
+    <a class="a-btn a-btn-secondary" href="/admin/assignments/<%= a.id %>/edit"><%- icon('edit') %> Редактировать</a>
+    <% if (s.pending > 0) { %>
+      <a class="a-btn a-btn-primary" href="/admin/submissions?tab=review&q=<%= encodeURIComponent(a.title) %>">Проверить работы (<%= s.pending %>)</a>
+    <% } %>
+  </div>
+</div>
+
+<div class="a-stats a-stats-sm">
+  <div class="a-stat"><span class="a-stat-value"><%= s.assigned %></span><span class="a-stat-label">Назначено</span></div>
+  <div class="a-stat"><span class="a-stat-value"><%= s.submitted %></span><span class="a-stat-label">Сдано</span></div>
+  <div class="a-stat<%= s.pending ? ' a-stat-accent' : '' %>"><span class="a-stat-value"><%= s.pending %></span><span class="a-stat-label">На проверке</span></div>
+  <div class="a-stat"><span class="a-stat-value"><%= s.checked %></span><span class="a-stat-label">Проверено</span></div>
+</div>
+
+<section class="a-card a-card-flush">
+  <div class="a-card-head a-card-head-pad"><h2>Студенты</h2></div>
+  <% if (detail.rows.length === 0) { %>
+    <%- include('partials/empty', { emptyIcon: 'students', emptyTitle: 'Задание никому не назначено', emptyText: 'В целевой группе пока нет студентов.' }) %>
+  <% } else { %>
+    <div class="a-table-wrap">
+      <table class="a-table a-table-cards">
+        <thead><tr><th>Студент</th><th>Группа</th><th>Дата сдачи</th><th>Статус</th><th class="a-col-action"><span class="a-sr">Действие</span></th></tr></thead>
+        <tbody>
+          <% detail.rows.forEach(function (r) { %>
+            <tr<% if (r.submission) { %> data-href="/admin/submissions/<%= r.submission.id %>"<% } %>>
+              <td data-label="Студент"><a class="a-person" href="/admin/students/<%= r.student.id %>"><span class="a-avatar a-avatar-sm"><%= view.initials(r.student.name) %></span><%= r.student.name %></a></td>
+              <td data-label="Группа" class="a-muted"><%= r.student.group || '—' %></td>
+              <td data-label="Дата сдачи" class="a-nowrap"><%= r.submission ? view.formatDateTime(r.submission.submittedAt) : '—' %></td>
+              <td data-label="Статус"><%- include('partials/status', { key: r.statusKey }) %></td>
+              <td class="a-col-action">
+                <% if (r.submission) { %>
+                  <a class="a-btn a-btn-sm <%= r.submission.status === 'pending' ? 'a-btn-primary' : 'a-btn-secondary' %>" href="/admin/submissions/<%= r.submission.id %>"><%= r.submission.status === 'pending' ? 'Проверить' : 'Открыть' %></a>
+                <% } %>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</section>
+
+<details class="a-card a-collapse">
+  <summary><h2>Условие задания</h2><%- icon('chevronDown') %></summary>
+  <div class="a-markdown"><%- conditionHtml %></div>
+</details>
+
+<%- include('partials/end') %>
