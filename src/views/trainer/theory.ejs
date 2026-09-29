@@ -11,8 +11,23 @@
     <main class="content">
       <nav class="breadcrumbs"><a href="/trainer/theory">Теоретический материал</a> / <%= topicTitle %></nav>
       <%- html %>
-      <% if (user.role === 'student') { %>
-        <p><a href="/trainer/practice/<%= topicKey %>" class="btn btn-primary">Перейти к практике по этой теме →</a></p>
+      <% if (practice) { %>
+        <section class="practice-cta<%= practice.unlocked ? '' : ' practice-cta-locked' %>" data-testid="practice-cta">
+          <h2 class="practice-cta-title">🧪 Практика по теме</h2>
+          <p class="practice-cta-text">
+            Закрепите материал: <strong><%= practice.total %></strong>
+            <%= practice.total % 10 === 1 && practice.total % 100 !== 11 ? 'задание' : (practice.total % 10 >= 2 && practice.total % 10 <= 4 && (practice.total % 100 < 12 || practice.total % 100 > 14) ? 'задания' : 'заданий') %>
+            в SQL-тренажёре.
+            <% if (practice.forStudent) { %>Решено: <strong><%= practice.solvedCount %> / <%= practice.total %></strong>.<% } %>
+          </p>
+          <% if (!practice.forStudent) { %>
+            <p class="practice-cta-text">Практику решают студенты. Результаты по теме — в <a href="/admin/trainer/results">панели преподавателя</a>.</p>
+          <% } else if (practice.unlocked) { %>
+            <a href="/trainer/practice/<%= topicKey %>" class="btn btn-primary"><%= practice.solvedCount > 0 ? 'Продолжить практику →' : 'Перейти к практике →' %></a>
+          <% } else { %>
+            <p class="practice-cta-text">🔒 Практика откроется после того, как вы решите задания предыдущих тем. <a href="/trainer">К тренажёру</a></p>
+          <% } %>
+        </section>
       <% } %>
     </main>
   </div>

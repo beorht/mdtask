@@ -495,3 +495,18 @@ button:focus-visible, .btn:focus-visible, input[type="submit"]:focus-visible {
 .cell-empty { color: var(--text-soft); }
 .sql-progress-matrix td a { color: inherit; text-decoration: none; display: block; }
 .sql-progress-matrix td a:hover { text-decoration: underline; }
+
+/* Theory page → practice trainer call-to-action card */
+.practice-cta {
+  margin-top: 2.5rem;
+  padding: 1.25rem 1.5rem;
+  background: var(--accent-soft-bg);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: 6px;
+  box-shadow: var(--card-shadow);
+}
+.practice-cta-title { margin: 0 0 0.5rem; font-size: 1.2rem; }
+.practice-cta-text { margin: 0 0 0.75rem; }
+.practice-cta-text:last-child { margin-bottom: 0; }
+.practice-cta-locked { border-left-color: var(--border); }
