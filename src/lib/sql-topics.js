@@ -9,6 +9,12 @@ const TOPICS = [
   { key: 'delete', label: 'DELETE' },
   { key: 'drop', label: 'DROP TABLE' },
   { key: 'select_where', label: 'SELECT + WHERE: вывод данных' },
+  { key: 'distinct', label: 'Выборка уникальных значений. Оператор DISTINCT' },
+  { key: 'filter_ops', label: 'Операторы фильтрации' },
+  { key: 'order_by', label: 'Сортировка. ORDER BY' },
+  { key: 'limit', label: 'Получение диапазона строк. Оператор LIMIT' },
+  { key: 'aggregate', label: 'Агрегатные функции' },
+  { key: 'group_by', label: 'Группировка' },
   // Theory-only topics: no practice exercises exist for these yet, only lecture material.
   { key: 'primary_key', label: 'ID / Ключи — PRIMARY KEY' },
   { key: 'foreign_key', label: 'FOREIGN KEY — связи между таблицами' },

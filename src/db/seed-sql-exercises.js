@@ -1,11 +1,14 @@
-const exercises = require('./sql-exercises-data');
+const baseExercises = require('./sql-exercises-data');
+const queryExercises = require('./sql-exercises-query-data');
 
+const ALL_EXERCISES = [...baseExercises, ...queryExercises];
+
+// Inserts every exercise whose id isn't in the table yet. Running on each startup (instead
+// of only on an empty table) lets new topics reach databases that were seeded earlier —
+// existing rows, and the attempts that reference them, are left untouched.
 function seedSqlExercises(conn) {
-  const { c } = conn.prepare('SELECT COUNT(*) as c FROM sql_exercises').get();
-  if (c > 0) return;
-
   const insert = conn.prepare(
-    `INSERT INTO sql_exercises
+    `INSERT OR IGNORE INTO sql_exercises
       (id, order_index, topic, title, description_md, schema_sql, allowed_statement, check_type, checker_sql, order_matters, expected_result)
      VALUES (@id, @orderIndex, @topic, @title, @descriptionMd, @schemaSql, @allowedStatement, @checkType, @checkerSql, @orderMatters, @expectedResult)`
   );
@@ -15,7 +18,7 @@ function seedSqlExercises(conn) {
   });
 
   insertMany(
-    exercises.map((e) => ({
+    ALL_EXERCISES.map((e) => ({
       id: e.id,
       orderIndex: e.orderIndex,
       topic: e.topic,
@@ -31,4 +34,4 @@ function seedSqlExercises(conn) {
   );
 }
 
-module.exports = { seedSqlExercises };
+module.exports = { seedSqlExercises, ALL_EXERCISES };

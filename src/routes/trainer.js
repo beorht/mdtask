@@ -59,12 +59,27 @@ router.get('/trainer/theory/:topic', requireAuth, (req, res) => {
     return res.status(404).render('404');
   }
 
+  // "Theory → practice" card at the end of the page: only for topics that have exercises.
+  const user = req.session.user;
+  const topicExercises = exercisesForUser(user).filter((e) => e.topic === req.params.topic);
+  let practice = null;
+  if (topicExercises.length > 0) {
+    practice = { total: topicExercises.length, solvedCount: 0, unlocked: true, forStudent: user.role === 'student' };
+    if (practice.forStudent) {
+      const solvedIds = getSolvedSqlExerciseIds(user.id);
+      const progress = withProgress(exercisesForUser(user), solvedIds).filter((e) => e.topic === req.params.topic);
+      practice.solvedCount = progress.filter((e) => e.solved).length;
+      practice.unlocked = progress.some((e) => e.unlocked);
+    }
+  }
+
   res.render('trainer/theory', {
-    user: req.session.user,
+    user,
     sidebarTree: sidebarForRequest(req),
     topicKey: req.params.topic,
     topicTitle: topic.title,
     html: renderMarkdown(topic.md),
+    practice,
     activeAssignmentId: null,
     activePath: `/trainer/theory/${req.params.topic}`,
   });

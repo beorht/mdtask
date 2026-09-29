@@ -1068,4 +1068,7 @@ JOIN students AS s2 ON s1.partner_id = s2.id;
   },
 };
 
+// Query topics (DISTINCT … GROUP BY) live in their own file to keep this one readable.
+Object.assign(TOPIC_THEORY, require('./sql-theory-query').QUERY_THEORY);
+
 module.exports = { TOPIC_THEORY };
