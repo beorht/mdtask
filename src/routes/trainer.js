@@ -7,6 +7,7 @@ const { renderMarkdown } = require('../lib/markdown');
 const { TOPIC_THEORY } = require('../content/sql-theory');
 const { TOPIC_LABELS, getAllowedTopicKeys, getTopicsForUser } = require('../lib/sql-topics');
 const { withProgress } = require('../lib/sql-progress');
+const { describeExpected } = require('../lib/sql-expected');
 const { hasFullAccess } = require('../lib/test-access');
 
 const router = express.Router();
@@ -144,6 +145,7 @@ router.get('/trainer/:id', requireRole('student'), findExerciseWithProgress, (re
     sidebarTree: sidebarForRequest(req),
     exercise,
     topicLabel: TOPIC_LABELS[exercise.topic],
+    expected: describeExpected(exercise),
     attempts,
     schema,
     data,
@@ -172,6 +174,7 @@ router.post('/trainer/:id/run', requireRole('student'), findExerciseWithProgress
     sidebarTree: sidebarForRequest(req),
     exercise,
     topicLabel: TOPIC_LABELS[exercise.topic],
+    expected: describeExpected(exercise),
     attempts,
     schema,
     data,
@@ -202,6 +205,7 @@ router.post('/trainer/:id/submit', requireRole('student'), findExerciseWithProgr
     sidebarTree: sidebarForRequest(req),
     exercise: { ...exercise, solved: solvedIds.has(exercise.id) },
     topicLabel: TOPIC_LABELS[exercise.topic],
+    expected: describeExpected(exercise),
     attempts,
     schema,
     data,

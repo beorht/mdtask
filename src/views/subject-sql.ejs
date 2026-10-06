@@ -21,7 +21,7 @@
       </div>
       <p class="subject-actions">
         <% if (sql.next) { %><a class="btn btn-primary" href="/trainer/<%= sql.next.id %>">Продолжить: <%= sql.next.title %> →</a><% } %>
-        <a class="btn btn-secondary" href="/trainer/theory">Вся теория</a>
+        <a class="topic-btn topic-btn-theory topic-btn-lg" href="/trainer/theory"><span aria-hidden="true">📖</span> Вся теория</a>
       </p>
       <p class="empty-state">Сначала прочитайте теорию темы, затем решайте задачи. Темы практики открываются по порядку.</p>
 
@@ -32,13 +32,13 @@
             <span class="topic-row-num"><%= state === 'done' ? '✓' : (state === 'locked' ? '🔒' : i + 1) %></span>
             <span class="topic-row-title"><%= t.label %></span>
             <span class="topic-row-links">
-              <a href="/trainer/theory/<%= t.key %>">Теория</a>
+              <a class="topic-btn topic-btn-theory" href="/trainer/theory/<%= t.key %>"><span aria-hidden="true">📖</span> Теория</a>
               <% if (state === 'theory') { %>
-                <span class="topic-row-note">только теория</span>
+                <span class="topic-btn topic-btn-none">Практики нет</span>
               <% } else if (state === 'locked') { %>
-                <span class="topic-row-note">Практика <%= t.solvedCount %> / <%= t.total %></span>
+                <span class="topic-btn topic-btn-practice is-locked" title="Откроется после решения предыдущих тем"><span aria-hidden="true">🔒</span> Практика <span class="topic-btn-count"><%= t.solvedCount %>/<%= t.total %></span></span>
               <% } else { %>
-                <a href="/trainer/practice/<%= t.key %>">Практика <%= t.solvedCount %> / <%= t.total %></a>
+                <a class="topic-btn topic-btn-practice<%= state === 'done' ? ' is-done' : '' %>" href="/trainer/practice/<%= t.key %>"><span aria-hidden="true"><%= state === 'done' ? '✓' : '🧪' %></span> Практика <span class="topic-btn-count"><%= t.solvedCount %>/<%= t.total %></span></a>
               <% } %>
             </span>
           </li>
