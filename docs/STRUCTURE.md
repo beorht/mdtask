@@ -66,7 +66,7 @@ mdtask/
 │   │
 │   └── views/
 │       ├── login.ejs / change-password.ejs
-│       ├── student-dashboard.ejs / assignment-view.ejs
+│       ├── student-home.ejs (главная без сайдбара) / subject-sql.ejs / subject-language.ejs / bank-exercise.ejs / assignment-view.ejs
 │       ├── teacher-dashboard.ejs / assignment-editor.ejs / assignment-new.ejs
 │       ├── submissions-table.ejs
 │       ├── 403.ejs / 404.ejs

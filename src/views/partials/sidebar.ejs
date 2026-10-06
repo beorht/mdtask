@@ -23,9 +23,11 @@ const courseProgressPct = courseProgress && courseProgress.total ? Math.round((c
     <% sidebarTree.forEach(function renderNode(node) { %>
       <li>
         <% if (node.href) { %>
-          <a href="<%= node.href %>" class="<%= typeof activePath !== 'undefined' && activePath === node.href ? 'active' : '' %> <%= node.navStatus === 'locked' ? 'nav-locked' : '' %>">
+          <% const isActive = node.assignmentId ? activeAssignmentId === node.assignmentId : (typeof activePath !== 'undefined' && activePath === node.href); %>
+          <a href="<%= node.href %>" class="<%= isActive ? 'active' : '' %> <%= node.navStatus === 'locked' ? 'nav-locked' : '' %>">
             <% if (node.navStatus) { %><span class="nav-icon nav-icon-<%= node.navStatus %>"></span><% } %>
             <%= node.title %>
+            <% if (node.status) { %><span class="badge badge-<%= node.status %>"></span><% } %>
           </a>
         <% } else if (node.assignmentId) { %>
           <% const assignmentHref = user.role === 'teacher' ? '/admin/assignments/' + node.assignmentId : '/assignment/' + node.assignmentId; %>

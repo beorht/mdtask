@@ -7,6 +7,7 @@ const {
   getAllSqlAttempts,
 } = require('../db');
 const { TOPICS } = require('./sql-topics');
+const { TEST_GROUP } = require('./test-access');
 
 // Every status the admin UI can show. Status is never conveyed by colour alone —
 // each carries an icon and a text label (docs: "Не используй только цвет").
@@ -41,7 +42,7 @@ function isPastDue(assignment, now = Date.now()) {
 
 function isAssignedTo(assignment, student) {
   if (assignment.targetType === 'individual') return assignment.targetStudentId === student.id;
-  return !assignment.targetGroup || assignment.targetGroup === student.group;
+  return !assignment.targetGroup || assignment.targetGroup === student.group || student.group === TEST_GROUP;
 }
 
 function byNewest(a, b) {

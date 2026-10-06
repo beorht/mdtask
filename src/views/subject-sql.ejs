@@ -1,0 +1,51 @@
+<!-- src/views/subject-sql.ejs — the SQL trainer as a subject: theory + practice per topic -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <%- include('partials/head', { pageTitle: title }) %>
+</head>
+<body>
+  <%- include('partials/header') %>
+  <div class="app-layout">
+    <%- include('partials/sidebar') %>
+    <main class="content">
+      <nav class="breadcrumbs"><a href="/">Главная</a> / <%= title %></nav>
+      <h1><%= title %></h1>
+      <% const pct = sql.total ? Math.round((sql.solved / sql.total) * 100) : 0; %>
+      <div class="subject-summary">
+        <span>Решено <strong><%= sql.solved %> / <%= sql.total %></strong></span>
+        <span>Тем: <strong><%= sql.topicsCount %></strong></span>
+        <span class="progress subject-summary-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<%= pct %>" aria-label="Прогресс">
+          <span class="progress-fill" style="width: <%= pct %>%"></span>
+        </span>
+      </div>
+      <p class="subject-actions">
+        <% if (sql.next) { %><a class="btn btn-primary" href="/trainer/<%= sql.next.id %>">Продолжить: <%= sql.next.title %> →</a><% } %>
+        <a class="btn btn-secondary" href="/trainer/theory">Вся теория</a>
+      </p>
+      <p class="empty-state">Сначала прочитайте теорию темы, затем решайте задачи. Темы практики открываются по порядку.</p>
+
+      <ol class="topic-list">
+        <% sql.topics.forEach(function (t, i) { %>
+          <% const state = t.total === 0 ? 'theory' : (!t.unlocked ? 'locked' : (t.solvedCount === t.total ? 'done' : 'open')); %>
+          <li class="topic-row topic-row-<%= state %>">
+            <span class="topic-row-num"><%= state === 'done' ? '✓' : (state === 'locked' ? '🔒' : i + 1) %></span>
+            <span class="topic-row-title"><%= t.label %></span>
+            <span class="topic-row-links">
+              <a href="/trainer/theory/<%= t.key %>">Теория</a>
+              <% if (state === 'theory') { %>
+                <span class="topic-row-note">только теория</span>
+              <% } else if (state === 'locked') { %>
+                <span class="topic-row-note">Практика <%= t.solvedCount %> / <%= t.total %></span>
+              <% } else { %>
+                <a href="/trainer/practice/<%= t.key %>">Практика <%= t.solvedCount %> / <%= t.total %></a>
+              <% } %>
+            </span>
+          </li>
+        <% }) %>
+      </ol>
+    </main>
+  </div>
+  <%- include('partials/scripts') %>
+</body>
+</html>

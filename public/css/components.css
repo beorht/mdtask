@@ -510,3 +510,167 @@ button:focus-visible, .btn:focus-visible, input[type="submit"]:focus-visible {
 .practice-cta-text { margin: 0 0 0.75rem; }
 .practice-cta-text:last-child { margin-bottom: 0; }
 .practice-cta-locked { border-left-color: var(--border); }
+
+/* ---------- Student home: hero, stats, subject cards ---------- */
+.home-hero { margin-bottom: 1.5rem; }
+.home-eyebrow { margin: 0 0 0.25rem; color: var(--text-soft); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.home-title { margin: 0 0 0.4rem; }
+.home-lead { margin: 0; color: var(--text-soft); max-width: 60ch; }
+
+.home-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.75rem; margin-bottom: 2rem; }
+.home-stat {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.9rem 1rem;
+  box-shadow: var(--card-shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.home-stat-value { font-size: 1.8rem; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.home-stat-label { color: var(--text-soft); font-size: 0.85rem; }
+.home-stat-alert { border-color: var(--color-status-failed); }
+.home-stat-alert .home-stat-value { color: var(--color-status-failed); }
+
+.home-section { margin-bottom: 2rem; }
+.home-section-title { margin: 0 0 0.9rem; font-size: 1.25rem; }
+.home-more { color: var(--text-soft); font-size: 0.9rem; margin: -0.75rem 0 0; }
+
+.subject-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+}
+.subject-grid > li { display: flex; }
+.subject-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 1.1rem 1.2rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: 4px solid var(--accent);
+  border-radius: 8px;
+  box-shadow: var(--card-shadow);
+  color: var(--text);
+  text-decoration: none;
+  transition: transform var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard);
+}
+.content a.subject-card { color: var(--text); }
+.subject-card-sql { border-top-color: var(--color-status-info); }
+.subject-card-python { border-top-color: var(--color-status-done); }
+.subject-card-javascript { border-top-color: var(--color-status-pending); }
+.subject-card:hover { transform: translateY(-3px); box-shadow: var(--card-shadow-hover); }
+.subject-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.subject-card-head { display: flex; align-items: center; justify-content: space-between; }
+.subject-card-icon { font-size: 1.6rem; line-height: 1; }
+.subject-card-kind {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-soft);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.1rem 0.55rem;
+}
+.subject-card-title { font-size: 1.15rem; font-weight: 700; }
+.subject-card-meta { color: var(--text-soft); font-size: 0.88rem; line-height: 1.45; flex: 1; }
+.subject-card-foot { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: var(--text-soft); }
+.subject-card-go { color: var(--accent-text); font-weight: 600; }
+
+.progress { display: block; height: 6px; border-radius: 999px; background: var(--border); overflow: hidden; }
+.progress-fill { display: block; height: 100%; background: var(--color-status-done); border-radius: inherit; transition: width var(--duration-fast) var(--ease-standard); }
+
+/* Status pill: badge icon + text, so status never relies on color alone */
+.status-pill { display: inline-flex; align-items: center; gap: 0.35rem; margin-left: auto; font-size: 0.82rem; color: var(--text-soft); white-space: nowrap; }
+.status-pill .badge { margin-left: 0; }
+.status-pill-overdue { color: var(--color-status-failed); font-weight: 600; }
+.status-pill + .due-date { margin-left: 0.75rem; }
+
+/* ---------- Subject pages ---------- */
+.subject-summary { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1.5rem; margin-bottom: 1.5rem; color: var(--text-soft); }
+.subject-summary strong { color: var(--text); }
+.subject-summary-alert, .subject-summary-alert strong { color: var(--color-status-failed); }
+.subject-summary-progress { flex: 1 1 100%; max-width: 480px; }
+.subject-section { margin-bottom: 1.75rem; }
+.subject-section-title { display: flex; align-items: baseline; gap: 0.6rem; font-size: 1.2rem; margin: 0 0 0.75rem; }
+.subject-section-count { font-size: 0.85rem; font-weight: 400; color: var(--text-soft); }
+.subject-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+
+.topic-list { list-style: none; margin: 0; padding: 0; }
+.topic-row {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.7rem 1rem;
+  margin-bottom: 0.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: var(--card-shadow);
+}
+.topic-row-num {
+  flex-shrink: 0;
+  width: 1.9rem;
+  height: 1.9rem;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  background: var(--accent-soft-bg);
+  color: var(--accent-text);
+}
+.topic-row-done .topic-row-num { background: var(--color-status-done); color: var(--on-accent-text); }
+.topic-row-locked { opacity: 0.7; }
+.topic-row-locked .topic-row-num { background: var(--border); }
+.topic-row-title { font-weight: 600; flex: 1; }
+.topic-row-links { display: flex; gap: 1rem; align-items: center; font-size: 0.9rem; white-space: nowrap; }
+.topic-row-note { color: var(--text-soft); }
+
+@media (max-width: 700px) {
+  .home-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .assignment-card { flex-wrap: wrap; }
+  .status-pill { margin-left: 0; }
+  .topic-row { flex-wrap: wrap; }
+  .topic-row-links { width: 100%; padding-left: 2.8rem; }
+}
+
+/* Home is a standalone page (no sidebar): keep it centred and readable */
+.content.home { max-width: 1100px; width: 100%; box-sizing: border-box; }
+.home .home-stats { margin-bottom: 2rem; }
+
+/* Python / JavaScript subject page */
+.subject-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 1.5rem; }
+.subject-tabs a {
+  padding: 0.35rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+.subject-tabs a:hover { background: var(--accent-soft-bg); }
+.subject-block { margin-bottom: 2.5rem; scroll-margin-top: calc(var(--header-height) + 1rem); }
+.subject-block-title { margin: 0 0 0.35rem; }
+.subject-block-lead { margin: 0 0 1rem; color: var(--text-soft); max-width: 70ch; }
+.bank-card-go { margin-left: auto; color: var(--accent-text); font-size: 0.85rem; font-weight: 600; }
+
+/* Bank task page */
+.bank-meta { display: flex; align-items: center; gap: 0.6rem; color: var(--text-soft); font-size: 0.85rem; margin: 0 0 0.25rem; }
+.bank-note {
+  margin: 2rem 0 1rem;
+  padding: 0.8rem 1rem;
+  border-left: 4px solid var(--accent);
+  background: var(--accent-soft-bg);
+  border-radius: 6px;
+}
+.bank-pager { display: flex; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; margin-top: 1.5rem; }

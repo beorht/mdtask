@@ -1,0 +1,86 @@
+<!-- src/views/student-home.ejs — student home: a standalone landing page (no sidebar) with one card per subject -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <%- include('partials/head', { pageTitle: 'Главная' }) %>
+</head>
+<body>
+  <%- include('partials/header') %>
+  <main class="content home">
+    <% const nameParts = user.name.split(/\s+/); const firstName = nameParts[1] || nameParts[0]; %>
+    <% function plural(n, one, few, many) { const m10 = n % 10, m100 = n % 100; return n + ' ' + (m10 === 1 && m100 !== 11 ? one : (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? few : many)); } %>
+    <% const ICONS = { sql: '🗄️', python: '🐍', javascript: '🟨' }; %>
+    <header class="home-hero">
+      <p class="home-eyebrow">Группа <%= user.group || '—' %></p>
+      <h1 class="home-title">Здравствуйте, <%= firstName %>!</h1>
+      <p class="home-lead">Выберите предмет — у каждого своя страница с навигацией, теорией и заданиями.</p>
+    </header>
+
+    <section class="home-section" aria-labelledby="subjectsTitle">
+      <h2 id="subjectsTitle" class="home-section-title">Предметы</h2>
+      <ul class="subject-grid">
+        <% home.subjects.forEach(function (s) { %>
+          <% const isSql = s.kind === 'sql'; %>
+          <% const done = isSql ? s.solved : s.counts.done; %>
+          <% const total = isSql ? s.total : s.counts.total; %>
+          <% const pct = total ? Math.round((done / total) * 100) : 0; %>
+          <li>
+            <a class="subject-card subject-card-<%= s.key %>" href="/subjects/<%= s.key %>">
+              <span class="subject-card-head">
+                <span class="subject-card-icon" aria-hidden="true"><%= ICONS[s.key] %></span>
+                <span class="subject-card-kind"><%= isSql ? 'Тренажёр' : 'Программирование' %></span>
+              </span>
+              <span class="subject-card-title"><%= s.title %></span>
+              <span class="subject-card-meta">
+                <% if (isSql) { %>
+                  <%= plural(s.topicsCount, 'тема', 'темы', 'тем') %> · <%= plural(s.total, 'задача', 'задачи', 'задач') %> с автопроверкой<% if (s.currentTopic) { %><br>Сейчас: <%= s.currentTopic.label %><% } %>
+                <% } else { %>
+                  <%= plural(s.counts.total, 'задание', 'задания', 'заданий') %> со сдачей · <%= plural(s.bankCount, 'задача', 'задачи', 'задач') %> в банке<% if (s.nextDue) { %><br>Ближайший срок: <%= s.nextDue %><% } %>
+                <% } %>
+              </span>
+              <span class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<%= pct %>" aria-label="Прогресс">
+                <span class="progress-fill" style="width: <%= pct %>%"></span>
+              </span>
+              <span class="subject-card-foot">
+                <span><%= isSql ? 'Решено' : 'Сдано и принято' %> <%= done %> / <%= total %></span>
+                <span class="subject-card-go">Открыть →</span>
+              </span>
+            </a>
+          </li>
+        <% }) %>
+      </ul>
+    </section>
+
+    <section class="home-stats" aria-label="Сводка по заданиям со сдачей">
+      <div class="home-stat"><span class="home-stat-value"><%= home.counts.todo %></span><span class="home-stat-label">Нужно сделать</span></div>
+      <div class="home-stat"><span class="home-stat-value"><%= home.counts.pending %></span><span class="home-stat-label">На проверке</span></div>
+      <div class="home-stat"><span class="home-stat-value"><%= home.counts.done %></span><span class="home-stat-label">Выполнено</span></div>
+      <div class="home-stat<%= home.counts.overdue ? ' home-stat-alert' : '' %>"><span class="home-stat-value"><%= home.counts.overdue %></span><span class="home-stat-label">Просрочено</span></div>
+    </section>
+
+    <section class="home-section" aria-labelledby="upcomingTitle">
+      <h2 id="upcomingTitle" class="home-section-title">Ближайшие задания со сдачей</h2>
+      <% if (home.upcoming.length === 0) { %>
+        <p class="empty-state">Открытых заданий нет — всё сдано. 🎉</p>
+      <% } else { %>
+        <ul class="assignment-list">
+          <% home.upcoming.forEach(function (a) { %>
+            <li>
+              <a class="assignment-card" href="/assignment/<%= a.id %>">
+                <span class="assignment-card-title"><%= a.title %></span>
+                <% if (a.targetType === 'individual') { %><span class="tag">доп. задание</span><% } %>
+                <%- include('partials/status-label', { a: a }) %>
+                <span class="due-date<%= a.dueSoon ? ' due-soon' : '' %>">до <%= a.dueDate %></span>
+              </a>
+            </li>
+          <% }) %>
+        </ul>
+        <% if (home.upcomingMore) { %>
+          <p class="home-more">И ещё <%= home.upcomingMore %> — все задания в разделах Python и JavaScript.</p>
+        <% } %>
+      <% } %>
+    </section>
+  </main>
+  <%- include('partials/scripts') %>
+</body>
+</html>

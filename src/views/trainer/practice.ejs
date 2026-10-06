@@ -9,7 +9,7 @@
   <div class="app-layout">
     <%- include('../partials/sidebar') %>
     <main class="content">
-      <nav class="breadcrumbs"><a href="/trainer">Практический тренажёр</a> / <%= topicLabel %></nav>
+      <nav class="breadcrumbs"><% if (user.role === 'student') { %><a href="/">Главная</a> / <a href="/subjects/sql">Базы данных (SQL)</a> / <% } %><a href="/trainer">Практический тренажёр</a> / <%= topicLabel %></nav>
       <h1><%= topicLabel %></h1>
       <p><a href="/trainer/theory/<%= topicKey %>">📖 Теория по этой теме</a></p>
 

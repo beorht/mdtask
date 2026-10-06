@@ -89,3 +89,18 @@ CREATE INDEX IF NOT EXISTS idx_users_student_group ON users(student_group);
 -- idx_assignments_target_group lives in db/index.js, run *after* addColumnIfMissing —
 -- creating it here would fail on a pre-existing database where schema.sql's own
 -- CREATE TABLE IF NOT EXISTS is a no-op and the column doesn't exist yet.
+
+-- Второй пароль на студента для практики по Цезарю (не связан с users.password_hash,
+-- используется только как fallback при логине — см. routes/auth.js).
+CREATE TABLE IF NOT EXISTS ctf_caesar_secrets (
+  id TEXT PRIMARY KEY,
+  student_id TEXT NOT NULL REFERENCES users(id),
+  caesar_shift INTEGER NOT NULL,
+  plain_password TEXT NOT NULL,
+  cipher_text TEXT NOT NULL,
+  hidden_file_path TEXT NOT NULL,
+  solved INTEGER NOT NULL DEFAULT 0,
+  solved_at TEXT,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_ctf_caesar_secrets_student ON ctf_caesar_secrets(student_id);

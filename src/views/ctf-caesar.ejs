@@ -1,0 +1,43 @@
+<!-- src/views/ctf-caesar.ejs -->
+<!DOCTYPE html>
+<html lang="ru">
+<head><%- include('partials/head', { pageTitle: 'Терминал' }) %></head>
+<body>
+  <%- include('partials/header') %>
+  <main class="content task-page" style="max-width: 860px; margin: 0 auto;">
+    <h1>Терминал</h1>
+
+    <% if (solved) { %>
+      <div class="sql-alert sql-alert-success">Второй пароль уже найден и использован для входа.</div>
+    <% } %>
+
+    <section class="task-panel">
+      <p>Наберите <code>help</code>, чтобы увидеть список команд.</p>
+    </section>
+
+    <section class="task-panel task-panel-editor">
+      <pre class="sql-console" style="min-height:260px; white-space:pre-wrap; overflow:auto;"><% history.forEach(function (h) { %><%= user.id %>@seclab:<%= h.prompt %>$ <%= h.cmd %>
+<%= h.output %>
+
+<% }) %><%= user.id %>@seclab:<%= cwdPrompt %>$</pre>
+
+      <form method="post" action="/ctf/caesar/run" class="sql-console-form">
+        <input
+          type="text"
+          name="cmd"
+          class="sql-console"
+          style="min-height: auto; font-family: inherit;"
+          autocomplete="off"
+          autofocus
+          placeholder="введите команду... (help)"
+        >
+        <div class="sql-console-actions">
+          <button type="submit" class="btn-primary">Выполнить</button>
+          <button type="submit" formaction="/ctf/caesar/clear" class="btn-secondary">Очистить экран</button>
+        </div>
+      </form>
+    </section>
+  </main>
+  <%- include('partials/scripts') %>
+</body>
+</html>

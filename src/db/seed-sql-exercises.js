@@ -1,7 +1,8 @@
 const baseExercises = require('./sql-exercises-data');
 const queryExercises = require('./sql-exercises-query-data');
+const relationsExercises = require('./sql-exercises-relations-data');
 
-const ALL_EXERCISES = [...baseExercises, ...queryExercises];
+const ALL_EXERCISES = [...baseExercises, ...queryExercises, ...relationsExercises];
 
 // Inserts every exercise whose id isn't in the table yet. Running on each startup (instead
 // of only on an empty table) lets new topics reach databases that were seeded earlier —

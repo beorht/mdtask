@@ -1,0 +1,79 @@
+<!-- src/views/subject-language.ejs — Python / JavaScript subject: shared assignments + language task bank -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <%- include('partials/head', { pageTitle: subject.title }) %>
+</head>
+<body>
+  <%- include('partials/header') %>
+  <div class="app-layout">
+    <%- include('partials/sidebar') %>
+    <main class="content">
+      <nav class="breadcrumbs"><a href="/">Главная</a> / <%= subject.title %></nav>
+      <h1><%= subject.title %></h1>
+
+      <nav class="subject-tabs" aria-label="Разделы предмета">
+        <a href="#assignments">Задания со сдачей</a>
+        <a href="#bank">Банк задач</a>
+      </nav>
+
+      <section id="assignments" class="subject-block">
+        <h2 class="subject-block-title">Задания со сдачей</h2>
+        <p class="subject-block-lead">Решение загружается архивом (.zip / .rar), преподаватель проверяет его и ставит статус. Задания общие для Python и JavaScript — решайте на языке своей группы.</p>
+        <% const c = subject.counts; const pct = c.total ? Math.round((c.done / c.total) * 100) : 0; %>
+        <div class="subject-summary">
+          <span>Выполнено <strong><%= c.done %> / <%= c.total %></strong></span>
+          <span>На проверке: <strong><%= c.pending %></strong></span>
+          <span>Нужно сделать: <strong><%= c.todo %></strong></span>
+          <% if (c.overdue) { %><span class="subject-summary-alert">Просрочено: <strong><%= c.overdue %></strong></span><% } %>
+          <span class="progress subject-summary-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<%= pct %>" aria-label="Прогресс">
+            <span class="progress-fill" style="width: <%= pct %>%"></span>
+          </span>
+        </div>
+
+        <% if (subject.sections.length === 0) { %>
+          <p class="empty-state">Заданий со сдачей пока нет.</p>
+        <% } %>
+        <% subject.sections.forEach(function (section) { %>
+          <div class="subject-section">
+            <h3 class="subject-section-title"><%= section.title %> <span class="subject-section-count"><%= section.items.filter(function (a) { return a.status === 'done'; }).length %> / <%= section.items.length %></span></h3>
+            <ul class="assignment-list">
+              <% section.items.forEach(function (a) { %>
+                <li>
+                  <a class="assignment-card" href="/assignment/<%= a.id %>?subject=<%= subject.key %>">
+                    <span class="assignment-card-title"><%= a.title %></span>
+                    <% if (a.targetType === 'individual') { %><span class="tag">доп. задание</span><% } %>
+                    <%- include('partials/status-label', { a: a }) %>
+                    <span class="due-date<%= a.dueSoon ? ' due-soon' : '' %>">до <%= a.dueDate %></span>
+                  </a>
+                </li>
+              <% }) %>
+            </ul>
+          </div>
+        <% }) %>
+      </section>
+
+      <section id="bank" class="subject-block">
+        <h2 class="subject-block-title">Банк задач <%= subject.title %></h2>
+        <p class="subject-block-lead">Задачи для самостоятельной практики по темам — сдавать их не нужно.</p>
+        <% subject.bank.forEach(function (topic) { %>
+          <div class="subject-section">
+            <h3 class="subject-section-title"><%= topic.label %> <span class="subject-section-count"><%= topic.items.length %></span></h3>
+            <ul class="assignment-list">
+              <% topic.items.forEach(function (ex) { %>
+                <li>
+                  <a class="assignment-card" href="/subjects/<%= subject.key %>/bank/<%= ex.id %>">
+                    <span class="assignment-card-title"><%= ex.title %></span>
+                    <span class="bank-card-go">Открыть →</span>
+                  </a>
+                </li>
+              <% }) %>
+            </ul>
+          </div>
+        <% }) %>
+      </section>
+    </main>
+  </div>
+  <%- include('partials/scripts') %>
+</body>
+</html>
