@@ -9,7 +9,7 @@
   <div class="app-layout">
     <%- include('../partials/sidebar') %>
     <main class="content">
-      <nav class="breadcrumbs">SQL DataBase / Практический тренажёр</nav>
+      <nav class="breadcrumbs"><% if (user.role === 'student') { %><a href="/">Главная</a> / <a href="/subjects/sql">Базы данных (SQL)</a><% } else { %>SQL DataBase<% } %> / Практический тренажёр</nav>
       <h1>Практический тренажёр SQL</h1>
       <p class="empty-state">
         Темы открываются по порядку — следующая тема доступна только после того, как решено последнее задание предыдущей.

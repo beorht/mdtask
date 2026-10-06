@@ -9,7 +9,7 @@
   <div class="app-layout">
     <%- include('../partials/sidebar') %>
     <main class="content">
-      <nav class="breadcrumbs"><a href="/trainer/theory">Теоретический материал</a> / <%= topicTitle %></nav>
+      <nav class="breadcrumbs"><% if (user.role === 'student') { %><a href="/">Главная</a> / <a href="/subjects/sql">Базы данных (SQL)</a> / <% } %><a href="/trainer/theory">Теоретический материал</a> / <%= topicTitle %></nav>
       <%- html %>
       <% if (practice) { %>
         <section class="practice-cta<%= practice.unlocked ? '' : ' practice-cta-locked' %>" data-testid="practice-cta">

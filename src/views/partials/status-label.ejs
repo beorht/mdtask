@@ -1,0 +1,5 @@
+<%# Status pill for an assignment: icon badge + text. Expects `a` with status/overdue. %>
+<% const STATUS_TEXT = { done: 'Выполнено', pending: 'На проверке', not_done: 'На доработку', not_submitted: 'Не сдано' }; %>
+<span class="status-pill status-pill-<%= a.overdue ? 'overdue' : a.status %>">
+  <span class="badge badge-<%= a.status %>"></span><%= a.overdue ? 'Просрочено' : STATUS_TEXT[a.status] %>
+</span>

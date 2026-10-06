@@ -25,12 +25,14 @@ function createApp() {
   const teacherRoutes = require('./routes/teacher');
   const trainerRoutes = require('./routes/trainer');
   const adminRoutes = require('./routes/admin');
+  const ctfRoutes = require('./routes/ctf');
 
   app.use(authRoutes);
   app.use(studentRoutes);
   app.use(teacherRoutes);
   app.use(trainerRoutes);
   app.use(adminRoutes);
+  app.use(ctfRoutes);
 
   app.use((req, res) => res.status(404).render('404'));
 

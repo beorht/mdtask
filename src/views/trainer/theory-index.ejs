@@ -9,7 +9,7 @@
   <div class="app-layout">
     <%- include('../partials/sidebar') %>
     <main class="content">
-      <nav class="breadcrumbs">SQL DataBase / Теоретический материал</nav>
+      <nav class="breadcrumbs"><% if (user.role === 'student') { %><a href="/">Главная</a> / <a href="/subjects/sql">Базы данных (SQL)</a><% } else { %>SQL DataBase<% } %> / Теоретический материал</nav>
       <h1>Теоретический материал: SQL (SQLite)</h1>
       <p class="empty-state">Выберите тему — по каждой из них есть подробный конспект с синтаксисом, примерами и частыми ошибками.</p>
       <ul class="assignment-list">

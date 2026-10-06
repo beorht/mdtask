@@ -9,7 +9,7 @@
   <div class="app-layout">
     <%- include('partials/sidebar') %>
     <main class="content">
-      <nav class="breadcrumbs">Мои задания / <%= assignment.title %></nav>
+      <nav class="breadcrumbs"><a href="/">Главная</a> / <a href="/subjects/<%= subject.key %>"><%= subject.title %></a> / <%= assignment.title %></nav>
       <%- html %>
 
       <section class="submission-block task-panel">

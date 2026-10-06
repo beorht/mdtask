@@ -5,6 +5,7 @@ const { seed } = require('./seed');
 const { seedSqlExercises } = require('./seed-sql-exercises');
 const { seedLanguageExercises } = require('./seed-language-exercises');
 const { DEFAULT_PASSWORD, hashPassword, verifyPassword } = require('../lib/password');
+const { TEST_GROUP } = require('../lib/test-access');
 
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, '..', '..', 'data', 'mdtask.db');
 
@@ -126,6 +127,30 @@ function verifyUserCredentials(id, password) {
   return rowToUser(row);
 }
 
+function getUserById(id) {
+  const row = prepared('SELECT * FROM users WHERE id = ?').get(id);
+  return row ? rowToUser(row) : null;
+}
+
+// Второй, независимый от password_hash пароль для практики по шифру Цезаря
+// (см. ctf/caesar-secret в репозитории IBEmulator и routes/ctf.js здесь).
+function getCaesarSecretForStudent(studentId) {
+  return prepared('SELECT * FROM ctf_caesar_secrets WHERE student_id = ?').get(studentId);
+}
+
+function verifyCaesarSecret(studentId, password) {
+  const row = getCaesarSecretForStudent(studentId);
+  if (!row || !password) return null;
+  return row.plain_password === password ? row : null;
+}
+
+function markCaesarSecretSolved(studentId) {
+  prepared('UPDATE ctf_caesar_secrets SET solved = 1, solved_at = ? WHERE student_id = ?').run(
+    new Date().toISOString(),
+    studentId
+  );
+}
+
 function setUserPassword(id, newPassword) {
   const { hash, salt } = hashPassword(newPassword);
   prepared('UPDATE users SET password_hash = ?, password_salt = ?, must_change_password = 0 WHERE id = ?').run(
@@ -151,10 +176,17 @@ function getAssignmentsForStudent(studentId, studentGroup) {
   return prepared(
     `SELECT * FROM assignments
      WHERE (target_type = 'individual' AND target_student_id = ?)
-        OR (target_type = 'group' AND (target_group IS NULL OR target_group = ?))`
+        OR (target_type = 'group' AND (target_group IS NULL OR target_group = ? OR ? = ?))`
   )
-    .all(studentId, studentGroup || null)
+    .all(studentId, studentGroup || null, studentGroup || null, TEST_GROUP)
     .map(rowToAssignment);
+}
+
+function createUser({ id, role, name, group = null, password = DEFAULT_PASSWORD, mustChangePassword = true }) {
+  const { hash, salt } = hashPassword(password);
+  prepared(
+    'INSERT INTO users (id, role, name, student_group, password_hash, password_salt, must_change_password) VALUES (?, ?, ?, ?, ?, ?, ?)'
+  ).run(id, role, name, group, hash, salt, mustChangePassword ? 1 : 0);
 }
 
 function setMustChangePasswordForTests(id) {
@@ -162,8 +194,8 @@ function setMustChangePasswordForTests(id) {
 }
 
 function getDistinctStudentGroups() {
-  return prepared("SELECT DISTINCT student_group FROM users WHERE student_group IS NOT NULL ORDER BY student_group")
-    .all()
+  return prepared('SELECT DISTINCT student_group FROM users WHERE student_group IS NOT NULL AND student_group != ? ORDER BY student_group')
+    .all(TEST_GROUP)
     .map((r) => r.student_group);
 }
 
@@ -359,7 +391,12 @@ function __resetForTests() {
 module.exports = {
   getUsers,
   verifyUserCredentials,
+  getUserById,
+  getCaesarSecretForStudent,
+  verifyCaesarSecret,
+  markCaesarSecretSolved,
   setUserPassword,
+  createUser,
   setMustChangePasswordForTests,
   getDistinctStudentGroups,
   getCourses,

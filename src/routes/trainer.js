@@ -6,6 +6,8 @@ const { getSqlExercises, getSqlAttempts, getSolvedSqlExerciseIds } = require('..
 const { renderMarkdown } = require('../lib/markdown');
 const { TOPIC_THEORY } = require('../content/sql-theory');
 const { TOPIC_LABELS, getAllowedTopicKeys, getTopicsForUser } = require('../lib/sql-topics');
+const { withProgress } = require('../lib/sql-progress');
+const { hasFullAccess } = require('../lib/test-access');
 
 const router = express.Router();
 
@@ -14,16 +16,8 @@ function exercisesForUser(user) {
   return getSqlExercises().filter((e) => allowed.includes(e.topic));
 }
 
-function withProgress(exercises, solvedIds) {
-  return exercises.map((ex, i) => {
-    const prev = exercises[i - 1];
-    const unlocked = i === 0 || solvedIds.has(prev.id);
-    return { ...ex, solved: solvedIds.has(ex.id), unlocked };
-  });
-}
-
 function findExerciseWithProgress(req, res, next) {
-  const exercises = withProgress(exercisesForUser(req.session.user), getSolvedSqlExerciseIds(req.session.user.id));
+  const exercises = withProgress(exercisesForUser(req.session.user), getSolvedSqlExerciseIds(req.session.user.id), hasFullAccess(req.session.user));
   const exercise = exercises.find((e) => e.id === req.params.id);
   if (!exercise) return res.status(404).render('404');
   if (!exercise.unlocked) return res.status(403).render('403');
@@ -38,6 +32,7 @@ function sidebarForRequest(req) {
     role: user.role,
     studentId: user.role === 'student' ? user.id : undefined,
     studentGroup: user.role === 'student' ? user.group : undefined,
+    subject: 'sql',
   });
 }
 
@@ -67,7 +62,7 @@ router.get('/trainer/theory/:topic', requireAuth, (req, res) => {
     practice = { total: topicExercises.length, solvedCount: 0, unlocked: true, forStudent: user.role === 'student' };
     if (practice.forStudent) {
       const solvedIds = getSolvedSqlExerciseIds(user.id);
-      const progress = withProgress(exercisesForUser(user), solvedIds).filter((e) => e.topic === req.params.topic);
+      const progress = withProgress(exercisesForUser(user), solvedIds, hasFullAccess(user)).filter((e) => e.topic === req.params.topic);
       practice.solvedCount = progress.filter((e) => e.solved).length;
       practice.unlocked = progress.some((e) => e.unlocked);
     }
@@ -89,7 +84,7 @@ router.get('/trainer/theory/:topic', requireAuth, (req, res) => {
 
 router.get('/trainer', requireRole('student'), (req, res) => {
   const solvedIds = getSolvedSqlExerciseIds(req.session.user.id);
-  const exercises = withProgress(exercisesForUser(req.session.user), solvedIds);
+  const exercises = withProgress(exercisesForUser(req.session.user), solvedIds, hasFullAccess(req.session.user));
 
   const topics = getTopicsForUser(req.session.user)
     .map((topic) => {
@@ -119,7 +114,7 @@ router.get('/trainer/practice/:topic', requireRole('student'), (req, res) => {
     return res.status(404).render('404');
   }
 
-  const exercises = withProgress(exercisesForUser(req.session.user), getSolvedSqlExerciseIds(req.session.user.id)).filter(
+  const exercises = withProgress(exercisesForUser(req.session.user), getSolvedSqlExerciseIds(req.session.user.id), hasFullAccess(req.session.user)).filter(
     (e) => e.topic === topicKey
   );
   if (exercises.length === 0) return res.status(404).render('404'); // theory-only topic, no practice list
@@ -195,7 +190,7 @@ router.post('/trainer/:id/submit', requireRole('student'), findExerciseWithProgr
   const submitResult = checkSolution(req.session.user.id, exercise, sql);
 
   const solvedIds = getSolvedSqlExerciseIds(req.session.user.id);
-  const exercises = withProgress(exercisesForUser(req.session.user), solvedIds);
+  const exercises = withProgress(exercisesForUser(req.session.user), solvedIds, hasFullAccess(req.session.user));
   const attempts = getSqlAttempts(exercise.id, req.session.user.id);
   const schema = getTableSchema(req.session.user.id, exercise);
   const data = getTableData(req.session.user.id, exercise);

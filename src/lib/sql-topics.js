@@ -15,9 +15,11 @@ const TOPICS = [
   { key: 'limit', label: 'Получение диапазона строк. Оператор LIMIT' },
   { key: 'aggregate', label: 'Агрегатные функции' },
   { key: 'group_by', label: 'Группировка' },
-  // Theory-only topics: no practice exercises exist for these yet, only lecture material.
+  // Keys and links. primary_key, foreign_key and join are theory-only (no exercises yet);
+  // relations has practice (src/db/sql-exercises-relations-data.js).
   { key: 'primary_key', label: 'ID / Ключи — PRIMARY KEY' },
   { key: 'foreign_key', label: 'FOREIGN KEY — связи между таблицами' },
+  { key: 'relations', label: 'Связи между таблицами: зачем и как' },
   { key: 'join', label: 'JOIN — соединение таблиц' },
 ];
 

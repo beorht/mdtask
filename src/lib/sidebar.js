@@ -1,13 +1,25 @@
 const fs = require('fs');
 const path = require('path');
 const { parseSummary } = require('./summary-parser');
-const { getAssignments, getSubmissions, getSqlExercises, getSolvedSqlExerciseIds, getDistinctStudentGroups } = require('../db');
+const {
+  getAssignments,
+  getSubmissions,
+  getSqlExercises,
+  getSolvedSqlExerciseIds,
+  getDistinctStudentGroups,
+  getLanguageExercises,
+} = require('../db');
 const { getTopicsForUser } = require('./sql-topics');
+const { hasFullAccess } = require('./test-access');
+const { LANGUAGE_SUBJECTS } = require('./subjects');
 
 const SUMMARY_PATH = path.join(__dirname, '..', '..', 'content', 'SUMMARY.md');
 
-function buildSidebarTree({ role, studentId, studentGroup }) {
+// `subject` scopes the tree to one subject ('sql' | 'python' | 'javascript'); without it the
+// full combined tree is returned (all sections + teacher group categories + SQL trainer).
+function buildSidebarTree({ role, studentId, studentGroup, subject }) {
   const TOPICS = getTopicsForUser({ role, group: studentGroup });
+  const fullAccess = hasFullAccess({ role, group: studentGroup });
   const summaryText = fs.readFileSync(SUMMARY_PATH, 'utf-8');
   const tree = parseSummary(summaryText);
   const assignments = getAssignments();
@@ -34,7 +46,8 @@ function buildSidebarTree({ role, studentId, studentGroup }) {
           assignment &&
           assignment.targetType === 'group' &&
           assignment.targetGroup &&
-          assignment.targetGroup !== studentGroup
+          assignment.targetGroup !== studentGroup &&
+          !fullAccess
         ) {
           return null;
         }
@@ -82,7 +95,7 @@ function buildSidebarTree({ role, studentId, studentGroup }) {
       // skip the practice link and leave the unlock chain untouched.
       if (total > 0) {
         let navStatus = 'not_started';
-        if (!prevTopicSolved) navStatus = 'locked';
+        if (!prevTopicSolved && !fullAccess) navStatus = 'locked';
         else if (solved === total) navStatus = 'done';
         else if (solved > 0) navStatus = 'current';
         prevTopicSolved = prevTopicSolved && solved === total;
@@ -115,6 +128,42 @@ function buildSidebarTree({ role, studentId, studentGroup }) {
         groupCategories.push({ title: `Группа ${group}`, href: null, children });
       }
     }
+  }
+
+  const homeLink =
+    role === 'teacher'
+      ? { title: '← Админ-панель', href: '/admin', children: [] }
+      : { title: '← Все предметы', href: '/', children: [] };
+
+  if (subject === 'sql') {
+    const overview = role === 'student' ? [{ title: 'Обзор предмета', href: '/subjects/sql', children: [] }] : [];
+    return [homeLink, ...overview, { ...trainerSection, title: 'Базы данных (SQL)' }];
+  }
+
+  if (LANGUAGE_SUBJECTS[subject]) {
+    const withSubjectLinks = (nodes) =>
+      nodes.map((node) => ({
+        ...node,
+        href: node.assignmentId ? `/assignment/${node.assignmentId}?subject=${subject}` : node.href || null,
+        children: withSubjectLinks(node.children),
+      }));
+
+    const bankTopics = [];
+    for (const ex of getLanguageExercises(subject)) {
+      let topic = bankTopics.find((t) => t.key === ex.topic);
+      if (!topic) {
+        topic = { key: ex.topic, title: ex.topicLabel, href: null, children: [] };
+        bankTopics.push(topic);
+      }
+      topic.children.push({ title: ex.title, href: `/subjects/${subject}/bank/${ex.id}`, children: [] });
+    }
+
+    return [
+      homeLink,
+      { title: 'Обзор предмета', href: `/subjects/${subject}`, children: [] },
+      { title: 'Задания со сдачей', href: null, children: withSubjectLinks(attach(tree)) },
+      { title: 'Банк задач', href: null, children: bankTopics },
+    ];
   }
 
   return [...attach(tree), ...groupCategories, trainerSection];

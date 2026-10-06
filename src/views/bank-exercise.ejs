@@ -1,0 +1,32 @@
+<!-- src/views/bank-exercise.ejs — one task from the Python / JavaScript bank (read-only) -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <%- include('partials/head', { pageTitle: exercise.title }) %>
+</head>
+<body>
+  <%- include('partials/header') %>
+  <div class="app-layout">
+    <%- include('partials/sidebar') %>
+    <main class="content">
+      <nav class="breadcrumbs"><a href="/">Главная</a> / <a href="/subjects/<%= subjectKey %>"><%= subjectTitle %></a> / <a href="/subjects/<%= subjectKey %>#bank">Банк задач</a> / <%= exercise.title %></nav>
+      <p class="bank-meta"><span class="tag"><%= exercise.topicLabel %></span> Задача <%= position %> из <%= total %></p>
+      <h1><%= exercise.title %></h1>
+      <%- html %>
+      <p class="bank-note">Это задача для самостоятельной практики: решите её на <%= subjectTitle %> у себя в редакторе. Сдавать решение не нужно.</p>
+
+      <nav class="bank-pager" aria-label="Соседние задачи">
+        <% if (prev) { %>
+          <a class="btn btn-secondary" href="/subjects/<%= subjectKey %>/bank/<%= prev.id %>">← <%= prev.title %></a>
+        <% } else { %><span></span><% } %>
+        <% if (next) { %>
+          <a class="btn btn-primary" href="/subjects/<%= subjectKey %>/bank/<%= next.id %>"><%= next.title %> →</a>
+        <% } else { %>
+          <a class="btn btn-primary" href="/subjects/<%= subjectKey %>">К предмету →</a>
+        <% } %>
+      </nav>
+    </main>
+  </div>
+  <%- include('partials/scripts') %>
+</body>
+</html>
