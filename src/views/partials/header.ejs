@@ -1,6 +1,10 @@
 <header class="app-header">
   <% if (typeof sidebarTree !== 'undefined' && sidebarTree) { %>
-    <button class="sidebar-toggle" id="sidebarToggle" aria-label="Меню" aria-controls="sidebar">☰</button>
+    <button class="sidebar-toggle" id="sidebarToggle" type="button" aria-label="Скрыть или показать меню" aria-controls="sidebar" aria-expanded="true" title="Меню">
+      <span class="burger" aria-hidden="true"><span></span><span></span><span></span></span>
+    </button>
+    <%# Apply the saved collapsed state before the sidebar is painted (no flash, no animation on load). %>
+    <script>try { if (localStorage.getItem('sidebarCollapsed') === '1') document.documentElement.classList.add('sidebar-collapsed'); } catch (e) {}</script>
   <% } %>
   <a href="<%= user.role === 'teacher' ? '/admin' : '/' %>" class="app-brand">
     <span class="app-brand-mark">📚</span><span class="app-brand-name">mdtask</span>

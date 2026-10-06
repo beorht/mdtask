@@ -184,3 +184,69 @@ test('all groups see the full trainer curriculum', async () => {
   assert.match(theoryIndex.text, />CREATE TABLE</);
   assert.strictEqual((await agent.get('/trainer/theory/create_table')).status, 200);
 });
+
+test('running a CREATE TABLE shows the created table as an empty table with its columns', async () => {
+  const app = createApp();
+  const agent = await loginAs(app, 'student-1');
+  const first = db.getSqlExercises()[0];
+  const res = await agent
+    .post(`/trainer/${first.id}/run`)
+    .send({ sql: 'CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price REAL NOT NULL)' });
+  assert.strictEqual(res.status, 200);
+  assert.match(res.text, /Таблица <code>products<\/code> создана/);
+  assert.match(res.text, /class="sql-result-table sql-created-table"/);
+  assert.match(res.text, /<th>price<span class="sql-col-meta">REAL · NOT NULL<\/span><\/th>/);
+  assert.doesNotMatch(res.text, /has-error/);
+});
+
+test('a failing query turns the result panel red and shows the error', async () => {
+  const app = createApp();
+  const agent = await loginAs(app, 'student-1');
+  const first = db.getSqlExercises()[0];
+  const res = await agent.post(`/trainer/${first.id}/run`).send({ sql: 'CREATE TABLE products (id INTEGER PRIMARY KEY,)' });
+  assert.match(res.text, /sql-result-panel has-result has-error/);
+  assert.match(res.text, /✕ Ошибка в запросе/);
+  assert.match(res.text, /syntax error/);
+  assert.doesNotMatch(res.text, /sql-created-caption/);
+});
+
+test('after a correct submit the next-task button sits under the editor buttons; failures show an SQL notice there', async () => {
+  const app = createApp();
+  const agent = await loginAs(app, 'student-1');
+  const [first, second] = db.getSqlExercises();
+
+  const wrong = await agent.post(`/trainer/${first.id}/submit`).send({ sql: 'CREATE TABLE products (id INTEGER PRIMARY KEY,)' });
+  const wrongEditor = wrong.text.slice(wrong.text.indexOf('id="submitBtn"'), wrong.text.indexOf('<!-- LEFT: query result -->'));
+  assert.match(wrongEditor, /✕ Ошибка в SQL:/);
+  assert.doesNotMatch(wrong.text, /Следующее задание/);
+
+  const ok = await agent
+    .post(`/trainer/${first.id}/submit`)
+    .send({ sql: 'CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price REAL NOT NULL)' });
+  const okEditor = ok.text.slice(ok.text.indexOf('id="submitBtn"'), ok.text.indexOf('<!-- LEFT: query result -->'));
+  assert.match(okEditor, new RegExp(`href="/trainer/${second.id}"[^>]*>Следующее задание →`));
+});
+
+test('every exercise kind shows an expected result: structure, table contents or dropped table', async () => {
+  const app = createApp();
+  // TEST-group account: every exercise is unlocked, so each kind can be opened directly.
+  db.createUser({ id: 'tester', role: 'student', name: 'Тест', group: 'TEST', mustChangePassword: false });
+  const tester = await loginAs(app, 'tester');
+
+  const create = await tester.get('/trainer/create_table-1');
+  assert.match(create.text, /Ожидаемая структура таблицы products/);
+  assert.match(create.text, /<th>price<span class="sql-col-meta">REAL · NOT NULL<\/span><\/th>/);
+
+  const insert = await tester.get('/trainer/insert-6');
+  assert.match(insert.text, /Ожидаемое содержимое таблицы products после добавления/);
+  assert.match(insert.text, /class="sql-row-changed"/);
+
+  const update = await tester.get('/trainer/update-21');
+  assert.match(update.text, /Было до изменения/);
+
+  const drop = await tester.get('/trainer/drop-31');
+  assert.match(drop.text, /Таблицы <code>products<\/code> в базе быть не должно/);
+
+  const select = await tester.get('/trainer/group_by-2');
+  assert.match(select.text, /Ожидаемый результат <span class="sql-hint">\(5 стр\., порядок строк важен\)/);
+});

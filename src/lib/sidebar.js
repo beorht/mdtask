@@ -130,39 +130,147 @@ function buildSidebarTree({ role, studentId, studentGroup, subject }) {
     }
   }
 
-  const homeLink =
-    role === 'teacher'
-      ? { title: '← Админ-панель', href: '/admin', children: [] }
-      : { title: '← Все предметы', href: '/', children: [] };
+  // ---------- subject-scoped navigation ----------
+  // Nodes carry a `kind` the sidebar partial renders specially:
+  //   back    — "← Все предметы" link;
+  //   header  — subject card: icon, title, progress (done / total);
+  //   section — labelled block, optionally with a filter box;
+  //   group   — collapsible topic/section: status icon, title, counter; opens when it holds the
+  //             active page or is the student's current topic;
+  //   link    — leaf link with an icon, optional counter / status badge / locked state.
+  if (subject === 'sql') return sqlSubjectNav();
+  if (LANGUAGE_SUBJECTS[subject]) return languageSubjectNav(subject);
 
-  if (subject === 'sql') {
-    const overview = role === 'student' ? [{ title: 'Обзор предмета', href: '/subjects/sql', children: [] }] : [];
-    return [homeLink, ...overview, { ...trainerSection, title: 'Базы данных (SQL)' }];
+  function backLink() {
+    return role === 'teacher'
+      ? { kind: 'back', title: 'Админ-панель', href: '/admin', children: [] }
+      : { kind: 'back', title: 'Все предметы', href: '/', children: [] };
   }
 
-  if (LANGUAGE_SUBJECTS[subject]) {
-    const withSubjectLinks = (nodes) =>
-      nodes.map((node) => ({
-        ...node,
-        href: node.assignmentId ? `/assignment/${node.assignmentId}?subject=${subject}` : node.href || null,
-        children: withSubjectLinks(node.children),
-      }));
+  function sqlSubjectNav() {
+    const header = { kind: 'header', icon: '🗄️', title: 'Базы данных (SQL)', href: role === 'student' ? '/subjects/sql' : null, children: [] };
 
-    const bankTopics = [];
-    for (const ex of getLanguageExercises(subject)) {
-      let topic = bankTopics.find((t) => t.key === ex.topic);
-      if (!topic) {
-        topic = { key: ex.topic, title: ex.topicLabel, href: null, children: [] };
-        bankTopics.push(topic);
-      }
-      topic.children.push({ title: ex.title, href: `/subjects/${subject}/bank/${ex.id}`, children: [] });
+    if (role !== 'student') {
+      const topics = TOPICS.map((t) => ({ kind: 'link', icon: '📖', title: t.label, href: `/trainer/theory/${t.key}`, children: [] }));
+      return [
+        backLink(),
+        header,
+        { kind: 'section', title: 'Теория по темам', filter: true, children: topics },
+        { kind: 'section', title: 'Преподавателю', children: [{ kind: 'link', icon: '📊', title: 'Результаты тренажёра', href: '/admin/trainer/results', children: [] }] },
+      ];
     }
 
+    let chainOpen = true; // sequential unlock: a topic opens once every earlier one is fully solved
+    let currentMarked = false;
+    let solvedAll = 0;
+    let totalAll = 0;
+    const groups = TOPICS.map((topic, i) => {
+      const list = exercisesByTopic[topic.key];
+      const total = list.length;
+      const solved = list.filter((e) => solvedIds.has(e.id)).length;
+      solvedAll += solved;
+      totalAll += total;
+
+      const children = [{ kind: 'link', icon: '📖', title: 'Теория', href: `/trainer/theory/${topic.key}`, children: [] }];
+      let status = 'theory';
+      if (total > 0) {
+        const locked = !chainOpen && !fullAccess;
+        if (locked) status = 'locked';
+        else if (solved === total) status = 'done';
+        else if (!currentMarked) {
+          status = 'current';
+          currentMarked = true;
+        } else status = 'open';
+        chainOpen = chainOpen && solved === total;
+        children.push({
+          kind: 'link',
+          icon: locked ? '🔒' : status === 'done' ? '✓' : '🧪',
+          title: 'Практика',
+          meta: `${solved}/${total}`,
+          href: `/trainer/practice/${topic.key}`,
+          locked,
+          children: [],
+        });
+      }
+      return {
+        kind: 'group',
+        number: i + 1,
+        title: topic.label,
+        status,
+        meta: total > 0 ? `${solved}/${total}` : null,
+        open: status === 'current',
+        children,
+      };
+    });
+
     return [
-      homeLink,
-      { title: 'Обзор предмета', href: `/subjects/${subject}`, children: [] },
-      { title: 'Задания со сдачей', href: null, children: withSubjectLinks(attach(tree)) },
-      { title: 'Банк задач', href: null, children: bankTopics },
+      backLink(),
+      { ...header, done: solvedAll, total: totalAll, label: 'задач решено' },
+      { kind: 'section', title: 'Темы', filter: true, children: groups },
+    ];
+  }
+
+  function languageSubjectNav(language) {
+    const toNav = (nodes) =>
+      nodes
+        .map((node) => {
+          if (node.assignmentId) {
+            return {
+              kind: 'link',
+              title: node.title,
+              href: `/assignment/${node.assignmentId}?subject=${language}`,
+              assignmentId: node.assignmentId,
+              status: node.status,
+              children: [],
+            };
+          }
+          const children = toNav(node.children);
+          if (!children.length) return null; // SUMMARY entries without an assignment for this student
+          const leaves = children.filter((c) => c.assignmentId);
+          return {
+            kind: 'group',
+            title: node.title,
+            status: leaves.length && leaves.every((c) => c.status === 'done') ? 'done' : 'open',
+            meta: `${leaves.filter((c) => c.status === 'done').length}/${leaves.length}`,
+            children,
+          };
+        })
+        .filter(Boolean);
+
+    const assignmentNav = toNav(attach(tree));
+    // Open the first section that still has unfinished assignments.
+    const firstOpen = assignmentNav.find((n) => n.kind === 'group' && n.status !== 'done');
+    if (firstOpen) firstOpen.open = true;
+    const allLeaves = [];
+    (function walk(nodes) {
+      nodes.forEach((n) => (n.assignmentId ? allLeaves.push(n) : walk(n.children)));
+    })(assignmentNav);
+
+    const bankGroups = [];
+    for (const ex of getLanguageExercises(language)) {
+      let topic = bankGroups.find((t) => t.key === ex.topic);
+      if (!topic) {
+        topic = { kind: 'group', key: ex.topic, title: ex.topicLabel, status: 'bank', children: [] };
+        bankGroups.push(topic);
+      }
+      topic.children.push({ kind: 'link', icon: '📝', title: ex.title, href: `/subjects/${language}/bank/${ex.id}`, children: [] });
+    }
+    bankGroups.forEach((g) => (g.meta = String(g.children.length)));
+
+    return [
+      backLink(),
+      {
+        kind: 'header',
+        icon: language === 'python' ? '🐍' : '🟨',
+        title: LANGUAGE_SUBJECTS[language],
+        href: `/subjects/${language}`,
+        done: allLeaves.filter((l) => l.status === 'done').length,
+        total: allLeaves.length,
+        label: 'заданий принято',
+        children: [],
+      },
+      { kind: 'section', title: 'Задания со сдачей', children: assignmentNav },
+      { kind: 'section', title: 'Банк задач', filter: true, children: bankGroups },
     ];
   }
 

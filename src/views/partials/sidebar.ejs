@@ -1,4 +1,7 @@
 <%
+// Left navigation. Subject pages pass nodes with a `kind` (back / header / section / group /
+// link — see buildSidebarTree in src/lib/sidebar.js); other pages pass the legacy tree
+// (no `kind`), rendered as before.
 function countProgress(nodes) {
   let done = 0;
   let total = 0;
@@ -15,16 +18,88 @@ function countProgress(nodes) {
   });
   return { done, total };
 }
-const courseProgress = user.role === 'student' ? countProgress(sidebarTree) : null;
+const isSubjectNav = sidebarTree.some(function (n) { return n.kind; });
+const courseProgress = user.role === 'student' && !isSubjectNav ? countProgress(sidebarTree) : null;
 const courseProgressPct = courseProgress && courseProgress.total ? Math.round((courseProgress.done / courseProgress.total) * 100) : 0;
+const currentPath = typeof activePath !== 'undefined' ? activePath : null;
+
+function isActiveNode(node) {
+  if (node.assignmentId) return activeAssignmentId === node.assignmentId;
+  return !!node.href && currentPath === node.href;
+}
+function containsActive(node) {
+  return isActiveNode(node) || (node.children || []).some(containsActive);
+}
+const STATUS_TITLE = { done: 'Решено', current: 'Текущая тема', open: 'Открыта', locked: 'Закрыта: сначала решите предыдущие темы', theory: 'Только теория', bank: 'Задачи для практики' };
 %>
-<nav class="sidebar" id="sidebar">
+<nav class="sidebar<%= isSubjectNav ? ' sidebar-subject' : '' %>" id="sidebar" aria-label="Навигация по предмету">
+<% if (isSubjectNav) { %>
+  <% function renderNav(node) { %>
+    <% if (node.kind === 'back') { %>
+      <a class="nav-back" href="<%= node.href %>"><span aria-hidden="true">←</span> <%= node.title %></a>
+    <% } else if (node.kind === 'header') { %>
+      <% const pct = node.total ? Math.round((node.done / node.total) * 100) : 0; %>
+      <div class="nav-header">
+        <a class="nav-header-link<%= isActiveNode(node) ? ' active' : '' %>" <% if (node.href) { %>href="<%= node.href %>"<% } %>>
+          <span class="nav-header-icon" aria-hidden="true"><%= node.icon %></span>
+          <span class="nav-header-text">
+            <span class="nav-header-title"><%= node.title %></span>
+            <% if (node.href) { %><span class="nav-header-sub">Обзор предмета</span><% } %>
+          </span>
+        </a>
+        <% if (typeof node.total === 'number' && node.total > 0) { %>
+          <div class="nav-header-progress">
+            <span class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<%= pct %>" aria-label="Прогресс по предмету"><span class="progress-fill" style="width: <%= pct %>%"></span></span>
+            <span class="nav-header-count"><strong><%= node.done %></strong> из <%= node.total %> <%= node.label %></span>
+          </div>
+        <% } %>
+      </div>
+    <% } else if (node.kind === 'section') { %>
+      <section class="nav-section" data-nav-section>
+        <h2 class="nav-section-title"><%= node.title %></h2>
+        <% if (node.filter && node.children.length > 5) { %>
+          <input type="search" class="nav-filter" placeholder="Найти тему…" aria-label="Найти тему в разделе «<%= node.title %>»" data-nav-filter>
+        <% } %>
+        <ul class="nav-list">
+          <% node.children.forEach(function (child) { %><li class="nav-item" data-nav-item><% renderNav(child) %></li><% }) %>
+        </ul>
+        <p class="nav-empty" hidden data-nav-empty>Ничего не найдено</p>
+      </section>
+    <% } else if (node.kind === 'group') { %>
+      <% const open = node.open || containsActive(node); %>
+      <details class="nav-group nav-group-<%= node.status %><%= containsActive(node) ? ' has-active' : '' %>" <%= open ? 'open' : '' %>>
+        <summary class="nav-group-summary" title="<%= STATUS_TITLE[node.status] || '' %>">
+          <span class="nav-status nav-status-<%= node.status %>" aria-hidden="true"><%= node.status === 'done' ? '✓' : node.status === 'locked' ? '🔒' : node.status === 'bank' ? '•' : (node.number || '•') %></span>
+          <span class="nav-group-title"><%= node.title %></span>
+          <% if (node.meta) { %><span class="nav-count"><%= node.meta %></span><% } %>
+          <span class="nav-chevron" aria-hidden="true"></span>
+        </summary>
+        <ul class="nav-group-body">
+          <% node.children.forEach(function (child) { %><li><% renderNav(child) %></li><% }) %>
+        </ul>
+      </details>
+    <% } else if (node.kind === 'link') { %>
+      <% if (node.locked) { %>
+        <span class="nav-link is-locked" title="Откроется после решения предыдущих тем">
+          <span class="nav-link-icon" aria-hidden="true"><%= node.icon %></span><span class="nav-link-title"><%= node.title %></span><% if (node.meta) { %><span class="nav-count"><%= node.meta %></span><% } %>
+        </span>
+      <% } else { %>
+        <a class="nav-link<%= isActiveNode(node) ? ' active' : '' %>" href="<%= node.href %>"<% if (isActiveNode(node)) { %> aria-current="page"<% } %>>
+          <% if (node.icon) { %><span class="nav-link-icon" aria-hidden="true"><%= node.icon %></span><% } %>
+          <span class="nav-link-title"><%= node.title %></span>
+          <% if (node.meta) { %><span class="nav-count"><%= node.meta %></span><% } %>
+          <% if (node.status) { %><span class="badge badge-<%= node.status %>" title="<%= { done: 'Выполнено', pending: 'На проверке', not_done: 'На доработку', not_submitted: 'Не сдано' }[node.status] %>"></span><% } %>
+        </a>
+      <% } %>
+    <% } %>
+  <% } %>
+  <% sidebarTree.forEach(function (node) { renderNav(node); }) %>
+<% } else { %>
   <ul class="tree">
     <% sidebarTree.forEach(function renderNode(node) { %>
       <li>
         <% if (node.href) { %>
-          <% const isActive = node.assignmentId ? activeAssignmentId === node.assignmentId : (typeof activePath !== 'undefined' && activePath === node.href); %>
-          <a href="<%= node.href %>" class="<%= isActive ? 'active' : '' %> <%= node.navStatus === 'locked' ? 'nav-locked' : '' %>">
+          <a href="<%= node.href %>" class="<%= isActiveNode(node) ? 'active' : '' %> <%= node.navStatus === 'locked' ? 'nav-locked' : '' %>">
             <% if (node.navStatus) { %><span class="nav-icon nav-icon-<%= node.navStatus %>"></span><% } %>
             <%= node.title %>
             <% if (node.status) { %><span class="badge badge-<%= node.status %>"></span><% } %>
@@ -55,4 +130,5 @@ const courseProgressPct = courseProgress && courseProgress.total ? Math.round((c
       <div class="progress-bar"><div class="progress-bar__fill" style="width: <%= courseProgressPct %>%"></div></div>
     </div>
   <% } %>
+<% } %>
 </nav>
