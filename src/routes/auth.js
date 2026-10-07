@@ -1,11 +1,5 @@
 const express = require('express');
-const {
-  verifyUserCredentials,
-  setUserPassword,
-  getUserById,
-  verifyCaesarSecret,
-  markCaesarSecretSolved,
-} = require('../db');
+const { verifyUserCredentials, setUserPassword } = require('../db');
 const { MIN_PASSWORD_LENGTH } = require('../lib/password');
 const { requireAuth } = require('../middleware/auth');
 
@@ -17,17 +11,7 @@ router.get('/login', (req, res) => {
 
 router.post('/login', (req, res) => {
   const { studentId, password } = req.body;
-  let user = verifyUserCredentials(studentId, password || '');
-
-  // Fallback: второй пароль из практики по шифру Цезаря (тот же логин, другой
-  // пароль, найденный студентом в зашифрованном виде) — независимо от основного.
-  if (!user) {
-    const secret = verifyCaesarSecret(studentId, password || '');
-    if (secret) {
-      user = getUserById(studentId);
-      if (user) markCaesarSecretSolved(studentId);
-    }
-  }
+  const user = verifyUserCredentials(studentId, password || '');
 
   if (!user) {
     return res.render('login', { error: 'Неверный ID или пароль' });

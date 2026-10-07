@@ -8,6 +8,7 @@ const { getTopicsForUser } = require('./sql-topics');
 const { withProgress, topicProgress } = require('./sql-progress');
 const { hasFullAccess } = require('./test-access');
 const { LANGUAGE_SUBJECTS } = require('./subjects');
+const { IB_SUBJECT_KEY, IB_SUBJECT_TITLE, ibSummary } = require('./ib-tasks');
 const {
   getAssignmentsForStudent,
   getLanguageExercises,
@@ -134,8 +135,14 @@ function buildStudentHome(user, now = Date.now()) {
     currentTopic: sql.currentTopic,
   };
 
+  // Shown only once the student has a task there (tasks are generated per group by the teacher).
+  const ib = ibSummary(user);
+  const ibSubjects = ib.total
+    ? [{ key: IB_SUBJECT_KEY, kind: 'ib', title: IB_SUBJECT_TITLE, solved: ib.solved, total: ib.total, next: ib.next }]
+    : [];
+
   return {
-    subjects: [sqlSubject, ...languageSubjects],
+    subjects: [sqlSubject, ...languageSubjects, ...ibSubjects],
     counts,
     // Anything the student still has to act on (or is waiting on), nearest deadline first.
     upcoming: open.slice(0, UPCOMING_LIMIT),

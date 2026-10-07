@@ -573,6 +573,7 @@ button:focus-visible, .btn:focus-visible, input[type="submit"]:focus-visible {
 .subject-card-sql { border-top-color: var(--color-status-info); }
 .subject-card-python { border-top-color: var(--color-status-done); }
 .subject-card-javascript { border-top-color: var(--color-status-pending); }
+.subject-card-ib { border-top-color: var(--color-status-current); }
 .subject-card:hover { transform: translateY(-3px); box-shadow: var(--card-shadow-hover); }
 .subject-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .subject-card-head { display: flex; align-items: center; justify-content: space-between; }
@@ -609,6 +610,64 @@ button:focus-visible, .btn:focus-visible, input[type="submit"]:focus-visible {
 .subject-section-title { display: flex; align-items: baseline; gap: 0.6rem; font-size: 1.2rem; margin: 0 0 0.75rem; }
 .subject-section-count { font-size: 0.85rem; font-weight: 400; color: var(--text-soft); }
 .subject-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+
+/* Information security: task list + the embedded web terminal (ib/prototype/terminal-lab.html) */
+.ib-task-list { list-style: none; margin: 0; padding: 0; }
+.ib-task-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem 1.1rem;
+  margin-bottom: 0.6rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: var(--card-shadow);
+  transition: transform var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard);
+}
+.content a.ib-task-card { color: var(--text); text-decoration: none; }
+a.ib-task-card:hover { transform: translateY(-2px); box-shadow: var(--card-shadow-hover); border-color: var(--color-peach); }
+a.ib-task-card:focus-visible { outline: 2px solid var(--color-coral); outline-offset: 2px; }
+.ib-task-num {
+  flex-shrink: 0;
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  background: var(--accent-soft-bg);
+  color: var(--accent-text);
+}
+.ib-task-card.is-solved .ib-task-num { background: var(--color-status-done); color: var(--on-accent-text); }
+.ib-task-body { display: flex; flex-direction: column; gap: 0.35rem; flex: 1; min-width: 0; }
+.ib-task-title { font-weight: 700; }
+.ib-task-summary { color: var(--text-soft); font-size: 0.92rem; line-height: 1.45; }
+.ib-task-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.ib-task-card .status-pill { align-self: center; }
+
+.ib-task-page { max-width: none; }
+.ib-task-head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; }
+.ib-task-head h1 { margin: 0; }
+.ib-task-head .status-pill { margin-left: 0; }
+.ib-task-hint { color: var(--text-soft); font-size: 0.92rem; margin: 0.75rem 0 1rem; }
+.ib-task-hint a { margin-left: 0.4rem; white-space: nowrap; }
+.ib-terminal {
+  display: block;
+  width: 100%;
+  height: calc(100vh - 20rem);
+  min-height: 420px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #000;
+}
+@media (max-width: 640px) {
+  .ib-task-card { flex-wrap: wrap; }
+  .ib-terminal { height: 70vh; }
+}
 
 .topic-list { list-style: none; margin: 0; padding: 0; }
 .topic-row {

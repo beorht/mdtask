@@ -42,6 +42,9 @@ addColumnIfMissing('assignments', 'target_group', 'TEXT');
 // Set by the admin "На пересдачу" verdict: a not_done submission the student may
 // replace even after the due date (plain not_done only allows it before the deadline).
 addColumnIfMissing('submissions', 'resubmit_allowed', 'INTEGER NOT NULL DEFAULT 0');
+// Task variants of ib/ctf/caesar-secret (its generator adds them too).
+addColumnIfMissing('ctf_caesar_secrets', 'variant', "TEXT NOT NULL DEFAULT 'password'");
+addColumnIfMissing('ctf_caesar_secrets', 'password_file_path', 'TEXT');
 db.exec('CREATE INDEX IF NOT EXISTS idx_assignments_target_group ON assignments(target_group)');
 
 // Any account created before password auth existed (real, already-enrolled students/
@@ -132,23 +135,14 @@ function getUserById(id) {
   return row ? rowToUser(row) : null;
 }
 
-// Второй, независимый от password_hash пароль для практики по шифру Цезаря
-// (см. ctf/caesar-secret в репозитории IBEmulator и routes/ctf.js здесь).
+// Задание «Доступ к защищённой базе данных» (раздел «Информационная безопасность», ib/):
+// таблицу заполняет генератор ib/ctf/caesar-secret, solved ставит терминал (ib/server).
 function getCaesarSecretForStudent(studentId) {
   return prepared('SELECT * FROM ctf_caesar_secrets WHERE student_id = ?').get(studentId);
 }
 
-function verifyCaesarSecret(studentId, password) {
-  const row = getCaesarSecretForStudent(studentId);
-  if (!row || !password) return null;
-  return row.plain_password === password ? row : null;
-}
-
-function markCaesarSecretSolved(studentId) {
-  prepared('UPDATE ctf_caesar_secrets SET solved = 1, solved_at = ? WHERE student_id = ?').run(
-    new Date().toISOString(),
-    studentId
-  );
+function getCaesarSecrets() {
+  return prepared('SELECT * FROM ctf_caesar_secrets').all();
 }
 
 function setUserPassword(id, newPassword) {
@@ -383,8 +377,16 @@ function getAllSqlAttempts() {
   return prepared('SELECT * FROM sql_attempts ORDER BY created_at DESC').all().map(rowToSqlAttempt);
 }
 
+// Tests only: the row ib/ctf/caesar-secret/generate_challenge.py writes for a student.
+function seedCaesarSecretForTests(studentId, { solved = false } = {}) {
+  prepared(
+    `INSERT INTO ctf_caesar_secrets (id, student_id, caesar_shift, plain_password, cipher_text, hidden_file_path, solved, solved_at, created_at)
+     VALUES (?, ?, 3, 'Falcon123', 'Idofrq123', '~/.ssh/.config.bak', ?, ?, ?)`
+  ).run(`secret-${studentId}`, studentId, solved ? 1 : 0, solved ? new Date().toISOString() : null, new Date().toISOString());
+}
+
 function __resetForTests() {
-  db.exec('DELETE FROM sql_attempts; DELETE FROM submissions; DELETE FROM assignments; DELETE FROM courses; DELETE FROM users;');
+  db.exec('DELETE FROM ctf_caesar_secrets; DELETE FROM sql_attempts; DELETE FROM submissions; DELETE FROM assignments; DELETE FROM courses; DELETE FROM users;');
   seed(db);
 }
 
@@ -393,8 +395,8 @@ module.exports = {
   verifyUserCredentials,
   getUserById,
   getCaesarSecretForStudent,
-  verifyCaesarSecret,
-  markCaesarSecretSolved,
+  getCaesarSecrets,
+  seedCaesarSecretForTests,
   setUserPassword,
   createUser,
   setMustChangePasswordForTests,

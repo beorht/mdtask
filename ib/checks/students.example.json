@@ -1,0 +1,14 @@
+[
+  {
+    "student_id": "ivanov_i",
+    "full_name": "Иванов Иван",
+    "task1": { "host": "10.0.5.11", "user": "student", "identity_file": "/keys/ivanov_i.pem", "port": 22 },
+    "task2": { "container_name": "lab-ivanov_i" }
+  },
+  {
+    "student_id": "petrova_a",
+    "full_name": "Петрова Анна",
+    "task1": { "host": "10.0.5.12", "user": "student", "identity_file": "/keys/petrova_a.pem", "port": 22 },
+    "task2": { "container_name": "lab-petrova_a" }
+  }
+]

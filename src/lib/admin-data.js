@@ -5,6 +5,7 @@ const {
   getSubmissions,
   getSqlExercises,
   getAllSqlAttempts,
+  getCaesarSecrets,
 } = require('../db');
 const { TOPICS } = require('./sql-topics');
 const { TEST_GROUP } = require('./test-access');
@@ -411,6 +412,29 @@ function nextInQueue(ctx, currentId) {
   return ordered.find((w) => w.id !== currentId) || null;
 }
 
+// --- Information security (ib/): task №3 «Доступ к защищённой базе данных» ---
+// One row per student the task was generated for, with the answers (password, hidden file).
+function ibResults(ctx, filters) {
+  const studentById = new Map(ctx.students.map((s) => [s.id, s]));
+  const q = (filters.q || '').toLowerCase();
+  const rows = getCaesarSecrets()
+    .map((secret) => ({ secret, student: studentById.get(secret.student_id) }))
+    .filter((r) => r.student)
+    .filter((r) => !filters.group || r.student.group === filters.group)
+    .filter((r) => !q || r.student.name.toLowerCase().includes(q) || r.student.id.toLowerCase().includes(q))
+    .sort(
+      (a, b) =>
+        b.secret.solved - a.secret.solved ||
+        String(a.secret.solved_at || '').localeCompare(String(b.secret.solved_at || '')) ||
+        a.student.name.localeCompare(b.student.name, 'ru')
+    );
+  return {
+    rows,
+    total: rows.length,
+    solved: rows.filter((r) => r.secret.solved).length,
+  };
+}
+
 module.exports = {
   STATUS_META,
   loadContext,
@@ -430,6 +454,7 @@ module.exports = {
   courseDetail,
   trainerOverview,
   trainerMatrix,
+  ibResults,
   search,
   nextInQueue,
 };

@@ -1,0 +1,416 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>SecLab Проверка</title>
+<style>
+:root{
+  --bg:#0d1113;
+  --panel:#141a1c;
+  --panel-2:#1a2224;
+  --border:#25302f;
+  --text:#d9e2df;
+  --dim:#6f827c;
+  --pass:#3ecf8e;
+  --pass-dim:#173a2c;
+  --warn:#e0a751;
+  --warn-dim:#3a2f17;
+  --fail:#e0685c;
+  --fail-dim:#3a1e1a;
+  --accent:#39d9a4;
+  color-scheme: dark;
+}
+:root[data-theme="light"]{
+  --bg:#0d1113; --panel:#141a1c; --panel-2:#1a2224; --border:#25302f; --text:#d9e2df;
+  --dim:#6f827c; --pass:#3ecf8e; --pass-dim:#173a2c; --warn:#e0a751; --warn-dim:#3a2f17;
+  --fail:#e0685c; --fail-dim:#3a1e1a; --accent:#39d9a4;
+  color-scheme: dark;
+}
+
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.wrap{
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 24px 16px calc(40px + env(safe-area-inset-bottom,0px));
+}
+
+header{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-bottom:20px;
+  padding-bottom:16px;
+  border-bottom:1px solid var(--border);
+}
+h1{
+  font-size:18px;
+  margin:0 0 4px;
+  letter-spacing:0.02em;
+  font-weight:600;
+}
+h1 .accent{color:var(--accent);}
+.subtitle{color:var(--dim); font-size:12px;}
+.gen-at{color:var(--dim); font-size:11px; text-align:right;}
+
+.stats{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px,1fr));
+  gap:10px;
+  margin-bottom:22px;
+}
+.stat{
+  background: var(--panel);
+  border:1px solid var(--border);
+  border-radius:4px;
+  padding:12px 14px;
+}
+.stat .n{
+  font-size:22px;
+  font-weight:600;
+  font-variant-numeric: tabular-nums;
+}
+.stat .label{color:var(--dim); font-size:11px; margin-top:2px;}
+.stat.pass .n{color:var(--pass);}
+.stat.warn .n{color:var(--warn);}
+.stat.fail .n{color:var(--fail);}
+
+table{width:100%; border-collapse:collapse;}
+thead th{
+  text-align:left;
+  font-size:11px;
+  color:var(--dim);
+  font-weight:500;
+  padding:0 10px 8px;
+  border-bottom:1px solid var(--border);
+  letter-spacing:0.03em;
+}
+thead th.num{text-align:center;}
+
+tbody tr.student-row{
+  cursor:pointer;
+}
+tbody tr.student-row:hover{background: var(--panel);}
+tbody tr.student-row td{
+  padding:10px;
+  border-bottom:1px solid var(--border);
+  vertical-align:middle;
+}
+.student-name{font-weight:600;}
+.student-id{color:var(--dim); font-size:11px;}
+
+.caret{
+  display:inline-block;
+  color:var(--dim);
+  width:14px;
+  transition: transform .12s;
+}
+tr.student-row.open .caret{transform:rotate(90deg); color:var(--text);}
+
+.pill{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  padding:3px 9px;
+  border-radius:100px;
+  font-size:12px;
+  font-variant-numeric: tabular-nums;
+  white-space:nowrap;
+}
+.pill.pass{background:var(--pass-dim); color:var(--pass);}
+.pill.warn{background:var(--warn-dim); color:var(--warn);}
+.pill.fail{background:var(--fail-dim); color:var(--fail);}
+.pill .dot{width:6px;height:6px;border-radius:50%; background:currentColor;}
+
+td.num{text-align:center;}
+
+tr.detail-row{display:none;}
+tr.detail-row.open{display:table-row;}
+tr.detail-row td{
+  padding: 0 10px 16px 30px;
+  border-bottom:1px solid var(--border);
+  background: var(--panel);
+}
+.detail-grid{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px,1fr));
+  gap:14px;
+  padding-top:12px;
+}
+.detail-task h4{
+  margin:0 0 8px;
+  font-size:12px;
+  color:var(--text);
+  font-weight:600;
+}
+.stage-list{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:4px;}
+.stage-item{
+  display:flex;
+  align-items:flex-start;
+  gap:8px;
+  font-size:12px;
+  padding:4px 8px;
+  border-radius:4px;
+  background: var(--panel-2);
+}
+.stage-mark{flex-shrink:0; width:14px; text-align:center; font-weight:700;}
+.stage-item.pass .stage-mark{color:var(--pass);}
+.stage-item.fail .stage-mark{color:var(--fail);}
+.stage-body .stage-title{color:var(--text);}
+.stage-body .stage-detail{color:var(--dim); font-size:11px;}
+.task-error{
+  color:var(--fail);
+  font-size:12px;
+  padding:8px;
+  background:var(--fail-dim);
+  border-radius:4px;
+}
+
+footer{
+  margin-top:24px;
+  color:var(--dim);
+  font-size:11px;
+  border-top:1px solid var(--border);
+  padding-top:12px;
+}
+
+@media (max-width:640px){
+  thead th:nth-child(1), thead th:nth-child(2){display:none;}
+  .task-col-title{display:block; font-size:10px; color:var(--dim); margin-bottom:2px;}
+}
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap">
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Sec<span class="accent">Lab</span> · проверка заданий</h1>
+      <div class="subtitle">Отчёт по автоматическим чекерам № 1–2</div>
+    </div>
+    <div class="gen-at" id="gen-at"></div>
+  </header>
+
+  <div class="stats" id="stats"></div>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width:26px"></th>
+        <th>Студент</th>
+        <th class="num" id="th-task1">№1</th>
+        <th class="num" id="th-task2">№2</th>
+        <th class="num">Итого</th>
+      </tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+
+  <footer>Источник: checks/run_all.py · данные из reports/sample_report.json (демо-набор для прототипа)</footer>
+</div>
+
+<script>
+const REPORT = {
+  "generated_at": "2026-09-27T09:40:00+00:00",
+  "tasks": [
+    { "id": "task1", "title": "№1. SSH: вход только по ключу" },
+    { "id": "task2", "title": "№2. Контейнерная изоляция" }
+  ],
+  "students": [
+    {
+      "student_id": "ivanov_i", "full_name": "Иванов Иван",
+      "results": [
+        { "task":"task1","total_stages":7,"passed_stages":7,
+          "stages":[
+            {"stage":1,"title":"Подключение по ключу без пароля","status":"pass","detail":"ssh с BatchMode=yes отработал"},
+            {"stage":2,"title":"PasswordAuthentication no","status":"pass","detail":"директива найдена"},
+            {"stage":3,"title":"PubkeyAuthentication yes","status":"pass","detail":"директива найдена"},
+            {"stage":4,"title":"PermitRootLogin no","status":"pass","detail":"директива найдена"},
+            {"stage":5,"title":"KbdInteractiveAuthentication no","status":"pass","detail":"директива найдена"},
+            {"stage":6,"title":"Права ~/.ssh и authorized_keys","status":"pass","detail":"700/600"},
+            {"stage":7,"title":"sshd -t проходит без ошибок","status":"pass","detail":"конфиг валиден"}
+          ]},
+        { "task":"task2","total_stages":8,"passed_stages":5,
+          "stages":[
+            {"stage":1,"title":"Контейнер существует и запущен","status":"pass","detail":"найден"},
+            {"stage":2,"title":"Лимит памяти задан","status":"pass","detail":"Memory=536870912"},
+            {"stage":3,"title":"Лимит CPU задан","status":"pass","detail":"NanoCpus=1000000000"},
+            {"stage":4,"title":"Лимит процессов задан","status":"fail","detail":"PidsLimit не задан"},
+            {"stage":5,"title":"Привилегии сброшены (cap-drop=ALL)","status":"pass","detail":"CapDrop=ALL"},
+            {"stage":6,"title":"no-new-privileges включен","status":"fail","detail":"SecurityOpt=пусто"},
+            {"stage":7,"title":"Rootfs read-only","status":"fail","detail":"ReadonlyRootfs=false"},
+            {"stage":8,"title":"Изолированная сеть","status":"pass","detail":"NetworkMode=lab-net-ivanov_i"}
+          ]}
+      ]
+    },
+    {
+      "student_id": "petrova_a", "full_name": "Петрова Анна",
+      "results": [
+        { "task":"task1","total_stages":7,"passed_stages":4,
+          "stages":[
+            {"stage":1,"title":"Подключение по ключу без пароля","status":"pass","detail":"ssh с BatchMode=yes отработал"},
+            {"stage":2,"title":"PasswordAuthentication no","status":"fail","detail":"директива отсутствует"},
+            {"stage":3,"title":"PubkeyAuthentication yes","status":"pass","detail":"директива найдена"},
+            {"stage":4,"title":"PermitRootLogin no","status":"pass","detail":"директива найдена"},
+            {"stage":5,"title":"KbdInteractiveAuthentication no","status":"fail","detail":"директива отсутствует"},
+            {"stage":6,"title":"Права ~/.ssh и authorized_keys","status":"pass","detail":"700/600"},
+            {"stage":7,"title":"sshd -t проходит без ошибок","status":"fail","detail":"нет прав sudo для проверки"}
+          ]},
+        { "task":"task2","total_stages":0,"passed_stages":0,"stages":[],
+          "error":"docker inspect не нашёл контейнер lab-petrova_a" }
+      ]
+    },
+    {
+      "student_id": "sidorov_p", "full_name": "Сидоров Пётр",
+      "results": [
+        { "task":"task1","total_stages":7,"passed_stages":0,"stages":[],
+          "error":"не удалось подключиться в BatchMode (ключ не работает или требуется пароль)" },
+        { "task":"task2","total_stages":8,"passed_stages":8,
+          "stages":[
+            {"stage":1,"title":"Контейнер существует и запущен","status":"pass","detail":"найден"},
+            {"stage":2,"title":"Лимит памяти задан","status":"pass","detail":"Memory=536870912"},
+            {"stage":3,"title":"Лимит CPU задан","status":"pass","detail":"NanoCpus=1000000000"},
+            {"stage":4,"title":"Лимит процессов задан","status":"pass","detail":"PidsLimit=100"},
+            {"stage":5,"title":"Привилегии сброшены (cap-drop=ALL)","status":"pass","detail":"CapDrop=ALL"},
+            {"stage":6,"title":"no-new-privileges включен","status":"pass","detail":"SecurityOpt=no-new-privileges"},
+            {"stage":7,"title":"Rootfs read-only","status":"pass","detail":"ReadonlyRootfs=true"},
+            {"stage":8,"title":"Изолированная сеть","status":"pass","detail":"NetworkMode=lab-net-sidorov_p"}
+          ]}
+      ]
+    }
+  ]
+};
+
+function taskStatus(result){
+  if(result.error) return 'fail';
+  if(result.total_stages === 0) return 'fail';
+  if(result.passed_stages === result.total_stages) return 'pass';
+  if(result.passed_stages === 0) return 'fail';
+  return 'warn';
+}
+
+function pillHtml(result){
+  const st = taskStatus(result);
+  const label = result.error ? '0/0' : `${result.passed_stages}/${result.total_stages}`;
+  return `<span class="pill ${st}"><span class="dot"></span>${label}</span>`;
+}
+
+function renderStats(){
+  const students = REPORT.students;
+  let fullyDone = 0, totalTasks = 0, passedTasks = 0;
+  students.forEach(s => {
+    let allOk = true;
+    s.results.forEach(r => {
+      totalTasks++;
+      if(taskStatus(r) === 'pass') passedTasks++;
+      else allOk = false;
+    });
+    if(allOk) fullyDone++;
+  });
+  const rate = totalTasks ? Math.round(passedTasks/totalTasks*100) : 0;
+
+  document.getElementById('stats').innerHTML = `
+    <div class="stat">
+      <div class="n">${students.length}</div>
+      <div class="label">студентов в отчёте</div>
+    </div>
+    <div class="stat pass">
+      <div class="n">${fullyDone}</div>
+      <div class="label">выполнили всё полностью</div>
+    </div>
+    <div class="stat warn">
+      <div class="n">${students.length - fullyDone}</div>
+      <div class="label">есть незавершённые этапы</div>
+    </div>
+    <div class="stat">
+      <div class="n">${rate}%</div>
+      <div class="label">средний процент по всем заданиям</div>
+    </div>
+  `;
+}
+
+function renderTable(){
+  document.getElementById('gen-at').textContent =
+    'сформировано: ' + new Date(REPORT.generated_at).toLocaleString('ru-RU');
+
+  document.getElementById('th-task1').textContent = REPORT.tasks[0].id === 'task1' ? '№1' : REPORT.tasks[0].title;
+  document.getElementById('th-task2').textContent = REPORT.tasks[1].id === 'task2' ? '№2' : REPORT.tasks[1].title;
+
+  const rowsEl = document.getElementById('rows');
+  rowsEl.innerHTML = '';
+
+  REPORT.students.forEach((s, idx) => {
+    const r1 = s.results.find(r => r.task === 'task1');
+    const r2 = s.results.find(r => r.task === 'task2');
+    const totalPassed = (r1?.passed_stages||0) + (r2?.passed_stages||0);
+    const totalStages = (r1?.total_stages||0) + (r2?.total_stages||0);
+    const overallSt = (totalStages>0 && totalPassed===totalStages) ? 'pass' : (totalPassed===0 ? 'fail' : 'warn');
+
+    const tr = document.createElement('tr');
+    tr.className = 'student-row';
+    tr.dataset.idx = idx;
+    tr.innerHTML = `
+      <td><span class="caret">▸</span></td>
+      <td>
+        <div class="student-name">${s.full_name}</div>
+        <div class="student-id">${s.student_id}</div>
+      </td>
+      <td class="num"><span class="task-col-title">№1</span>${pillHtml(r1)}</td>
+      <td class="num"><span class="task-col-title">№2</span>${pillHtml(r2)}</td>
+      <td class="num"><span class="pill ${overallSt}">${totalPassed}/${totalStages}</span></td>
+    `;
+    rowsEl.appendChild(tr);
+
+    const detailTr = document.createElement('tr');
+    detailTr.className = 'detail-row';
+    detailTr.dataset.idx = idx;
+    detailTr.innerHTML = `<td colspan="5">${renderDetail(s, r1, r2)}</td>`;
+    rowsEl.appendChild(detailTr);
+
+    tr.addEventListener('click', () => {
+      tr.classList.toggle('open');
+      detailTr.classList.toggle('open');
+    });
+  });
+}
+
+function renderStagesList(result){
+  if(result.error){
+    return `<div class="task-error">Ошибка проверки: ${result.error}</div>`;
+  }
+  if(!result.stages.length){
+    return `<div class="task-error">Нет данных по этапам</div>`;
+  }
+  return `<ul class="stage-list">${result.stages.map(st => `
+    <li class="stage-item ${st.status}">
+      <span class="stage-mark">${st.status === 'pass' ? '✓' : '✗'}</span>
+      <div class="stage-body">
+        <div class="stage-title">${st.stage}. ${st.title}</div>
+        <div class="stage-detail">${st.detail}</div>
+      </div>
+    </li>`).join('')}</ul>`;
+}
+
+function renderDetail(s, r1, r2){
+  return `<div class="detail-grid">
+    <div class="detail-task">
+      <h4>${REPORT.tasks[0].title}</h4>
+      ${renderStagesList(r1)}
+    </div>
+    <div class="detail-task">
+      <h4>${REPORT.tasks[1].title}</h4>
+      ${renderStagesList(r2)}
+    </div>
+  </div>`;
+}
+
+renderStats();
+renderTable();
+</script>

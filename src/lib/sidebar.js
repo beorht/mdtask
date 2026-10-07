@@ -12,10 +12,11 @@ const {
 const { getTopicsForUser } = require('./sql-topics');
 const { hasFullAccess } = require('./test-access');
 const { LANGUAGE_SUBJECTS } = require('./subjects');
+const { IB_SUBJECT_KEY, IB_SUBJECT_TITLE, ibTasksForUser } = require('./ib-tasks');
 
 const SUMMARY_PATH = path.join(__dirname, '..', '..', 'content', 'SUMMARY.md');
 
-// `subject` scopes the tree to one subject ('sql' | 'python' | 'javascript'); without it the
+// `subject` scopes the tree to one subject ('sql' | 'python' | 'javascript' | 'ib'); without it the
 // full combined tree is returned (all sections + teacher group categories + SQL trainer).
 function buildSidebarTree({ role, studentId, studentGroup, subject }) {
   const TOPICS = getTopicsForUser({ role, group: studentGroup });
@@ -140,6 +141,7 @@ function buildSidebarTree({ role, studentId, studentGroup, subject }) {
   //   link    — leaf link with an icon, optional counter / status badge / locked state.
   if (subject === 'sql') return sqlSubjectNav();
   if (LANGUAGE_SUBJECTS[subject]) return languageSubjectNav(subject);
+  if (subject === IB_SUBJECT_KEY) return ibSubjectNav();
 
   function backLink() {
     return role === 'teacher'
@@ -207,6 +209,31 @@ function buildSidebarTree({ role, studentId, studentGroup, subject }) {
       backLink(),
       { ...header, done: solvedAll, total: totalAll, label: 'задач решено' },
       { kind: 'section', title: 'Темы', filter: true, children: groups },
+    ];
+  }
+
+  function ibSubjectNav() {
+    const tasks = ibTasksForUser({ id: studentId }).filter((t) => t.assigned);
+    const links = tasks.map((t) => ({
+      kind: 'link',
+      icon: t.solved ? '✓' : '💻',
+      title: `№${t.number}. ${t.title}`,
+      href: `/subjects/${IB_SUBJECT_KEY}/${t.key}`,
+      children: [],
+    }));
+    return [
+      backLink(),
+      {
+        kind: 'header',
+        icon: '🛡️',
+        title: IB_SUBJECT_TITLE,
+        href: `/subjects/${IB_SUBJECT_KEY}`,
+        done: tasks.filter((t) => t.solved).length,
+        total: tasks.length,
+        label: 'заданий выполнено',
+        children: [],
+      },
+      { kind: 'section', title: 'Задания', children: links },
     ];
   }
 

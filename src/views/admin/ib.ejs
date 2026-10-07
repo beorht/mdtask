@@ -1,0 +1,58 @@
+<%- include('partials/start') %>
+
+<div class="a-page-head">
+  <div>
+    <h1>Информационная безопасность</h1>
+    <p class="a-subtitle">Задание №3 «Доступ к защищённой базе данных» — засчитывается автоматически, когда студент открывает базу в терминале с верным паролем.</p>
+  </div>
+</div>
+
+<div class="a-stats">
+  <div class="a-stat"><span class="a-stat-value"><%= results.total %></span><span class="a-stat-label">Задание выдано</span></div>
+  <div class="a-stat"><span class="a-stat-value"><%= results.solved %></span><span class="a-stat-label">Выполнили</span></div>
+  <div class="a-stat"><span class="a-stat-value"><%= results.total - results.solved %></span><span class="a-stat-label">Ещё не выполнили</span></div>
+</div>
+
+<form class="a-filters" method="get" action="/admin/ib" data-autosubmit>
+  <label class="a-input-search">
+    <%- icon('search') %>
+    <input type="search" name="q" value="<%= filters.q %>" placeholder="Поиск по имени или ID" aria-label="Поиск студента">
+  </label>
+  <select name="group" aria-label="Группа">
+    <option value="">Все группы</option>
+    <% groups.forEach(function (g) { %><option value="<%= g %>" <%= filters.group === g ? 'selected' : '' %>><%= g %></option><% }) %>
+  </select>
+  <button type="submit" class="a-btn a-btn-secondary a-noscript-only">Применить</button>
+  <% if (filters.q || filters.group) { %><a class="a-btn a-btn-ghost" href="/admin/ib">Сбросить</a><% } %>
+</form>
+
+<section class="a-card a-card-flush">
+  <% if (results.rows.length === 0) { %>
+    <%- include('partials/empty', (filters.q || filters.group)
+      ? { emptyIcon: 'search', emptyTitle: 'Никого не нашли', emptyText: 'Проверьте написание или сбросьте фильтр группы.', emptyHref: '/admin/ib', emptyAction: 'Сбросить фильтры' }
+      : { emptyIcon: 'shield', emptyTitle: 'Задание ещё не выдано', emptyText: 'Сгенерируйте его группе: python3 ib/ctf/caesar-secret/generate_challenge.py --group IB' }) %>
+  <% } else { %>
+    <div class="a-table-wrap">
+      <table class="a-table a-table-cards">
+        <thead><tr><th>Студент</th><th>Группа</th><th>Статус</th><th>Выполнено</th><th>Вариант</th><th class="a-num">Сдвиг</th><th>Пароль</th><th>Скрытый файл</th></tr></thead>
+        <tbody>
+          <% results.rows.forEach(function (r) { const s = r.secret; %>
+            <tr>
+              <td data-label="Студент"><a class="a-person" href="/admin/students/<%= r.student.id %>"><span class="a-avatar a-avatar-sm"><%= view.initials(r.student.name) %></span><%= r.student.name %></a></td>
+              <td data-label="Группа" class="a-muted"><%= r.student.group || '—' %></td>
+              <td data-label="Статус"><%- include('partials/status', { key: s.solved ? 'done' : 'not_submitted' }) %></td>
+              <td data-label="Выполнено" class="a-muted a-nowrap"><%= s.solved ? view.formatDateTime(s.solved_at) : '—' %></td>
+              <td data-label="Вариант" class="a-muted"><%= s.variant === 'path' ? 'путь к файлу' : 'пароль' %></td>
+              <td data-label="Сдвиг" class="a-num"><%= s.caesar_shift %></td>
+              <td data-label="Пароль"><code><%= s.plain_password %></code></td>
+              <td data-label="Скрытый файл"><code><%= s.hidden_file_path %></code><% if (s.password_file_path) { %><br><span class="a-muted">пароль в </span><code><%= s.password_file_path %></code><% } %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <div class="a-card-foot a-muted">Показано: <%= results.rows.length %></div>
+  <% } %>
+</section>
+
+<%- include('partials/end') %>

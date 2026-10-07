@@ -1,0 +1,35 @@
+<!-- src/views/ib-task.ejs — one information-security task: IBEmulator's web terminal (ib/prototype) embedded -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <%- include('partials/head', { pageTitle: 'Задание №' + task.number }) %>
+</head>
+<body>
+  <%- include('partials/header') %>
+  <div class="app-layout">
+    <%- include('partials/sidebar') %>
+    <main class="content ib-task-page">
+      <nav class="breadcrumbs"><a href="/">Главная</a> / <a href="/subjects/ib"><%= subjectTitle %></a> / Задание №<%= task.number %></nav>
+      <div class="ib-task-head">
+        <h1>Задание №<%= task.number %>. <%= task.title %></h1>
+        <span class="status-pill status-pill-<%= task.solved ? 'done' : 'not_submitted' %>">
+          <span class="badge badge-<%= task.solved ? 'done' : 'not_submitted' %>"></span><%= task.solved ? 'Выполнено' : 'Не выполнено' %>
+        </span>
+      </div>
+      <p class="ib-task-hint">
+        Войдите в терминал под своим логином (<code><%= user.id %></code>) и паролем от платформы. Условие задания — <code>cat TASK.md</code>, список команд — <code>help</code>.
+        <a href="/ib/<%= task.key %>/terminal" target="_blank" rel="noopener">Открыть терминал во весь экран ↗</a>
+      </p>
+      <iframe class="ib-terminal" src="/ib/<%= task.key %>/terminal" title="Терминал SecLab"></iframe>
+    </main>
+  </div>
+  <%- include('partials/scripts') %>
+  <script>
+    // Keyboard focus goes straight to the terminal.
+    (function () {
+      var frame = document.querySelector('.ib-terminal');
+      frame.addEventListener('load', function () { frame.focus(); });
+    })();
+  </script>
+</body>
+</html>
