@@ -90,8 +90,10 @@ CREATE INDEX IF NOT EXISTS idx_users_student_group ON users(student_group);
 -- creating it here would fail on a pre-existing database where schema.sql's own
 -- CREATE TABLE IF NOT EXISTS is a no-op and the column doesn't exist yet.
 
--- Второй пароль на студента для практики по Цезарю (не связан с users.password_hash,
--- используется только как fallback при логине — см. routes/auth.js).
+-- Задание «Доступ к защищённой базе данных» (ib/, перенесено из IBEmulator): пароль от
+-- защищённой базы студента, зашифрованный шифром Цезаря. Заполняет генератор
+-- ib/ctf/caesar-secret/generate_challenge.py, solved ставит терминал (ib/server/app.py).
+-- Для входа на платформу этот пароль не подходит.
 CREATE TABLE IF NOT EXISTS ctf_caesar_secrets (
   id TEXT PRIMARY KEY,
   student_id TEXT NOT NULL REFERENCES users(id),
@@ -101,6 +103,10 @@ CREATE TABLE IF NOT EXISTS ctf_caesar_secrets (
   hidden_file_path TEXT NOT NULL,
   solved INTEGER NOT NULL DEFAULT 0,
   solved_at TEXT,
-  created_at TEXT NOT NULL
+  created_at TEXT NOT NULL,
+  -- 'password': cipher_text — зашифрованный пароль; 'path': зашифрованный путь к
+  -- password_file_path, где пароль лежит открытым текстом
+  variant TEXT NOT NULL DEFAULT 'password',
+  password_file_path TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_ctf_caesar_secrets_student ON ctf_caesar_secrets(student_id);

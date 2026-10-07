@@ -1,0 +1,49 @@
+<!-- src/views/subject-ib.ejs — "Информационная безопасность": the list of terminal tasks -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <%- include('partials/head', { pageTitle: title }) %>
+</head>
+<body>
+  <%- include('partials/header') %>
+  <div class="app-layout">
+    <%- include('partials/sidebar') %>
+    <main class="content">
+      <nav class="breadcrumbs"><a href="/">Главная</a> / <%= title %></nav>
+      <h1><%= title %></h1>
+      <% const pct = ib.total ? Math.round((ib.solved / ib.total) * 100) : 0; %>
+      <div class="subject-summary">
+        <span>Выполнено <strong><%= ib.solved %> / <%= ib.total %></strong></span>
+        <span class="progress subject-summary-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<%= pct %>" aria-label="Прогресс">
+          <span class="progress-fill" style="width: <%= pct %>%"></span>
+        </span>
+      </div>
+      <p class="empty-state">Задания выполняются в веб-терминале: вход под своим логином и паролем, условие — в файле <code>~/TASK.md</code>, список команд — <code>help</code>. Задание засчитывается автоматически.</p>
+
+      <% const assigned = ib.tasks.filter(function (t) { return t.assigned; }); %>
+      <% if (assigned.length === 0) { %>
+        <p class="empty-state">Заданий пока нет — их выдаёт преподаватель.</p>
+      <% } else { %>
+        <ul class="ib-task-list">
+          <% assigned.forEach(function (t) { %>
+            <li>
+              <a class="ib-task-card<%= t.solved ? ' is-solved' : '' %>" href="/subjects/ib/<%= t.key %>">
+                <span class="ib-task-num" aria-hidden="true"><%= t.solved ? '✓' : t.number %></span>
+                <span class="ib-task-body">
+                  <span class="ib-task-title">Задание №<%= t.number %>. <%= t.title %></span>
+                  <span class="ib-task-summary"><%= t.summary %></span>
+                  <span class="ib-task-tags"><% t.skills.forEach(function (s) { %><span class="tag"><%= s %></span><% }) %></span>
+                </span>
+                <span class="status-pill status-pill-<%= t.solved ? 'done' : 'not_submitted' %>">
+                  <span class="badge badge-<%= t.solved ? 'done' : 'not_submitted' %>"></span><%= t.solved ? 'Выполнено' : 'Не выполнено' %>
+                </span>
+              </a>
+            </li>
+          <% }) %>
+        </ul>
+      <% } %>
+    </main>
+  </div>
+  <%- include('partials/scripts') %>
+</body>
+</html>

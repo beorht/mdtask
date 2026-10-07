@@ -9,7 +9,7 @@
   <main class="content home">
     <% const nameParts = user.name.split(/\s+/); const firstName = nameParts[1] || nameParts[0]; %>
     <% function plural(n, one, few, many) { const m10 = n % 10, m100 = n % 100; return n + ' ' + (m10 === 1 && m100 !== 11 ? one : (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? few : many)); } %>
-    <% const ICONS = { sql: '🗄️', python: '🐍', javascript: '🟨' }; %>
+    <% const ICONS = { sql: '🗄️', python: '🐍', javascript: '🟨', ib: '🛡️' }; %>
     <header class="home-hero">
       <p class="home-eyebrow">Группа <%= user.group || '—' %></p>
       <h1 class="home-title">Здравствуйте, <%= firstName %>!</h1>
@@ -20,19 +20,21 @@
       <h2 id="subjectsTitle" class="home-section-title">Предметы</h2>
       <ul class="subject-grid">
         <% home.subjects.forEach(function (s) { %>
-          <% const isSql = s.kind === 'sql'; %>
-          <% const done = isSql ? s.solved : s.counts.done; %>
-          <% const total = isSql ? s.total : s.counts.total; %>
+          <% const isSql = s.kind === 'sql'; const isIb = s.kind === 'ib'; %>
+          <% const done = isSql || isIb ? s.solved : s.counts.done; %>
+          <% const total = isSql || isIb ? s.total : s.counts.total; %>
           <% const pct = total ? Math.round((done / total) * 100) : 0; %>
           <li>
             <a class="subject-card subject-card-<%= s.key %>" href="/subjects/<%= s.key %>">
               <span class="subject-card-head">
                 <span class="subject-card-icon" aria-hidden="true"><%= ICONS[s.key] %></span>
-                <span class="subject-card-kind"><%= isSql ? 'Тренажёр' : 'Программирование' %></span>
+                <span class="subject-card-kind"><%= isSql ? 'Тренажёр' : isIb ? 'Практикум' : 'Программирование' %></span>
               </span>
               <span class="subject-card-title"><%= s.title %></span>
               <span class="subject-card-meta">
-                <% if (isSql) { %>
+                <% if (isIb) { %>
+                  <%= plural(s.total, 'задание', 'задания', 'заданий') %> в веб-терминале с автопроверкой<% if (s.next) { %><br>Сейчас: №<%= s.next.number %>. <%= s.next.title %><% } %>
+                <% } else if (isSql) { %>
                   <%= plural(s.topicsCount, 'тема', 'темы', 'тем') %> · <%= plural(s.total, 'задача', 'задачи', 'задач') %> с автопроверкой<% if (s.currentTopic) { %><br>Сейчас: <%= s.currentTopic.label %><% } %>
                 <% } else { %>
                   <%= plural(s.counts.total, 'задание', 'задания', 'заданий') %> со сдачей · <%= plural(s.bankCount, 'задача', 'задачи', 'задач') %> в банке<% if (s.nextDue) { %><br>Ближайший срок: <%= s.nextDue %><% } %>
@@ -42,7 +44,7 @@
                 <span class="progress-fill" style="width: <%= pct %>%"></span>
               </span>
               <span class="subject-card-foot">
-                <span><%= isSql ? 'Решено' : 'Сдано и принято' %> <%= done %> / <%= total %></span>
+                <span><%= isSql ? 'Решено' : isIb ? 'Выполнено' : 'Сдано и принято' %> <%= done %> / <%= total %></span>
                 <span class="subject-card-go">Открыть →</span>
               </span>
             </a>

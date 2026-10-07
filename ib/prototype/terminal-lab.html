@@ -1,0 +1,393 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>SecLab TTY</title>
+<style>
+:root{
+  --bg:#000000;
+  --fg:#c7c7c7;
+  --dim:#5f5f5f;
+  --ok:#4caf6a;
+  --bad:#c7554a;
+  --cursor:#c7c7c7;
+  color-scheme: dark;
+}
+:root[data-theme="light"]{
+  --bg:#000000; --fg:#c7c7c7; --dim:#5f5f5f; --ok:#4caf6a; --bad:#c7554a; --cursor:#c7c7c7;
+  color-scheme: dark;
+}
+
+*{box-sizing:border-box;}
+html,body{height:100%;}
+body{
+  margin:0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+  font-size: 20px;
+  line-height: 1.5;
+  min-height: 100dvh;
+}
+
+#screen{
+  min-height: 100dvh;
+  padding: 18px 20px calc(18px + env(safe-area-inset-bottom,0px));
+  padding-top: calc(18px + env(safe-area-inset-top,0px));
+  cursor: text;
+}
+
+.line{white-space:pre-wrap; word-break:break-word; margin:0;}
+/* вывод sqlite3: таблицы не переносим, а прокручиваем по горизонтали */
+.line.pre{white-space:pre; word-break:normal; overflow-x:auto; line-height:1.25;}
+.dim{color:var(--dim);}
+.ok{color:var(--ok);}
+.bad{color:var(--bad);}
+
+#login-form{display:flex; flex-direction:column; gap:0;}
+.field-row{display:flex; align-items:baseline;}
+.field-input{
+  background:transparent;
+  border:none;
+  outline:none;
+  color: var(--fg);
+  font: inherit;
+  flex:1;
+  min-width: 40px;
+  caret-color: var(--cursor);
+  padding:0;
+  margin:0;
+}
+
+#term-view{display:none;}
+.prompt-row{display:flex; align-items:baseline;}
+#term-input{
+  background:transparent;
+  border:none;
+  outline:none;
+  color:var(--fg);
+  font:inherit;
+  flex:1;
+  min-width:40px;
+  caret-color: var(--cursor);
+  padding:0;
+  margin:0;
+}
+
+@media (max-width:480px){
+  body{font-size:18px;}
+  #screen{padding:14px 14px calc(14px + env(safe-area-inset-bottom,0px));}
+}
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap">
+
+<div id="screen">
+
+  <div id="login-view">
+    <div id="boot-log"></div>
+    <div id="login-form" style="display:none;">
+      <div class="field-row">
+        <span id="user-label">seclab login: </span><input id="user-input" class="field-input" autocomplete="off" autocapitalize="off" spellcheck="false" />
+      </div>
+      <div class="field-row" id="pass-row" style="display:none;">
+        <span>Password: </span><input id="pass-input" class="field-input" type="password" autocomplete="off" />
+      </div>
+      <div class="line" id="login-msg"></div>
+    </div>
+  </div>
+
+  <div id="term-view">
+    <div id="term-log"></div>
+    <div class="prompt-row" id="prompt-row">
+      <span id="prompt-tag"></span><input id="term-input" autocomplete="off" autocapitalize="off" spellcheck="false" />
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  // Базовый URL API: автономный сервер (server/app.py) — /api, внутри mdtask
+  // страница задаёт window.SECLAB_API (например /ib/caesar/api).
+  var API = window.SECLAB_API || '/api';
+  var bootLog = document.getElementById('boot-log');
+  var loginForm = document.getElementById('login-form');
+  var userInput = document.getElementById('user-input');
+  var passInput = document.getElementById('pass-input');
+  var passRow = document.getElementById('pass-row');
+  var loginMsg = document.getElementById('login-msg');
+  var loginView = document.getElementById('login-view');
+  var termView = document.getElementById('term-view');
+  var termLog = document.getElementById('term-log');
+  var termInput = document.getElementById('term-input');
+  var promptTag = document.getElementById('prompt-tag');
+  var screen = document.getElementById('screen');
+
+  var bootLines = [
+    ['dim', 'SecLab OS 3.1 LTS (GNU/Linux 6.8.0-seclab x86_64)'],
+    ['', ''],
+  ];
+
+  function typeLines(lines, done){
+    var i = 0;
+    function next(){
+      if(i >= lines.length){ done && done(); return; }
+      var div = document.createElement('div');
+      div.className = 'line ' + (lines[i][0]||'');
+      bootLog.appendChild(div);
+      var text = lines[i][1];
+      div.textContent = text;
+      i++;
+      setTimeout(next, 120);
+    }
+    next();
+  }
+
+  var stage = 'user';
+  var typedUser = '';
+
+  typeLines(bootLines, function(){
+    loginForm.style.display = 'flex';
+    loginForm.style.flexDirection = 'column';
+    userInput.focus();
+  });
+
+  function showMsg(text, cls){
+    loginMsg.textContent = text;
+    loginMsg.className = 'line ' + (cls||'');
+  }
+
+  function resetLoginForm(){
+    userInput.disabled = false;
+    passInput.disabled = false;
+    userInput.value = '';
+    passInput.value = '';
+    passRow.style.display = 'none';
+    stage = 'user';
+    userInput.focus();
+  }
+
+  function tryAuth(){
+    if(stage === 'user'){
+      typedUser = userInput.value.trim();
+      if(!typedUser) return;
+      userInput.disabled = true;
+      passRow.style.display = 'flex';
+      stage = 'pass';
+      passInput.focus();
+      return;
+    }
+    if(stage === 'pass'){
+      var password = passInput.value;
+      passInput.disabled = true;
+      showMsg('Проверка учётных данных...', 'dim');
+
+      fetch(API + '/login', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        credentials: 'include',
+        body: JSON.stringify({ studentId: typedUser, password: password })
+      })
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        if(!data.ok){
+          showMsg(data.error || 'Неверный логин или пароль', 'bad');
+          resetLoginForm();
+          return;
+        }
+        showMsg('');
+        startTerminal();
+      })
+      .catch(function(){
+        showMsg('Ошибка соединения с сервером', 'bad');
+        resetLoginForm();
+      });
+    }
+  }
+
+  userInput.addEventListener('keydown', function(e){
+    if(e.key === 'Enter'){ e.preventDefault(); tryAuth(); }
+  });
+  passInput.addEventListener('keydown', function(e){
+    if(e.key === 'Enter'){ e.preventDefault(); tryAuth(); }
+  });
+
+  function line(text, cls){
+    var div = document.createElement('div');
+    div.className = 'line ' + (cls||'');
+    div.textContent = text;
+    termLog.appendChild(div);
+  }
+
+  function echoPrompt(promptText, cmd){
+    var div = document.createElement('div');
+    div.className = 'line';
+    div.textContent = promptText + cmd;
+    termLog.appendChild(div);
+  }
+
+  // Текст приглашения приходит с сервера: "user@seclab:~$ " в bash,
+  // "sqlite> " / "   ...> " внутри sqlite3, "Password: " при открытии
+  // защищённой базы (mode === 'password' — ввод скрыт и не попадает в историю).
+  var currentPrompt = '';
+  var currentMode = 'shell';
+
+  function setPrompt(text, mode){
+    currentPrompt = text;
+    if(mode) currentMode = mode;
+    promptTag.textContent = text;
+    termInput.type = currentMode === 'password' ? 'password' : 'text';
+  }
+
+  function applyState(data){
+    setPrompt(data.nextPrompt, data.mode);
+  }
+
+  function postRun(payload){
+    return fetch(API + '/run', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      credentials: 'include',
+      body: JSON.stringify(payload)
+    }).then(function(r){
+      if(r.status === 401){ doLogout(); return null; }
+      return r.json();
+    });
+  }
+
+  function runCommand(raw){
+    var cmd = raw.trim();
+    if(cmd === '' && currentMode !== 'password') return;
+
+    if(currentMode === 'shell' && (cmd === 'logout' || cmd === 'exit')){
+      doLogout();
+      return;
+    }
+
+    var tabular = currentMode !== 'shell' || /^sqlite3\b/i.test(cmd);
+    termInput.disabled = true;
+    postRun({ cmd: cmd })
+    .then(function(data){
+      if(!data) return;
+      if(data.clear){
+        termLog.innerHTML = '';
+      } else {
+        echoPrompt(data.prompt, data.cmd);
+        if(data.output) line(data.output, tabular ? 'pre' : '');
+      }
+      applyState(data);
+    })
+    .catch(function(){
+      line('Ошибка соединения с сервером', 'bad');
+    })
+    .finally(function(){
+      termInput.disabled = false;
+      termInput.focus();
+      screen.scrollTop = screen.scrollHeight;
+    });
+  }
+
+  function doLogout(){
+    line('Завершение сессии...', 'dim');
+    fetch(API + '/logout', { method: 'POST', credentials: 'include' }).finally(function(){
+      setTimeout(function(){
+        termView.style.display = 'none';
+        loginView.style.display = 'block';
+        termLog.innerHTML = '';
+        setPrompt('', 'shell');
+        resetLoginForm();
+        showMsg('');
+      }, 400);
+    });
+  }
+
+  function startTerminal(){
+    loginView.style.display = 'none';
+    termView.style.display = 'block';
+    setPrompt(typedUser + '@seclab:~$ ', 'shell');
+    line('Last login: ' + new Date().toString());
+    line('Введите "help" для списка команд.', 'dim');
+    line('');
+    termInput.focus();
+  }
+
+  // История команд — как в обычном bash: ↑/↓ листают назад/вперёд,
+  // незавершённый ввод на "текущей" позиции сохраняется и возвращается
+  // при спуске обратно вниз.
+  var cmdHistory = [];
+  var historyIndex = 0;
+  var draftCmd = '';
+
+  termInput.addEventListener('keydown', function(e){
+    if(e.key === 'Enter'){
+      e.preventDefault();
+      var val = termInput.value;
+      termInput.value = '';
+      if(currentMode !== 'password' && val.trim() !== '' && cmdHistory[cmdHistory.length - 1] !== val){
+        cmdHistory.push(val);
+      }
+      historyIndex = cmdHistory.length;
+      draftCmd = '';
+      runCommand(val);
+      return;
+    }
+
+    if(e.key === 'ArrowUp'){
+      if(currentMode === 'password') return;
+      if(historyIndex === 0) return;
+      e.preventDefault();
+      if(historyIndex === cmdHistory.length) draftCmd = termInput.value;
+      historyIndex--;
+      termInput.value = cmdHistory[historyIndex];
+      requestAnimationFrame(function(){
+        termInput.setSelectionRange(termInput.value.length, termInput.value.length);
+      });
+      return;
+    }
+
+    if(e.key === 'ArrowDown'){
+      if(currentMode === 'password') return;
+      if(historyIndex >= cmdHistory.length) return;
+      e.preventDefault();
+      historyIndex++;
+      termInput.value = historyIndex === cmdHistory.length ? draftCmd : cmdHistory[historyIndex];
+      requestAnimationFrame(function(){
+        termInput.setSelectionRange(termInput.value.length, termInput.value.length);
+      });
+      return;
+    }
+
+    if(e.ctrlKey && (e.key === 'l' || e.key === 'L')){
+      e.preventDefault();
+      termLog.innerHTML = '';
+      return;
+    }
+
+    if(e.ctrlKey && (e.key === 'c' || e.key === 'C')){
+      e.preventDefault();
+      echoPrompt(currentPrompt, (currentMode === 'password' ? '' : termInput.value) + '^C');
+      termInput.value = '';
+      historyIndex = cmdHistory.length;
+      draftCmd = '';
+      screen.scrollTop = screen.scrollHeight;
+      if(currentMode !== 'shell'){
+        // отменить ввод пароля / сбросить недописанное многострочное выражение
+        postRun({ interrupt: true }).then(function(data){ if(data) applyState(data); });
+      }
+      return;
+    }
+  });
+
+  screen.addEventListener('click', function(){
+    if(termView.style.display !== 'none'){
+      termInput.focus();
+    } else if(stage === 'user' && !userInput.disabled){
+      userInput.focus();
+    } else if(stage === 'pass' && !passInput.disabled){
+      passInput.focus();
+    }
+  });
+
+  window.addEventListener('focus', function(){
+    if(termView.style.display !== 'none' && !termInput.disabled) termInput.focus();
+  });
+})();
+</script>

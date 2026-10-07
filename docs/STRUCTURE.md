@@ -100,6 +100,14 @@ mdtask/
 │   │   └── editor-preview.js       # live-превью markdown в редакторе преподавателя
 │   └── images/theory/*.png         # иллюстрации к теории (foreign key)
 │
+├── ib/                           # раздел «Информационная безопасность» (перенесён из IBEmulator один в один)
+│   ├── server/                   # backend терминала на Python stdlib: app.py (bash/sqlite3-эмуляция, handle_api),
+│   │                             #   sqlite_shell.py, protected_db.py, bridge.py (мост для Node, src/lib/ib-bridge.js)
+│   ├── prototype/terminal-lab.html   # веб-терминал (TTY), встраивается на /subjects/ib/<task>
+│   ├── ctf/caesar-secret/        # генератор задания №3 (пароли, шифр Цезаря, песочницы data/ctf/caesar/)
+│   ├── checks/ / task/ / docs/   # чекеры №1/№2, инструкции к заданиям, план курса
+│   └── admin-panel/              # демо-панель IBEmulator (реальные результаты — /admin/ib)
+│
 ├── tests/                          # node:test + supertest, 91/91 на момент README
 │   ├── server.test.js
 │   ├── db/index.test.js

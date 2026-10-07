@@ -405,6 +405,19 @@ router.get('/admin/trainer/:studentId/:exerciseId', (req, res) => {
   });
 });
 
+// --- Information security (ib/) ---
+
+router.get('/admin/ib', (req, res) => {
+  const ctx = data.loadContext();
+  const filters = { q: (req.query.q || '').trim(), group: req.query.group || '' };
+  render(res, 'ib', 'ib', {
+    pageTitle: 'Информационная безопасность',
+    filters,
+    results: data.ibResults(ctx, filters),
+    groups: getDistinctStudentGroups(),
+  });
+});
+
 // --- Settings ---
 
 router.get('/admin/settings', (req, res) => {

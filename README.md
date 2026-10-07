@@ -85,10 +85,18 @@ npm test
 
 ### Главная страница студента и предметы
 
-- `/` — отдельная главная без бокового меню: карточки предметов (SQL-тренажёр, Python, JavaScript), сводка по заданиям со сдачей и ближайшие сроки.
+- `/` — отдельная главная без бокового меню: карточки предметов (SQL-тренажёр, Python, JavaScript, «Информационная безопасность» — если студенту выдано задание), сводка по заданиям со сдачей и ближайшие сроки.
 - У каждого предмета своя страница и своё боковое меню: `/subjects/sql` (темы: теория + практика), `/subjects/python` и `/subjects/javascript` (общие задания со сдачей по разделам `SUMMARY.md` + банк задач своего языка).
 - Страница задания (`/assignment/:id`) показывает навигацию того языка, из которого её открыли (`?subject=`), иначе — последнего открытого.
 - Код: `src/lib/student-home.js`, `src/lib/subjects.js`, `buildSidebarTree({ subject })` в `src/lib/sidebar.js`.
+
+### Информационная безопасность (`ib/`, перенесено из IBEmulator)
+
+- Раздел `/subjects/ib` — список практических заданий (сейчас одно: №3 «Доступ к защищённой базе данных»), у каждого своя страница `/subjects/ib/<task>` со встроенным веб-терминалом.
+- Терминал — код IBEmulator один в один: фронтенд `ib/prototype/terminal-lab.html` (TTY с входом `seclab login:` — свой логин и пароль от платформы), backend `ib/server/` (Python stdlib: эмуляция bash и `sqlite3`, песочницы студентов, защищённая паролем база). Задание засчитывается автоматически, когда студент открывает базу с верным паролем (`ctf_caesar_secrets.solved`). Пароль задания для входа на платформу не подходит.
+- mdtask запускает backend одним дочерним процессом `ib/server/bridge.py` (JSON-строки через stdin/stdout, `src/lib/ib-bridge.js`), API терминала — `POST /ib/<task>/api/{login,run,logout,whoami}`. Нужен `python3` (без сторонних пакетов). Сессии терминала живут в этом процессе и сбрасываются при перезапуске сервера.
+- Выдать задание группе (пароли, шифр, песочницы в `data/ctf/caesar/<id>/`): `python3 ib/ctf/caesar-secret/generate_challenge.py --group IB` (подробнее — `ib/README.md`). Результаты и ответы — в админке, `/admin/ib`.
+- Список заданий раздела — `src/lib/ib-tasks.js`; новое задание добавляется туда записью.
 
 ## Структура проекта
 
@@ -98,12 +106,13 @@ src/
   db/                   # better-sqlite3: schema.sql, index.js (запросы, prepared-statement кэш), seed*.js
   lib/                  # markdown, sidebar, summary parser/writer, sql-sandbox, password (scrypt-хеширование)
   middleware/auth.js     # requireRole / requireAuth (+ редирект на смену пароля)
-  routes/               # auth (login/change-password/logout), student, teacher, trainer
+  routes/               # auth (login/change-password/logout), student, teacher, trainer, admin, ib
   views/                # EJS-шаблоны (в т.ч. change-password.ejs)
 content/
   SUMMARY.md            # оглавление в стиле mdBook
   src/                  # markdown-файлы заданий
 public/                 # css/js без сборки
+ib/                     # практикум по информационной безопасности (бывший IBEmulator): терминал, генераторы заданий, чекеры
 tests/                  # node:test + supertest
 docs/plan.md            # исходное ТЗ проекта (RU)
 ```
@@ -115,6 +124,8 @@ docs/plan.md            # исходное ТЗ проекта (RU)
 | `PORT` | `42521` | порт сервера |
 | `DB_PATH` | `data/mdtask.db` | путь к основной БД (`:memory:` для тестов) |
 | `TRAINER_DB_DIR` | `data/trainer` | папка с песочницами SQL-тренажёра по студентам |
+| `CTF_CAESAR_DIR` | `data/ctf/caesar` | песочницы студентов для задания №3 (раздел ИБ) |
+| `IB_PYTHON` | `python3` | интерпретатор для backend терминала (`ib/server/bridge.py`) |
 
 ## Оптимизация БД
 

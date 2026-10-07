@@ -1,0 +1,87 @@
+{
+  "generated_at": "2026-09-27T09:40:00+00:00",
+  "tasks": [
+    { "id": "task1", "title": "№1. SSH: вход только по ключу" },
+    { "id": "task2", "title": "№2. Контейнерная изоляция" }
+  ],
+  "students": [
+    {
+      "student_id": "ivanov_i",
+      "full_name": "Иванов Иван",
+      "results": [
+        {
+          "task": "task1", "student": "ivanov_i", "total_stages": 7, "passed_stages": 7,
+          "stages": [
+            {"stage":1,"title":"Подключение по ключу без пароля","status":"pass","detail":"ssh с BatchMode=yes отработал"},
+            {"stage":2,"title":"PasswordAuthentication no","status":"pass","detail":"директива найдена"},
+            {"stage":3,"title":"PubkeyAuthentication yes","status":"pass","detail":"директива найдена"},
+            {"stage":4,"title":"PermitRootLogin no","status":"pass","detail":"директива найдена"},
+            {"stage":5,"title":"KbdInteractiveAuthentication no","status":"pass","detail":"директива найдена"},
+            {"stage":6,"title":"Права на ~/.ssh и authorized_keys","status":"pass","detail":"700/600"},
+            {"stage":7,"title":"sshd -t проходит без ошибок","status":"pass","detail":"конфиг валиден"}
+          ]
+        },
+        {
+          "task": "task2", "student": "ivanov_i", "total_stages": 8, "passed_stages": 5,
+          "stages": [
+            {"stage":1,"title":"Контейнер существует и запущен","status":"pass","detail":"найден"},
+            {"stage":2,"title":"Лимит памяти задан","status":"pass","detail":"Memory=536870912"},
+            {"stage":3,"title":"Лимит CPU задан","status":"pass","detail":"NanoCpus=1000000000"},
+            {"stage":4,"title":"Лимит процессов задан","status":"fail","detail":"PidsLimit не задан"},
+            {"stage":5,"title":"Привилегии сброшены (cap-drop=ALL)","status":"pass","detail":"CapDrop=ALL"},
+            {"stage":6,"title":"no-new-privileges включен","status":"fail","detail":"SecurityOpt=пусто"},
+            {"stage":7,"title":"Rootfs read-only","status":"fail","detail":"ReadonlyRootfs=false"},
+            {"stage":8,"title":"Изолированная сеть","status":"pass","detail":"NetworkMode=lab-net-ivanov_i"}
+          ]
+        }
+      ]
+    },
+    {
+      "student_id": "petrova_a",
+      "full_name": "Петрова Анна",
+      "results": [
+        {
+          "task": "task1", "student": "petrova_a", "total_stages": 7, "passed_stages": 4,
+          "stages": [
+            {"stage":1,"title":"Подключение по ключу без пароля","status":"pass","detail":"ssh с BatchMode=yes отработал"},
+            {"stage":2,"title":"PasswordAuthentication no","status":"fail","detail":"директива отсутствует"},
+            {"stage":3,"title":"PubkeyAuthentication yes","status":"pass","detail":"директива найдена"},
+            {"stage":4,"title":"PermitRootLogin no","status":"pass","detail":"директива найдена"},
+            {"stage":5,"title":"KbdInteractiveAuthentication no","status":"fail","detail":"директива отсутствует"},
+            {"stage":6,"title":"Права на ~/.ssh и authorized_keys","status":"pass","detail":"700/600"},
+            {"stage":7,"title":"sshd -t проходит без ошибок","status":"fail","detail":"нет прав sudo для проверки"}
+          ]
+        },
+        {
+          "task": "task2", "student": "petrova_a", "total_stages": 0, "passed_stages": 0,
+          "stages": [],
+          "error": "docker inspect не нашёл контейнер lab-petrova_a"
+        }
+      ]
+    },
+    {
+      "student_id": "sidorov_p",
+      "full_name": "Сидоров Пётр",
+      "results": [
+        {
+          "task": "task1", "student": "sidorov_p", "total_stages": 7, "passed_stages": 0,
+          "stages": [],
+          "error": "не удалось подключиться в BatchMode (ключ не работает или требуется пароль)"
+        },
+        {
+          "task": "task2", "student": "sidorov_p", "total_stages": 8, "passed_stages": 8,
+          "stages": [
+            {"stage":1,"title":"Контейнер существует и запущен","status":"pass","detail":"найден"},
+            {"stage":2,"title":"Лимит памяти задан","status":"pass","detail":"Memory=536870912"},
+            {"stage":3,"title":"Лимит CPU задан","status":"pass","detail":"NanoCpus=1000000000"},
+            {"stage":4,"title":"Лимит процессов задан","status":"pass","detail":"PidsLimit=100"},
+            {"stage":5,"title":"Привилегии сброшены (cap-drop=ALL)","status":"pass","detail":"CapDrop=ALL"},
+            {"stage":6,"title":"no-new-privileges включен","status":"pass","detail":"SecurityOpt=no-new-privileges"},
+            {"stage":7,"title":"Rootfs read-only","status":"pass","detail":"ReadonlyRootfs=true"},
+            {"stage":8,"title":"Изолированная сеть","status":"pass","detail":"NetworkMode=lab-net-sidorov_p"}
+          ]
+        }
+      ]
+    }
+  ]
+}

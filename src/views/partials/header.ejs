@@ -19,7 +19,6 @@
       <span class="role-tag role-tag-<%= user.role %>"><%= user.role === 'teacher' ? 'Преподаватель' : 'Студент' %></span>
     </div>
     <% if (user.role === 'teacher') { %><a href="/admin" class="btn btn-secondary">Админ-панель</a><% } %>
-    <% if (user.role === 'student') { %><a href="/ctf/caesar" class="btn btn-secondary">Терминал</a><% } %>
     <a href="/change-password" class="btn btn-secondary">Сменить пароль</a>
     <form method="post" action="/logout"><button type="submit" class="btn-secondary">Выйти</button></form>
   </div>
