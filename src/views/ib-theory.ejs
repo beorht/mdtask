@@ -1,0 +1,34 @@
+<!-- src/views/ib-theory.ejs — theory for an information-security task, read before the terminal practice -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <%- include('partials/head', { pageTitle: 'Теория · Задание №' + task.number }) %>
+</head>
+<body>
+  <%- include('partials/header') %>
+  <div class="app-layout">
+    <%- include('partials/sidebar') %>
+    <main class="content ib-theory">
+      <nav class="breadcrumbs"><a href="/">Главная</a> / <a href="/subjects/ib"><%= subjectTitle %></a> / Задание №<%= task.number %> · Теория</nav>
+      <p class="ib-steps">
+        <span class="ib-step is-current"><span aria-hidden="true">1</span> Теория</span>
+        <span class="ib-step-sep" aria-hidden="true">→</span>
+        <a class="ib-step" href="/subjects/ib/<%= task.key %>"><span aria-hidden="true">2</span> Практика в терминале</a>
+      </p>
+      <%- html %>
+      <p class="ib-theory-next">
+        <a class="btn btn-primary" href="/subjects/ib/<%= task.key %>">Перейти к практике →</a>
+      </p>
+    </main>
+    <aside class="toc">
+      <h3>На этой странице</h3>
+      <ul>
+        <% toc.forEach(function (h) { %>
+          <li class="toc-level-<%= h.level %>"><a href="#<%= h.slug %>"><%= h.text %></a></li>
+        <% }) %>
+      </ul>
+    </aside>
+  </div>
+  <%- include('partials/scripts') %>
+</body>
+</html>

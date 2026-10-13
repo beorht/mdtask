@@ -287,3 +287,6 @@ const exercises = DEFINITIONS.map((def, i) => ({
 
 module.exports = exercises;
 module.exports.SOLUTIONS = Object.fromEntries(DEFINITIONS.map((d) => [d.id, d.solution]));
+// The same college database is used by the JOIN practice (sql-exercises-join-data.js).
+module.exports.SCHOOL_SCHEMA_EXT = SCHOOL_SCHEMA_EXT;
+module.exports.structureChecker = structureChecker;

@@ -53,8 +53,11 @@ test('seeding adds missing exercises to an already populated table without touch
     id TEXT PRIMARY KEY, order_index INTEGER NOT NULL UNIQUE, topic TEXT NOT NULL, title TEXT NOT NULL,
     description_md TEXT NOT NULL, schema_sql TEXT NOT NULL, allowed_statement TEXT NOT NULL, check_type TEXT NOT NULL,
     checker_sql TEXT, order_matters INTEGER NOT NULL DEFAULT 0, expected_result TEXT NOT NULL)`);
+  // what addColumnIfMissing in src/db/index.js adds before seeding
+  conn.exec('ALTER TABLE sql_exercises ADD COLUMN required_keyword TEXT');
   conn
-    .prepare(`INSERT INTO sql_exercises VALUES ('distinct-1', 91, 'distinct', 'old title', '', '', 'SELECT', 'select_match', NULL, 0, '[]')`)
+    .prepare(`INSERT INTO sql_exercises (id, order_index, topic, title, description_md, schema_sql, allowed_statement, check_type, checker_sql, order_matters, expected_result)
+      VALUES ('distinct-1', 91, 'distinct', 'old title', '', '', 'SELECT', 'select_match', NULL, 0, '[]')`)
     .run();
 
   seedSqlExercises(conn);
@@ -100,7 +103,7 @@ test('the theory practice card links to the practice list once the topic is unlo
 test('theory-only topics have no practice card', async () => {
   const app = createApp();
   const agent = await loginAs(app, 'student-1');
-  const res = await agent.get('/trainer/theory/join');
+  const res = await agent.get('/trainer/theory/primary_key');
   assert.strictEqual(res.status, 200);
   assert.doesNotMatch(res.text, /data-testid="practice-cta"/);
 });

@@ -25,8 +25,13 @@
       </p>
       <p class="empty-state">Сначала прочитайте теорию темы, затем решайте задачи. Темы практики открываются по порядку.</p>
 
+      <% sql.sections.forEach(function (section) { %>
+      <% if (section.key !== 'topics') { %>
+        <h2 class="trainer-section-title"><%= section.title %></h2>
+        <p class="empty-state">Задания на повторение: ключи, связи и вывод через JOIN. Открываются после темы «JOIN — соединение таблиц».</p>
+      <% } %>
       <ol class="topic-list">
-        <% sql.topics.forEach(function (t, i) { %>
+        <% section.topics.forEach(function (t, i) { %>
           <% const state = t.total === 0 ? 'theory' : (!t.unlocked ? 'locked' : (t.solvedCount === t.total ? 'done' : 'open')); %>
           <li class="topic-row topic-row-<%= state %>">
             <span class="topic-row-num"><%= state === 'done' ? '✓' : (state === 'locked' ? '🔒' : i + 1) %></span>
@@ -44,6 +49,7 @@
           </li>
         <% }) %>
       </ol>
+      <% }) %>
     </main>
   </div>
   <%- include('partials/scripts') %>

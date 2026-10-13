@@ -40,11 +40,26 @@ TASKS = [
         "args": lambda s: [s["student_id"], s["task2"]["container_name"]],
         "requires": "task2",
     },
+    {
+        # Песочница и значения студента берутся из mdtask — в students.json ничего не нужно.
+        "id": "task4",
+        "title": "№4. Поиск и правка конфигурационных файлов",
+        "script": SCRIPT_DIR / "task4_check.py",
+        "args": lambda s: [s["student_id"]],
+        "requires": None,
+    },
+    {
+        "id": "task5",
+        "title": "№5. Основы работы в терминале Linux",
+        "script": SCRIPT_DIR / "task5_check.py",
+        "args": lambda s: [s["student_id"]],
+        "requires": None,
+    },
 ]
 
 
 def run_checker(task, student):
-    if task["requires"] not in student:
+    if task["requires"] and task["requires"] not in student:
         return {
             "task": task["id"],
             "student": student["student_id"],

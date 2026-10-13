@@ -101,11 +101,19 @@ mdtask/
 │   └── images/theory/*.png         # иллюстрации к теории (foreign key)
 │
 ├── ib/                           # раздел «Информационная безопасность» (перенесён из IBEmulator один в один)
-│   ├── server/                   # backend терминала на Python stdlib: app.py (bash/sqlite3-эмуляция, handle_api),
+│   ├── server/                   # backend терминала на Python stdlib: app.py (сессии, задания, handle_api),
+│   │                             #   shell.py (эмулятор bash, история, скрипты, Tab), cmd_find/cmd_grep/cmd_sed.py,
+│   │                             #   cmd_files.py (mkdir/rm/mv/cp/chmod/ln/tree ...), posixre.py, vfs.py
+│   │                             #   (песочница и права), manpages.py, config_task.py (проверка №4),
+│   │                             #   terminal_task.py (этапы и проверка тренажёра №5),
 │   │                             #   sqlite_shell.py, protected_db.py, bridge.py (мост для Node, src/lib/ib-bridge.js)
 │   ├── prototype/terminal-lab.html   # веб-терминал (TTY), встраивается на /subjects/ib/<task>
 │   ├── ctf/caesar-secret/        # генератор задания №3 (пароли, шифр Цезаря, песочницы data/ctf/caesar/)
-│   ├── checks/ / task/ / docs/   # чекеры №1/№2, инструкции к заданиям, план курса
+│   ├── ctf/configs/              # задание №4: генератор сервера (generate_configs.py, templates.py),
+│   │                             #   условие TASK.md, теория THEORY.md (показывается в mdtask)
+│   ├── ctf/terminal/             # задание №5 (тренажёр команд): generate_terminal.py, теория THEORY.md
+│   ├── tests/                    # unittest эмулятора и заданий №4, №5 (npm run test:ib)
+│   ├── checks/ / task/ / docs/   # чекеры №1/№2/№4/№5, инструкции к заданиям, план курса
 │   └── admin-panel/              # демо-панель IBEmulator (реальные результаты — /admin/ib)
 │
 ├── tests/                          # node:test + supertest, 91/91 на момент README

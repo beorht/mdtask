@@ -39,8 +39,13 @@ addColumnIfMissing('users', 'password_hash', 'TEXT');
 addColumnIfMissing('users', 'password_salt', 'TEXT');
 addColumnIfMissing('users', 'must_change_password', "INTEGER NOT NULL DEFAULT 1");
 addColumnIfMissing('assignments', 'target_group', 'TEXT');
+// JSON list of file names (e.g. ["mydb.py","main.py"]): the student writes them in the
+// on-site Python editor instead of uploading an archive. NULL = archive upload.
+addColumnIfMissing('assignments', 'code_files', 'TEXT');
 // Set by the admin "На пересдачу" verdict: a not_done submission the student may
 // replace even after the due date (plain not_done only allows it before the deadline).
+// SQL trainer: keyword a solution must contain (the "Практикум" JOIN tasks).
+addColumnIfMissing('sql_exercises', 'required_keyword', 'TEXT');
 addColumnIfMissing('submissions', 'resubmit_allowed', 'INTEGER NOT NULL DEFAULT 0');
 // Task variants of ib/ctf/caesar-secret (its generator adds them too).
 addColumnIfMissing('ctf_caesar_secrets', 'variant', "TEXT NOT NULL DEFAULT 'password'");
@@ -99,6 +104,7 @@ function rowToAssignment(row) {
     targetStudentId: row.target_student_id,
     targetGroup: row.target_group,
     dueDate: row.due_date,
+    codeFiles: row.code_files ? JSON.parse(row.code_files) : null,
   };
 }
 
@@ -143,6 +149,70 @@ function getCaesarSecretForStudent(studentId) {
 
 function getCaesarSecrets() {
   return prepared('SELECT * FROM ctf_caesar_secrets').all();
+}
+
+// Задание «Поиск и правка конфигурационных файлов» (ib/, №4): заполняет ib/ctf/configs,
+// прогресс (passed/total/solved) пишет терминал после каждой правки файлов.
+function rowToConfigTask(row) {
+  return row ? { ...row, params: JSON.parse(row.params) } : null;
+}
+
+function getConfigTaskForStudent(studentId) {
+  return rowToConfigTask(prepared('SELECT * FROM ib_config_tasks WHERE student_id = ?').get(studentId));
+}
+
+function getConfigTasks() {
+  return prepared('SELECT * FROM ib_config_tasks').all().map(rowToConfigTask);
+}
+
+// Задание «Основы работы в терминале Linux» (ib/, №5, тренажёр): заполняет ib/ctf/terminal,
+// прогресс по этапам (passed/total, progress JSON) пишет терминал после каждой команды.
+function rowToTerminalTask(row) {
+  return row ? { ...row, params: JSON.parse(row.params), progress: JSON.parse(row.progress || '{}') } : null;
+}
+
+function getTerminalTaskForStudent(studentId) {
+  return rowToTerminalTask(prepared('SELECT * FROM ib_terminal_tasks WHERE student_id = ?').get(studentId));
+}
+
+// With activity per student from the command log: number of commands and the last one's time.
+function getTerminalTasks() {
+  return prepared(
+    `SELECT t.*, COUNT(l.id) AS commands, MAX(l.created_at) AS last_activity_at
+     FROM ib_terminal_tasks t LEFT JOIN ib_terminal_log l ON l.student_id = t.student_id
+     GROUP BY t.id`
+  )
+    .all()
+    .map(rowToTerminalTask);
+}
+
+// The student's latest commands, newest first.
+function getTerminalLog(studentId, limit = 300) {
+  return prepared('SELECT * FROM ib_terminal_log WHERE student_id = ? ORDER BY id DESC LIMIT ?')
+    .all(studentId, limit)
+    .map((row) => ({ ...row, cmds: JSON.parse(row.cmds || '[]') }));
+}
+
+// Задания ib/ на общем движке lab_task.py (№6 incident, №7 ssh): строка на задание и студента.
+function getLabTaskForStudent(task, studentId) {
+  return rowToTerminalTask(prepared('SELECT * FROM ib_lab_tasks WHERE task = ? AND student_id = ?').get(task, studentId));
+}
+
+function getLabTasks(task) {
+  return prepared(
+    `SELECT t.*, COUNT(l.id) AS commands, MAX(l.created_at) AS last_activity_at
+     FROM ib_lab_tasks t LEFT JOIN ib_lab_log l ON l.task = t.task AND l.student_id = t.student_id
+     WHERE t.task = ?
+     GROUP BY t.id`
+  )
+    .all(task)
+    .map(rowToTerminalTask);
+}
+
+function getLabLog(task, studentId, limit = 300) {
+  return prepared('SELECT * FROM ib_lab_log WHERE task = ? AND student_id = ? ORDER BY id DESC LIMIT ?')
+    .all(task, studentId, limit)
+    .map((row) => ({ ...row, cmds: JSON.parse(row.cmds || '[]') }));
 }
 
 function setUserPassword(id, newPassword) {
@@ -273,6 +343,28 @@ function createAssignment({ courseId, title, mdPath, targetType, targetStudentId
   return rowToAssignment(prepared('SELECT * FROM assignments WHERE id = ?').get(id));
 }
 
+function setAssignmentCodeFiles(id, codeFiles) {
+  prepared('UPDATE assignments SET code_files = ? WHERE id = ?').run(codeFiles ? JSON.stringify(codeFiles) : null, id);
+}
+
+// { fileName: code } of a student's unsent editor work, or null.
+function getCodeDraft(assignmentId, studentId) {
+  const row = prepared('SELECT files, updated_at FROM code_drafts WHERE assignment_id = ? AND student_id = ?').get(
+    assignmentId,
+    studentId
+  );
+  return row ? { files: JSON.parse(row.files), updatedAt: row.updated_at } : null;
+}
+
+function saveCodeDraft(assignmentId, studentId, files) {
+  const now = new Date().toISOString();
+  prepared(
+    `INSERT INTO code_drafts (assignment_id, student_id, files, updated_at) VALUES (?, ?, ?, ?)
+     ON CONFLICT (assignment_id, student_id) DO UPDATE SET files = excluded.files, updated_at = excluded.updated_at`
+  ).run(assignmentId, studentId, JSON.stringify(files), now);
+  return now;
+}
+
 function updateAssignmentTitle(id, title) {
   prepared('UPDATE assignments SET title = ? WHERE id = ?').run(title, id);
 }
@@ -293,6 +385,7 @@ function rowToSqlExercise(row) {
     checkType: row.check_type,
     checkerSql: row.checker_sql,
     orderMatters: !!row.order_matters,
+    requiredKeyword: row.required_keyword || null,
     expectedResult: JSON.parse(row.expected_result),
   };
 }
@@ -377,6 +470,79 @@ function getAllSqlAttempts() {
   return prepared('SELECT * FROM sql_attempts ORDER BY created_at DESC').all().map(rowToSqlAttempt);
 }
 
+// Tests only: the row ib/ctf/configs/generate_configs.py writes for a student.
+function seedConfigTaskForTests(studentId, { passed = 0, solved = false } = {}) {
+  prepared(
+    `INSERT INTO ib_config_tasks (id, student_id, params, passed, total, solved, solved_at, created_at)
+     VALUES (?, ?, ?, ?, 8, ?, ?, ?)`
+  ).run(
+    `config-${studentId}`,
+    studentId,
+    JSON.stringify({ ssh_port: 2345, apache_port: 8456, upload_max: '64M', decoys: {} }),
+    passed,
+    solved ? 1 : 0,
+    solved ? new Date().toISOString() : null,
+    new Date().toISOString()
+  );
+}
+
+// Tests only: the row ib/ctf/terminal/generate_terminal.py writes, plus optional log lines.
+function seedTerminalTaskForTests(studentId, { passed = 0, solved = false, answers = {}, attempts = {}, log = [] } = {}) {
+  const progress = { done: passed, opened: { 1: 0 }, completed_at: {}, answers, attempts };
+  prepared(
+    `INSERT INTO ib_terminal_tasks (id, student_id, params, progress, passed, total, solved, solved_at, created_at)
+     VALUES (?, ?, ?, ?, ?, 14, ?, ?, ?)`
+  ).run(
+    `terminal-${studentId}`,
+    studentId,
+    JSON.stringify({ project: 'proj-falcon', code_word: 'meadow-42', final_port: 4321 }),
+    JSON.stringify(progress),
+    passed,
+    solved ? 1 : 0,
+    solved ? new Date().toISOString() : null,
+    new Date().toISOString()
+  );
+  for (const raw of log) {
+    prepared('INSERT INTO ib_terminal_log (student_id, raw, line, cmds, status, created_at) VALUES (?, ?, ?, ?, 0, ?)').run(
+      studentId,
+      raw,
+      raw,
+      '[]',
+      new Date().toISOString()
+    );
+  }
+}
+
+// Tests only: a row of an ib/ lab task (lab_task.py), plus optional log lines.
+function seedLabTaskForTests(task, studentId, { passed = 0, total = 8, solved = false, params = {}, log = [] } = {}) {
+  const progress = { done: passed, opened: { 1: 0 }, completed_at: {}, answers: {}, attempts: {} };
+  prepared(
+    `INSERT INTO ib_lab_tasks (id, task, student_id, params, progress, passed, total, solved, solved_at, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(
+    `${task}-${studentId}`,
+    task,
+    studentId,
+    JSON.stringify(params),
+    JSON.stringify(progress),
+    passed,
+    total,
+    solved ? 1 : 0,
+    solved ? new Date().toISOString() : null,
+    new Date().toISOString()
+  );
+  for (const raw of log) {
+    prepared('INSERT INTO ib_lab_log (task, student_id, raw, line, cmds, status, created_at) VALUES (?, ?, ?, ?, ?, 0, ?)').run(
+      task,
+      studentId,
+      raw,
+      raw,
+      '[]',
+      new Date().toISOString()
+    );
+  }
+}
+
 // Tests only: the row ib/ctf/caesar-secret/generate_challenge.py writes for a student.
 function seedCaesarSecretForTests(studentId, { solved = false } = {}) {
   prepared(
@@ -386,7 +552,7 @@ function seedCaesarSecretForTests(studentId, { solved = false } = {}) {
 }
 
 function __resetForTests() {
-  db.exec('DELETE FROM ctf_caesar_secrets; DELETE FROM sql_attempts; DELETE FROM submissions; DELETE FROM assignments; DELETE FROM courses; DELETE FROM users;');
+  db.exec('DELETE FROM code_drafts; DELETE FROM ib_lab_log; DELETE FROM ib_lab_tasks; DELETE FROM ib_terminal_log; DELETE FROM ib_terminal_tasks; DELETE FROM ib_config_tasks; DELETE FROM ctf_caesar_secrets; DELETE FROM sql_attempts; DELETE FROM submissions; DELETE FROM assignments; DELETE FROM courses; DELETE FROM users;');
   seed(db);
 }
 
@@ -397,6 +563,17 @@ module.exports = {
   getCaesarSecretForStudent,
   getCaesarSecrets,
   seedCaesarSecretForTests,
+  getConfigTaskForStudent,
+  getConfigTasks,
+  seedConfigTaskForTests,
+  getTerminalTaskForStudent,
+  getTerminalTasks,
+  getTerminalLog,
+  seedTerminalTaskForTests,
+  getLabTaskForStudent,
+  getLabTasks,
+  getLabLog,
+  seedLabTaskForTests,
   setUserPassword,
   createUser,
   setMustChangePasswordForTests,
@@ -414,6 +591,9 @@ module.exports = {
   getLatestSubmission,
   updateSubmissionFiles,
   createAssignment,
+  setAssignmentCodeFiles,
+  getCodeDraft,
+  saveCodeDraft,
   updateAssignmentTitle,
   setAssignmentDueDateForTests,
   getLanguageExercises,

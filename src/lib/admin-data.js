@@ -6,9 +6,15 @@ const {
   getSqlExercises,
   getAllSqlAttempts,
   getCaesarSecrets,
+  getConfigTasks,
+  getTerminalTasks,
+  getTerminalLog,
+  getLabTasks,
+  getLabLog,
 } = require('../db');
 const { TOPICS } = require('./sql-topics');
 const { TEST_GROUP } = require('./test-access');
+const { findIbTask, IB_TASKS } = require('./ib-tasks');
 
 // Every status the admin UI can show. Status is never conveyed by colour alone —
 // each carries an icon and a text label (docs: "Не используй только цвет").
@@ -20,6 +26,8 @@ const STATUS_META = {
   sent_back: { label: 'На пересдаче', icon: '↻', tone: 'warning' },
   overdue: { label: 'Просрочено', icon: '!', tone: 'failed' },
   not_submitted: { label: 'Не сдано', icon: '–', tone: 'muted' },
+  // Information security task №4: some of the autocheck items already pass.
+  in_progress: { label: 'В процессе', icon: '◐', tone: 'info' },
 };
 
 const REVIEW_STATUSES = new Set(['pending', 'resubmitted']);
@@ -435,6 +443,144 @@ function ibResults(ctx, filters) {
   };
 }
 
+// Task №4 «Поиск и правка конфигурационных файлов»: progress of the terminal autocheck
+// (passed / total required checks) and the student's own target values.
+function ibConfigResults(ctx, filters) {
+  const studentById = new Map(ctx.students.map((s) => [s.id, s]));
+  const q = (filters.q || '').toLowerCase();
+  const rows = getConfigTasks()
+    .map((task) => ({ task, student: studentById.get(task.student_id) }))
+    .filter((r) => r.student)
+    .filter((r) => !filters.group || r.student.group === filters.group)
+    .filter((r) => !q || r.student.name.toLowerCase().includes(q) || r.student.id.toLowerCase().includes(q))
+    .sort(
+      (a, b) =>
+        b.task.solved - a.task.solved ||
+        b.task.passed - a.task.passed ||
+        String(a.task.solved_at || '').localeCompare(String(b.task.solved_at || '')) ||
+        a.student.name.localeCompare(b.student.name, 'ru')
+    );
+  return {
+    rows,
+    total: rows.length,
+    solved: rows.filter((r) => r.task.solved).length,
+    started: rows.filter((r) => !r.task.solved && r.task.passed > 0).length,
+  };
+}
+
+// Task №5 «Основы работы в терминале Linux» (step-by-step trainer): stages passed, the stage the
+// student is on, wrong answers and activity from the command log.
+const TERMINAL_STAGES = findIbTask('terminal').stages;
+
+function wrongAnswers(progress) {
+  const attempts = progress.attempts || {};
+  const answers = progress.answers || {};
+  return Object.keys(attempts).reduce((sum, q) => sum + attempts[q] - (answers[q] && answers[q].ok ? 1 : 0), 0);
+}
+
+// Step-by-step tasks (№5 trainer and the lab_task.py ones): rows with the stage the student is on,
+// wrong answers and activity from the command log.
+function stageTaskResults(ctx, filters, tasks, stages, info) {
+  const studentById = new Map(ctx.students.map((s) => [s.id, s]));
+  const q = (filters.q || '').toLowerCase();
+  const rows = tasks
+    .map((task) => ({
+      task,
+      student: studentById.get(task.student_id),
+      currentStage: task.solved ? null : stages[Math.min(task.passed, stages.length - 1)],
+      wrongAnswers: wrongAnswers(task.progress),
+      info: info ? info(task.params) : null,
+    }))
+    .filter((r) => r.student)
+    .filter((r) => !filters.group || r.student.group === filters.group)
+    .filter((r) => !q || r.student.name.toLowerCase().includes(q) || r.student.id.toLowerCase().includes(q))
+    .sort(
+      (a, b) =>
+        b.task.solved - a.task.solved ||
+        b.task.passed - a.task.passed ||
+        String(a.task.solved_at || '').localeCompare(String(b.task.solved_at || '')) ||
+        a.student.name.localeCompare(b.student.name, 'ru')
+    );
+  return {
+    rows,
+    total: rows.length,
+    solved: rows.filter((r) => r.task.solved).length,
+    started: rows.filter((r) => !r.task.solved && (r.task.passed > 0 || r.task.commands > 0)).length,
+  };
+}
+
+function stageTaskDetail(student, task, stagesList, log, meta) {
+  const progress = task.progress || {};
+  const completed = progress.completed_at || {};
+  const stages = stagesList.map((title, i) => ({
+    number: i + 1,
+    title,
+    done: i < task.passed,
+    current: !task.solved && i === task.passed,
+    completedAt: completed[String(i + 1)] || null,
+  }));
+  const attempts = progress.attempts || {};
+  const answered = progress.answers || {};
+  const answers = Object.keys({ ...attempts, ...answered })
+    .sort((a, b) => a.localeCompare(b, 'ru', { numeric: true }))
+    .map((qid) => ({
+      qid,
+      attempts: attempts[qid] || 0,
+      ok: !!(answered[qid] && answered[qid].ok),
+      value: answered[qid] ? answered[qid].value : null,
+      at: answered[qid] ? answered[qid].at : null,
+    }));
+  return { student, task, stages, answers, wrongAnswers: wrongAnswers(progress), log, meta };
+}
+
+function ibTerminalResults(ctx, filters) {
+  return stageTaskResults(ctx, filters, getTerminalTasks(), TERMINAL_STAGES);
+}
+
+function ibTerminalDetail(ctx, studentId) {
+  const student = ctx.students.find((s) => s.id === studentId);
+  const task = getTerminalTasks().find((t) => t.student_id === studentId);
+  if (!student || !task) return null;
+  const meta = {
+    number: 5,
+    title: findIbTask('terminal').title,
+    total: 14,
+    checkCommand: `python3 ib/checks/task5_check.py ${studentId} --text`,
+  };
+  return stageTaskDetail(student, task, TERMINAL_STAGES, getTerminalLog(studentId), meta);
+}
+
+// Personal values shown next to each student on /admin/ib (what the teacher needs to grade the report).
+const LAB_INFO = {
+  incident: (p) => `${p.target} · ${p.attacker_ip} · ${p.attack_failed} попыток · вход ${p.login_time}`,
+  ssh: (p) => `порт ${p.port}`,
+};
+
+const LAB_TASKS = IB_TASKS.filter((t) => t.lab);
+
+// Tasks on the shared ib/server/lab_task.py engine (№6, №7), in course order.
+function ibLabResults(ctx, filters) {
+  return LAB_TASKS.map((meta) => ({
+    meta,
+    ...stageTaskResults(ctx, filters, getLabTasks(meta.key), meta.stages, LAB_INFO[meta.key]),
+  }));
+}
+
+function ibLabDetail(ctx, key, studentId) {
+  const lab = LAB_TASKS.find((t) => t.key === key);
+  const student = ctx.students.find((s) => s.id === studentId);
+  const task = lab && getLabTasks(key).find((t) => t.student_id === studentId);
+  if (!student || !task) return null;
+  const meta = {
+    number: lab.number,
+    title: lab.title,
+    total: lab.stages.length,
+    info: LAB_INFO[key] ? LAB_INFO[key](task.params) : null,
+    checkCommand: `python3 ib/checks/lab_check.py --task ${key} ${studentId} --text`,
+  };
+  return stageTaskDetail(student, task, lab.stages, getLabLog(key, studentId), meta);
+}
+
 module.exports = {
   STATUS_META,
   loadContext,
@@ -455,6 +601,11 @@ module.exports = {
   trainerOverview,
   trainerMatrix,
   ibResults,
+  ibConfigResults,
+  ibTerminalResults,
+  ibTerminalDetail,
+  ibLabResults,
+  ibLabDetail,
   search,
   nextInQueue,
 };

@@ -650,6 +650,28 @@ a.ib-task-card:focus-visible { outline: 2px solid var(--color-coral); outline-of
 .ib-task-card .status-pill { align-self: center; }
 
 .ib-task-page { max-width: none; }
+.ib-task-meta { color: var(--text-soft); font-size: 0.82rem; }
+.ib-steps { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin: 0 0 1rem; font-size: 0.9rem; }
+.ib-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-soft);
+  background: var(--surface);
+}
+.content a.ib-step { color: var(--text-soft); text-decoration: none; }
+.content a.ib-step:hover { border-color: var(--color-peach); color: var(--text); }
+.ib-step > span { font-weight: 700; }
+.ib-step.is-current { color: var(--accent-text); border-color: var(--accent-text); background: var(--accent-soft-bg); font-weight: 600; }
+.ib-step-sep { color: var(--text-soft); }
+.ib-theory-next { margin: 2rem 0 1rem; }
+/* Wide code blocks and tables scroll inside the column instead of pushing the TOC off-screen. */
+.ib-theory { min-width: 0; }
+.ib-theory pre { overflow-x: auto; }
+.ib-theory table { display: block; overflow-x: auto; }
 .ib-task-head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; }
 .ib-task-head h1 { margin: 0; }
 .ib-task-head .status-pill { margin-left: 0; }
@@ -670,6 +692,8 @@ a.ib-task-card:focus-visible { outline: 2px solid var(--color-coral); outline-of
 }
 
 .topic-list { list-style: none; margin: 0; padding: 0; }
+/* SQL trainer: heading of a separate topic section ("Практикум") */
+.trainer-section-title { margin: 2rem 0 0.5rem; font-size: 1.25rem; }
 .topic-row {
   display: flex;
   align-items: center;
@@ -1117,3 +1141,43 @@ a.topic-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2p
   .nav-group.is-opening > .nav-group-body { animation: none; }
   .nav-chevron { transition: none; }
 }
+
+/* Python editor of an editor assignment (assignment-view.ejs, public/js/code-editor.js) */
+.code-editor-panel { margin: 1.5rem 0; }
+.code-editor-hint { color: var(--text-soft); font-size: 0.9rem; margin: 0 0 0.75rem; }
+.code-file-tabs { margin-bottom: 0.5rem; }
+.code-file-tabs .tab-btn { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.code-file-source { width: 100%; min-height: 360px; tab-size: 4; line-height: 1.5; box-sizing: border-box; }
+.code-file-pane .CodeMirror {
+  height: auto;
+  min-height: 360px;
+  border: 1px solid var(--editor-border);
+  border-radius: 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+.code-file-pane .CodeMirror-scroll { min-height: 360px; }
+.code-file-pane .CodeMirror.cm-s-material-darker,
+.code-file-pane .cm-s-material-darker .CodeMirror-gutters { background: var(--editor-bg); }
+.code-editor-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin: 0.75rem 0; }
+.code-editor-status { color: var(--text-soft); font-size: 0.85rem; }
+.code-output-head { font-weight: 600; font-size: 0.9rem; margin-bottom: 0.25rem; }
+.code-output {
+  margin: 0;
+  min-height: 120px;
+  max-height: 420px;
+  overflow: auto;
+  padding: 0.75rem;
+  border: 1px solid var(--editor-border);
+  border-radius: 6px;
+  background: var(--editor-bg);
+  color: var(--editor-text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.code-output-err { color: #FF8A80; }
+.code-output-info { color: #9E9E9E; }

@@ -4,7 +4,7 @@
 const fs = require('fs');
 const path = require('path');
 const { parseSummary } = require('./summary-parser');
-const { getTopicsForUser } = require('./sql-topics');
+const { getTopicsForUser, groupBySection } = require('./sql-topics');
 const { withProgress, topicProgress } = require('./sql-progress');
 const { hasFullAccess } = require('./test-access');
 const { LANGUAGE_SUBJECTS } = require('./subjects');
@@ -87,6 +87,7 @@ function sqlSummary(user) {
   return {
     exercises,
     topics,
+    sections: groupBySection(topics),
     total: exercises.length,
     solved: exercises.filter((e) => e.solved).length,
     topicsCount: topics.length,

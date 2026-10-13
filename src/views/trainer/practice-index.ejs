@@ -14,8 +14,13 @@
       <p class="empty-state">
         Темы открываются по порядку — следующая тема доступна только после того, как решено последнее задание предыдущей.
       </p>
+      <% sections.forEach(function (section) { %>
+      <% if (section.key !== 'topics') { %>
+        <h2 class="trainer-section-title"><%= section.title %></h2>
+        <p class="empty-state">Отдельный раздел с заданиями на повторение. Открывается после темы «JOIN — соединение таблиц».</p>
+      <% } %>
       <ul class="assignment-list">
-        <% topics.forEach(function (topic) { %>
+        <% section.topics.forEach(function (topic) { %>
           <li>
             <% if (topic.unlocked) { %>
               <a class="assignment-card" href="/trainer/practice/<%= topic.key %>">
@@ -31,6 +36,7 @@
           </li>
         <% }) %>
       </ul>
+      <% }) %>
     </main>
   </div>
   <%- include('../partials/scripts') %>

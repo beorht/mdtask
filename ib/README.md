@@ -36,7 +36,9 @@ docs/             общий план практических модулей к
 
 Реальный веб-терминал: вход по логину/паролю (та же БД, что использует mdtask), после входа — полноценный шелл с историей команд.
 
-**Поддерживаемые команды:** `ls [-a] [путь]`, `cd [путь]`, `pwd`, `cat <файл>`, `find [путь]`, `whoami`, `id`, `date`, `echo`, `sqlite3 [файл] [SQL]`, `clear`, `help`, `logout`.
+**Командная строка** — эмулятор bash (`server/shell.py`): кавычки, переменные (`$HOME`, `$USER`, `$?`), подстановка `$(...)`, маски `* ? [...]`, конвейеры `|`, списки `; && ||`, перенаправления `> >> < 2> 2>&1 &>`.
+
+**Поддерживаемые команды:** `ls [-alhd]`, `cd`, `pwd`, `cat [-n]`, `head`, `tail`, `wc`, `sort`, `uniq`, `cut`, **`find`** (GNU: `-name -iname -path -regex -type -size -empty -mtime -mmin -newer -user -perm -maxdepth`, операторы `! -o ( )`, действия `-print -print0 -printf -ls -exec … {} \; / + -execdir -delete -prune -quit`), **`grep`** (`-E -F -P -i -v -w -x -n -c -l -L -o -r -R -A -B -C -m -q --include --exclude`), **`sed`** (`-n -e -f -i[СУФФИКС] -E -s --follow-symlinks`; адреса и диапазоны, `s///` с флагами `g N p i`, `d p a i c y = q n N h H g G x b t T :`), `mkdir [-p]`, `rmdir`, `rm [-r -f]`, `mv`, `cp [-r]`, `chmod` (числом и буквами), `ln [-s]`, `readlink`, `file`, `basename`, `dirname`, `tree`, `less`/`more`, `printf`, `xargs`, `tee`, `touch`, `diff`, `stat`, `sudo`, `which`, `man`, `whoami`, `id`, `date`, `echo`, `hostname`, `uname`, `printenv`, `history` (и `!!`, `!N`), запуск скриптов `./script.sh` / `bash script.sh`, `sqlite3 [файл] [SQL]`, `check` (задания №4, №5), `task` и `answer` (№5), `clear`, `help`, `logout`. Tab дополняет имена команд и файлов. Интерактивных редакторов нет — `nano`/`vim` подсказывают править файлы через `sed -i`.
 
 **`sqlite3`** (`server/sqlite_shell.py`) — упрощённая эмуляция одноимённой утилиты. SQL выполняет настоящий движок SQLite, так что язык поддерживается полностью (JOIN, CTE, транзакции, триггеры и т.д.). Результаты выводятся таблицами в терминале (`.mode box` по умолчанию, также `table`, `column`, `markdown`, `list`, `csv`, `tabs`, `line`, `json`). Dot-команды: `.help`, `.tables`, `.schema`, `.indexes`, `.dump`, `.mode`, `.headers`, `.nullvalue`, `.open`, `.read`, `.timer`, `.show`, `.databases`, `.version`, `.quit`. Без SQL-аргумента включается интерактивный режим с приглашением `sqlite>` (многострочный ввод до `;`, `Ctrl+C` сбрасывает недописанное выражение), с аргументом — запрос выполняется один раз. Ограничения песочницы: файлы БД только внутри домашнего каталога, `ATTACH`/`VACUUM INTO` запрещены, лимиты на размер БД (~10 МБ), время запроса (3 с) и вывод (1000 строк). У каждого студента есть учебная база `~/Documents/inventory.db`.
 
@@ -75,11 +77,35 @@ python3 ctf/caesar-secret/generate_challenge.py --group IB --variant path --forc
 
 Подробности и формат данных — в `task/№3.Caesar-hidden-password.md`.
 
+## Задание №4: поиск и правка конфигурационных файлов
+
+Учебный сервер Debian 12 (SSH, Apache, PHP, MariaDB) с небезопасными настройками: студент находит конфиги (`find`, `grep`) и меняет 8 параметров без редактора (`sudo sed -i`, `tee`), значения у каждого свои. Перед практикой — теория (`ctf/configs/THEORY.md`, показывается в mdtask). В файловой системе есть ловушки: конфиг SSH-клиента, `sshd_config.d`, `sites-available`/`sites-enabled`, `php.ini` для CLI, шаблоны и резервные копии. Проверяются действующие значения (как их прочитает сервис), автопроверка — после каждой правки, прогресс — команда `check`.
+
+```bash
+python3 ctf/configs/generate_configs.py --group IB          # выдать задание группе
+python3 checks/task4_check.py --group IB --update-db         # проверить всех
+```
+
+Подробности — в `task/№4.Config-files-find-sed.md`.
+
+## Задание №5: основы работы в терминале Linux (тренажёр)
+
+Пошаговый тренажёр из 14 этапов, которые проходятся строго по порядку: знакомство (`pwd`, `whoami`, `man`), `ls`, `cd`, чтение файлов, создание, копирование и перемещение, удаление, права и запуск скриптов, ссылки, поиск, конвейеры и перенаправления, `sudo`, история команд, итоговое задание. Перед практикой — теория (`ctf/terminal/THEORY.md`, показывается в mdtask). У каждого студента своя песочница и свои значения. Этап засчитывается по трём видам пунктов: состояние файлов, команды из журнала (`ib_terminal_log`, только после открытия этапа) и ответы на вопросы (`answer 4.1 42`). В терминале: `task` — текущий этап, `check` — прогресс.
+
+```bash
+python3 ctf/terminal/generate_terminal.py --group IB         # выдать задание группе
+python3 checks/task5_check.py --group IB --update-db          # проверить всех
+```
+
+Подробности — в `task/№5.Terminal-basics.md`.
+
 ## Чекеры и отчёты (`checks/`)
 
 - `task1_check.sh <student_id> <host> <user> <identity_file>` — проверяет настройку SSH «только по ключу» на удалённом хосте студента
 - `task2_check.sh <student_id> <container_name>` — проверяет изоляцию Docker-контейнера (лимиты ресурсов, cap-drop, read-only rootfs, сетевая изоляция)
-- `run_all.py students.json` — прогоняет оба чекера по списку студентов, печатает прогресс и выгружает JSON-отчёт
+- `task4_check.py <student_id> | --group IB [--update-db] [--text]` — проверяет задание №4 по песочнице и значениям студента из mdtask
+- `task5_check.py <student_id> | --group IB [--update-db] [--text]` — проверяет тренажёр №5: этапы по порядку, файлы, журнал команд и ответы
+- `run_all.py students.json` — прогоняет чекеры по списку студентов, печатает прогресс и выгружает JSON-отчёт
 
 Пример входных данных — `checks/students.example.json`, пример отчёта — `checks/reports/sample_report.json`.
 
@@ -96,6 +122,8 @@ python3 ctf/caesar-secret/generate_challenge.py --group IB --variant path --forc
 - **№1** — настройка SSH с входом только по ключу
 - **№2** — контейнерная изоляция студенческих сессий (Docker/Firecracker, лимиты, снижение привилегий)
 - **№3** — пароль от защищённой базы данных, зашифрованный Цезарем (полностью реализовано и протестировано end-to-end)
+- **№4** — поиск и правка конфигурационных файлов через find/grep/sed (теория + практика в терминале, автопроверка)
+- **№5** — тренажёр основных команд терминала: 14 этапов по порядку (теория + практика, автопроверка, журнал команд)
 
 ## Стек
 

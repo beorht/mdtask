@@ -7,10 +7,11 @@ const path = require('path');
 const { requireRole } = require('../middleware/auth');
 const { buildSidebarTree } = require('../lib/sidebar');
 const { callTerminal } = require('../lib/ib-bridge');
+const { renderMarkdown, extractHeadings } = require('../lib/markdown');
 const { IB_SUBJECT_KEY, IB_SUBJECT_TITLE, findIbTask, ibSummary } = require('../lib/ib-tasks');
 
 const TERMINAL_HTML = path.join(__dirname, '..', '..', 'ib', 'prototype', 'terminal-lab.html');
-const API_PATHS = ['login', 'run', 'logout', 'whoami'];
+const API_PATHS = ['login', 'run', 'logout', 'whoami', 'complete'];
 
 const router = express.Router();
 
@@ -52,6 +53,24 @@ router.get(`/subjects/${IB_SUBJECT_KEY}/:task`, requireRole('student'), loadTask
   });
 });
 
+// Theory before practice (tasks that have it): the Markdown from ib/, rendered like assignments.
+router.get(`/subjects/${IB_SUBJECT_KEY}/:task/theory`, requireRole('student'), loadTask, (req, res) => {
+  const user = req.session.user;
+  const task = req.ibTask;
+  if (!task.theory) return res.status(404).render('404');
+  const md = fs.readFileSync(task.theory, 'utf-8');
+  res.render('ib-theory', {
+    user,
+    sidebarTree: subjectSidebar(user),
+    activeAssignmentId: null,
+    activePath: `/subjects/${IB_SUBJECT_KEY}/${task.key}/theory`,
+    subjectTitle: IB_SUBJECT_TITLE,
+    task,
+    html: renderMarkdown(md),
+    toc: extractHeadings(md).filter((h) => h.level === 2),
+  });
+});
+
 // The terminal page, one to one with IBEmulator; only its API base URL is set for this task.
 router.get('/ib/:task/terminal', requireRole('student'), loadTask, (req, res) => {
   const api = `/ib/${req.ibTask.key}/api`;
@@ -77,7 +96,9 @@ router.post('/ib/:task/api/:action', requireRole('student'), loadTask, async (re
   // A failed backend answers with plain text: the page can't parse it and shows
   // "Ошибка соединения с сервером", as with a dropped connection in IBEmulator.
   try {
-    const result = await callTerminal(`/api/${action}`, req.body || {}, sessions[key]);
+    // The terminal backend serves several tasks; the task picks the sandbox at login.
+    const body = action === 'login' ? { ...(req.body || {}), task: key } : req.body || {};
+    const result = await callTerminal(`/api/${action}`, body, sessions[key]);
     if (result.sid) sessions[key] = result.sid;
     else if (result.sid === '' || result.status === 401) delete sessions[key];
     if (result.status >= 500) return res.status(result.status).type('text').send(result.body.error || 'error');
