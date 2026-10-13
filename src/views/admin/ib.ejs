@@ -3,14 +3,8 @@
 <div class="a-page-head">
   <div>
     <h1>Информационная безопасность</h1>
-    <p class="a-subtitle">Задание №3 «Доступ к защищённой базе данных» — засчитывается автоматически, когда студент открывает базу в терминале с верным паролем.</p>
+    <p class="a-subtitle">Практические задания в веб-терминале. Все задания засчитываются автоматически.</p>
   </div>
-</div>
-
-<div class="a-stats">
-  <div class="a-stat"><span class="a-stat-value"><%= results.total %></span><span class="a-stat-label">Задание выдано</span></div>
-  <div class="a-stat"><span class="a-stat-value"><%= results.solved %></span><span class="a-stat-label">Выполнили</span></div>
-  <div class="a-stat"><span class="a-stat-value"><%= results.total - results.solved %></span><span class="a-stat-label">Ещё не выполнили</span></div>
 </div>
 
 <form class="a-filters" method="get" action="/admin/ib" data-autosubmit>
@@ -25,6 +19,15 @@
   <button type="submit" class="a-btn a-btn-secondary a-noscript-only">Применить</button>
   <% if (filters.q || filters.group) { %><a class="a-btn a-btn-ghost" href="/admin/ib">Сбросить</a><% } %>
 </form>
+
+<h2 class="a-ib-title">Задание №3. Доступ к защищённой базе данных</h2>
+<p class="a-subtitle">Засчитывается, когда студент открывает базу в терминале с верным паролем.</p>
+<div class="a-stats">
+  <div class="a-stat"><span class="a-stat-value"><%= results.total %></span><span class="a-stat-label">Задание выдано</span></div>
+  <div class="a-stat"><span class="a-stat-value"><%= results.solved %></span><span class="a-stat-label">Выполнили</span></div>
+  <div class="a-stat"><span class="a-stat-value"><%= results.total - results.solved %></span><span class="a-stat-label">Ещё не выполнили</span></div>
+</div>
+
 
 <section class="a-card a-card-flush">
   <% if (results.rows.length === 0) { %>
@@ -54,5 +57,119 @@
     <div class="a-card-foot a-muted">Показано: <%= results.rows.length %></div>
   <% } %>
 </section>
+
+<h2 class="a-ib-title">Задание №4. Поиск и правка конфигурационных файлов</h2>
+<p class="a-subtitle">Засчитывается, когда выполнены все 8 пунктов (автопроверка после каждой правки файлов в терминале). Проверить всех вручную: <code>python3 ib/checks/task4_check.py --group IB --update-db</code></p>
+<div class="a-stats">
+  <div class="a-stat"><span class="a-stat-value"><%= configs.total %></span><span class="a-stat-label">Задание выдано</span></div>
+  <div class="a-stat"><span class="a-stat-value"><%= configs.solved %></span><span class="a-stat-label">Выполнили</span></div>
+  <div class="a-stat"><span class="a-stat-value"><%= configs.started %></span><span class="a-stat-label">В процессе</span></div>
+</div>
+
+<section class="a-card a-card-flush">
+  <% if (configs.rows.length === 0) { %>
+    <%- include('partials/empty', (filters.q || filters.group)
+      ? { emptyIcon: 'search', emptyTitle: 'Никого не нашли', emptyText: 'Проверьте написание или сбросьте фильтр группы.', emptyHref: '/admin/ib', emptyAction: 'Сбросить фильтры' }
+      : { emptyIcon: 'shield', emptyTitle: 'Задание ещё не выдано', emptyText: 'Сгенерируйте его группе: python3 ib/ctf/configs/generate_configs.py --group IB' }) %>
+  <% } else { %>
+    <div class="a-table-wrap">
+      <table class="a-table a-table-cards">
+        <thead><tr><th>Студент</th><th>Группа</th><th>Статус</th><th>Прогресс</th><th>Выполнено</th><th class="a-num">Порт SSH</th><th class="a-num">Порт Apache</th><th>upload_max_filesize</th></tr></thead>
+        <tbody>
+          <% configs.rows.forEach(function (r) { const t = r.task; const total = t.total || 8; const pct = Math.round((t.passed / total) * 100); %>
+            <tr>
+              <td data-label="Студент"><a class="a-person" href="/admin/students/<%= r.student.id %>"><span class="a-avatar a-avatar-sm"><%= view.initials(r.student.name) %></span><%= r.student.name %></a></td>
+              <td data-label="Группа" class="a-muted"><%= r.student.group || '—' %></td>
+              <td data-label="Статус"><%- include('partials/status', { key: t.solved ? 'done' : (t.passed ? 'in_progress' : 'not_submitted') }) %></td>
+              <td data-label="Прогресс"><div class="a-progress" title="<%= t.passed %> из <%= total %>"><span style="width: <%= pct %>%"></span></div><span class="a-muted"><%= t.passed %>/<%= total %></span></td>
+              <td data-label="Выполнено" class="a-muted a-nowrap"><%= t.solved ? view.formatDateTime(t.solved_at) : '—' %></td>
+              <td data-label="Порт SSH" class="a-num"><%= t.params.ssh_port %></td>
+              <td data-label="Порт Apache" class="a-num"><%= t.params.apache_port %></td>
+              <td data-label="upload_max_filesize"><code><%= t.params.upload_max %></code></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <div class="a-card-foot a-muted">Показано: <%= configs.rows.length %></div>
+  <% } %>
+</section>
+
+<h2 class="a-ib-title">Задание №5. Основы работы в терминале Linux</h2>
+<p class="a-subtitle">Тренажёр из 14 этапов, проходятся по порядку; каждый этап засчитывается автоматически (файлы, журнал команд, ответы на вопросы). Журнал команд студента — по ссылке в колонке «Текущий этап». Проверить всех вручную: <code>python3 ib/checks/task5_check.py --group IB --update-db</code></p>
+<div class="a-stats">
+  <div class="a-stat"><span class="a-stat-value"><%= terminal.total %></span><span class="a-stat-label">Задание выдано</span></div>
+  <div class="a-stat"><span class="a-stat-value"><%= terminal.solved %></span><span class="a-stat-label">Выполнили</span></div>
+  <div class="a-stat"><span class="a-stat-value"><%= terminal.started %></span><span class="a-stat-label">В процессе</span></div>
+</div>
+
+<section class="a-card a-card-flush">
+  <% if (terminal.rows.length === 0) { %>
+    <%- include('partials/empty', (filters.q || filters.group)
+      ? { emptyIcon: 'search', emptyTitle: 'Никого не нашли', emptyText: 'Проверьте написание или сбросьте фильтр группы.', emptyHref: '/admin/ib', emptyAction: 'Сбросить фильтры' }
+      : { emptyIcon: 'shield', emptyTitle: 'Задание ещё не выдано', emptyText: 'Сгенерируйте его группе: python3 ib/ctf/terminal/generate_terminal.py --group IB' }) %>
+  <% } else { %>
+    <div class="a-table-wrap">
+      <table class="a-table a-table-cards">
+        <thead><tr><th>Студент</th><th>Группа</th><th>Статус</th><th>Этапы</th><th>Текущий этап</th><th class="a-num">Команд</th><th class="a-num">Неверных ответов</th><th>Активность</th></tr></thead>
+        <tbody>
+          <% terminal.rows.forEach(function (r) { const t = r.task; const total = t.total || 14; const pct = Math.round((t.passed / total) * 100); %>
+            <tr>
+              <td data-label="Студент"><a class="a-person" href="/admin/students/<%= r.student.id %>"><span class="a-avatar a-avatar-sm"><%= view.initials(r.student.name) %></span><%= r.student.name %></a></td>
+              <td data-label="Группа" class="a-muted"><%= r.student.group || '—' %></td>
+              <td data-label="Статус"><%- include('partials/status', { key: t.solved ? 'done' : (t.passed || t.commands ? 'in_progress' : 'not_submitted') }) %></td>
+              <td data-label="Этапы"><div class="a-progress" title="<%= t.passed %> из <%= total %>"><span style="width: <%= pct %>%"></span></div><span class="a-muted"><%= t.passed %>/<%= total %></span></td>
+              <td data-label="Текущий этап"><a href="/admin/ib/terminal/<%= r.student.id %>" title="Этапы, ответы и журнал команд"><%= t.solved ? 'все пройдены (' + view.formatDateTime(t.solved_at) + ')' : (t.passed + 1) + '. ' + r.currentStage %></a></td>
+              <td data-label="Команд" class="a-num"><%= t.commands %></td>
+              <td data-label="Неверных ответов" class="a-num"><%= r.wrongAnswers %></td>
+              <td data-label="Активность" class="a-muted a-nowrap"><%= t.last_activity_at ? view.formatDateTime(t.last_activity_at) : '—' %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <div class="a-card-foot a-muted">Показано: <%= terminal.rows.length %></div>
+  <% } %>
+</section>
+
+<% labs.forEach(function (lab) { const m = lab.meta; %>
+<h2 class="a-ib-title">Задание №<%= m.number %>. <%= m.title %></h2>
+<p class="a-subtitle"><%= m.stages.length %> этапов по порядку, каждый засчитывается автоматически (состояние сервера, журнал команд, ответы на вопросы). Этапы, ответы и журнал команд студента — по ссылке в колонке «Текущий этап». Проверить всех вручную: <code>python3 ib/checks/lab_check.py --task <%= m.key %> --group IB --update-db</code></p>
+<div class="a-stats">
+  <div class="a-stat"><span class="a-stat-value"><%= lab.total %></span><span class="a-stat-label">Задание выдано</span></div>
+  <div class="a-stat"><span class="a-stat-value"><%= lab.solved %></span><span class="a-stat-label">Выполнили</span></div>
+  <div class="a-stat"><span class="a-stat-value"><%= lab.started %></span><span class="a-stat-label">В процессе</span></div>
+</div>
+
+<section class="a-card a-card-flush">
+  <% if (lab.rows.length === 0) { %>
+    <%- include('partials/empty', (filters.q || filters.group)
+      ? { emptyIcon: 'search', emptyTitle: 'Никого не нашли', emptyText: 'Проверьте написание или сбросьте фильтр группы.', emptyHref: '/admin/ib', emptyAction: 'Сбросить фильтры' }
+      : { emptyIcon: 'shield', emptyTitle: 'Задание ещё не выдано', emptyText: 'Сгенерируйте его группе: python3 ib/ctf/' + m.key + '/generate_' + m.key + '.py --group IB' }) %>
+  <% } else { %>
+    <div class="a-table-wrap">
+      <table class="a-table a-table-cards">
+        <thead><tr><th>Студент</th><th>Группа</th><th>Статус</th><th>Этапы</th><th>Текущий этап</th><th class="a-num">Команд</th><th class="a-num">Неверных ответов</th><th>Значения</th><th>Активность</th></tr></thead>
+        <tbody>
+          <% lab.rows.forEach(function (r) { const t = r.task; const total = t.total || m.stages.length; const pct = Math.round((t.passed / total) * 100); %>
+            <tr>
+              <td data-label="Студент"><a class="a-person" href="/admin/students/<%= r.student.id %>"><span class="a-avatar a-avatar-sm"><%= view.initials(r.student.name) %></span><%= r.student.name %></a></td>
+              <td data-label="Группа" class="a-muted"><%= r.student.group || '—' %></td>
+              <td data-label="Статус"><%- include('partials/status', { key: t.solved ? 'done' : (t.passed || t.commands ? 'in_progress' : 'not_submitted') }) %></td>
+              <td data-label="Этапы"><div class="a-progress" title="<%= t.passed %> из <%= total %>"><span style="width: <%= pct %>%"></span></div><span class="a-muted"><%= t.passed %>/<%= total %></span></td>
+              <td data-label="Текущий этап"><a href="/admin/ib/lab/<%= m.key %>/<%= r.student.id %>" title="Этапы, ответы и журнал команд"><%= t.solved ? 'все пройдены (' + view.formatDateTime(t.solved_at) + ')' : (t.passed + 1) + '. ' + r.currentStage %></a></td>
+              <td data-label="Команд" class="a-num"><%= t.commands %></td>
+              <td data-label="Неверных ответов" class="a-num"><%= r.wrongAnswers %></td>
+              <td data-label="Значения" class="a-muted"><%= r.info || '—' %></td>
+              <td data-label="Активность" class="a-muted a-nowrap"><%= t.last_activity_at ? view.formatDateTime(t.last_activity_at) : '—' %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <div class="a-card-foot a-muted">Показано: <%= lab.rows.length %></div>
+  <% } %>
+</section>
+<% }) %>
 
 <%- include('partials/end') %>

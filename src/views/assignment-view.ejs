@@ -3,6 +3,10 @@
 <html lang="ru">
 <head>
   <%- include('partials/head', { pageTitle: assignment.title }) %>
+  <% if (code) { %>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css">
+  <% } %>
 </head>
 <body>
   <%- include('partials/header') %>
@@ -11,6 +15,36 @@
     <main class="content">
       <nav class="breadcrumbs"><a href="/">Главная</a> / <a href="/subjects/<%= subject.key %>"><%= subject.title %></a> / <%= assignment.title %></nav>
       <%- html %>
+
+      <% if (code) { %>
+        <section class="task-panel code-editor-panel" id="codeEditor" aria-labelledby="codeEditorTitle"
+                 data-draft-url="/assignment/<%= assignment.id %>/code/draft"
+                 data-submit-url="/assignment/<%= assignment.id %>/code/submit"
+                 data-can-submit="<%= canSubmit ? '1' : '' %>">
+          <h3 class="task-panel-title" id="codeEditorTitle">Редактор Python</h3>
+          <p class="code-editor-hint">Пишите код прямо здесь. «Запустить» выполняет <code><%= assignment.codeFiles.includes('main.py') ? 'main.py' : assignment.codeFiles[0] %></code> в браузере (Python 3 с модулем <code>sqlite3</code>); при каждом запуске база создаётся заново. Код сохраняется автоматически.</p>
+          <div class="tabs code-file-tabs" role="tablist">
+            <% assignment.codeFiles.forEach(function (name, i) { %>
+              <button type="button" class="tab-btn<%= i === 0 ? ' active' : '' %>" role="tab" data-code-file="<%= name %>"><%= name %></button>
+            <% }) %>
+          </div>
+          <% assignment.codeFiles.forEach(function (name, i) { %>
+            <div class="code-file-pane" data-code-pane="<%= name %>"<%= i === 0 ? '' : ' hidden' %>>
+              <textarea class="sql-console code-file-source" data-code-source="<%= name %>" rows="20" spellcheck="false" autocomplete="off" aria-label="<%= name %>"><%= code.files[name] %></textarea>
+            </div>
+          <% }) %>
+          <div class="code-editor-actions">
+            <button type="button" class="btn btn-primary" data-code-action="run">▶ Запустить</button>
+            <button type="button" class="btn btn-secondary" data-code-action="stop" hidden>■ Остановить</button>
+            <% if (canSubmit) { %>
+              <button type="button" class="btn btn-accent" data-code-action="submit">Сдать на проверку</button>
+            <% } %>
+            <span class="code-editor-status" data-code-status aria-live="polite"><%= code.savedAt ? 'Черновик сохранён' : '' %></span>
+          </div>
+          <div class="code-output-head">Вывод</div>
+          <pre class="code-output" data-code-output aria-live="polite">Нажмите «Запустить», чтобы выполнить программу.</pre>
+        </section>
+      <% } %>
 
       <section class="submission-block task-panel">
         <h3 class="task-panel-title">Сдача</h3>
@@ -27,7 +61,10 @@
             <% if (s.comment) { %><p class="comment"><%= s.comment %></p><% } %>
           </div>
         <% }) %>
-        <% if (canSubmit) { %>
+        <% if (code) { %>
+          <% if (!submissions.length) { %><p class="empty-state">Решение ещё не сдано. Напишите код в редакторе выше и нажмите «Сдать на проверку».</p><% } %>
+          <% if (!canSubmit) { %><p class="empty-state">Приём решений по этому заданию закрыт.</p><% } %>
+        <% } else if (canSubmit) { %>
           <form method="post" action="/assignment/<%= assignment.id %>/submit" enctype="multipart/form-data" id="uploadForm">
             <div class="dropzone" tabindex="0" id="dropzone">Перетащите файл(ы) сюда или выберите вручную (.zip, .rar)</div>
             <input type="file" name="files" id="fileInput" accept=".zip,.rar" multiple hidden>
@@ -47,5 +84,11 @@
     </aside>
   </div>
   <%- include('partials/scripts') %>
+  <% if (code) { %>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js" defer></script>
+    <script src="/js/code-editor.js" defer></script>
+  <% } %>
 </body>
 </html>

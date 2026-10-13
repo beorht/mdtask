@@ -17,6 +17,14 @@ const DB_PATH = path.resolve(process.env.DB_PATH || path.join(__dirname, '..', '
 const CTF_CAESAR_DIR = path.resolve(
   process.env.CTF_CAESAR_DIR || path.join(__dirname, '..', '..', 'data', 'ctf', 'caesar')
 );
+const CTF_CONFIGS_DIR = path.resolve(
+  process.env.CTF_CONFIGS_DIR || path.join(__dirname, '..', '..', 'data', 'ctf', 'configs')
+);
+// Tasks on ib/server/lab_task.py (№6, №7): data/ctf/<task dir>/<student>/.
+const CTF_LABS_DIR = path.resolve(process.env.CTF_LABS_DIR || path.join(__dirname, '..', '..', 'data', 'ctf'));
+const CTF_TERMINAL_DIR = path.resolve(
+  process.env.CTF_TERMINAL_DIR || path.join(__dirname, '..', '..', 'data', 'ctf', 'terminal')
+);
 
 let child = null;
 let nextId = 1;
@@ -33,7 +41,7 @@ function failAll(message) {
 function ensureChild() {
   if (child) return child;
   child = spawn(PYTHON, [BRIDGE_SCRIPT], {
-    env: { ...process.env, MDTASK_DB: DB_PATH, CTF_CAESAR_DIR, PYTHONDONTWRITEBYTECODE: '1' },
+    env: { ...process.env, MDTASK_DB: DB_PATH, CTF_CAESAR_DIR, CTF_CONFIGS_DIR, CTF_TERMINAL_DIR, CTF_LABS_DIR, PYTHONDONTWRITEBYTECODE: '1' },
     stdio: ['pipe', 'pipe', 'inherit'],
   });
   const proc = child;

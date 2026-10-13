@@ -9,7 +9,7 @@ function createApp() {
   app.set('views', path.join(__dirname, 'views'));
   app.use(express.static(path.join(__dirname, '..', 'public')));
   app.use(express.urlencoded({ extended: false }));
-  app.use(express.json());
+  app.use(express.json({ limit: '1mb' })); // editor assignments send whole source files
   app.use(
     session({
       secret: 'prototype-secret',

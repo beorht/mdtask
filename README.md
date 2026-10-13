@@ -92,10 +92,13 @@ npm test
 
 ### Информационная безопасность (`ib/`, перенесено из IBEmulator)
 
-- Раздел `/subjects/ib` — список практических заданий (сейчас одно: №3 «Доступ к защищённой базе данных»), у каждого своя страница `/subjects/ib/<task>` со встроенным веб-терминалом.
+- Раздел `/subjects/ib` — список практических заданий: №3 «Доступ к защищённой базе данных», №4 «Поиск и правка конфигурационных файлов» и №5 «Основы работы в терминале Linux» (у №4 и №5 сначала теория `/subjects/ib/<task>/theory`, затем практика). У каждого задания своя страница `/subjects/ib/<task>` со встроенным веб-терминалом.
 - Терминал — код IBEmulator один в один: фронтенд `ib/prototype/terminal-lab.html` (TTY с входом `seclab login:` — свой логин и пароль от платформы), backend `ib/server/` (Python stdlib: эмуляция bash и `sqlite3`, песочницы студентов, защищённая паролем база). Задание засчитывается автоматически, когда студент открывает базу с верным паролем (`ctf_caesar_secrets.solved`). Пароль задания для входа на платформу не подходит.
-- mdtask запускает backend одним дочерним процессом `ib/server/bridge.py` (JSON-строки через stdin/stdout, `src/lib/ib-bridge.js`), API терминала — `POST /ib/<task>/api/{login,run,logout,whoami}`. Нужен `python3` (без сторонних пакетов). Сессии терминала живут в этом процессе и сбрасываются при перезапуске сервера.
+- mdtask запускает backend одним дочерним процессом `ib/server/bridge.py` (JSON-строки через stdin/stdout, `src/lib/ib-bridge.js`), API терминала — `POST /ib/<task>/api/{login,run,logout,whoami,complete}` (`complete` — дополнение по Tab). Нужен `python3` (без сторонних пакетов). Сессии терминала живут в этом процессе и сбрасываются при перезапуске сервера.
 - Выдать задание группе (пароли, шифр, песочницы в `data/ctf/caesar/<id>/`): `python3 ib/ctf/caesar-secret/generate_challenge.py --group IB` (подробнее — `ib/README.md`). Результаты и ответы — в админке, `/admin/ib`.
+- Терминал — эмулятор bash с кавычками, конвейерами и перенаправлениями; `find`, `grep` и `sed` реализованы почти со всеми ключами GNU, права root эмулируются (`sudo`).
+- Задание №4: `python3 ib/ctf/configs/generate_configs.py --group IB` — каждому свой учебный сервер в `data/ctf/configs/<id>/` и свои значения; автопроверка после каждой правки, команда `check` в терминале, чекер `python3 ib/checks/task4_check.py --group IB --update-db`. Подробнее — `ib/task/№4.Config-files-find-sed.md`.
+- Задание №5 (тренажёр из 14 этапов: `ls`, `cd`, `cat`, `mkdir`, `cp`, `mv`, `rm`, `chmod`, `ln`, `find`, `grep`, конвейеры, `sudo`, `history`): `python3 ib/ctf/terminal/generate_terminal.py --group IB` — песочница и личные значения в `data/ctf/terminal/<id>/`; этапы засчитываются по порядку по файлам, журналу команд (`ib_terminal_log`) и ответам `answer`; в терминале `task` и `check`; чекер `python3 ib/checks/task5_check.py --group IB --update-db`; журнал команд студента — `/admin/ib/terminal/<id>`. Подробнее — `ib/task/№5.Terminal-basics.md`.
 - Список заданий раздела — `src/lib/ib-tasks.js`; новое задание добавляется туда записью.
 
 ## Структура проекта
@@ -125,6 +128,8 @@ docs/plan.md            # исходное ТЗ проекта (RU)
 | `DB_PATH` | `data/mdtask.db` | путь к основной БД (`:memory:` для тестов) |
 | `TRAINER_DB_DIR` | `data/trainer` | папка с песочницами SQL-тренажёра по студентам |
 | `CTF_CAESAR_DIR` | `data/ctf/caesar` | песочницы студентов для задания №3 (раздел ИБ) |
+| `CTF_CONFIGS_DIR` | `data/ctf/configs` | песочницы студентов для задания №4 (раздел ИБ) |
+| `CTF_TERMINAL_DIR` | `data/ctf/terminal` | песочницы студентов для задания №5 (раздел ИБ) |
 | `IB_PYTHON` | `python3` | интерпретатор для backend терминала (`ib/server/bridge.py`) |
 
 ## Оптимизация БД

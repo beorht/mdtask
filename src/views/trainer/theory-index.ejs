@@ -12,8 +12,10 @@
       <nav class="breadcrumbs"><% if (user.role === 'student') { %><a href="/">Главная</a> / <a href="/subjects/sql">Базы данных (SQL)</a><% } else { %>SQL DataBase<% } %> / Теоретический материал</nav>
       <h1>Теоретический материал: SQL (SQLite)</h1>
       <p class="empty-state">Выберите тему — по каждой из них есть подробный конспект с синтаксисом, примерами и частыми ошибками.</p>
+      <% sections.forEach(function (section) { %>
+      <% if (section.key !== 'topics') { %><h2 class="trainer-section-title"><%= section.title %></h2><% } %>
       <ul class="assignment-list">
-        <% topics.forEach(function (topic) { %>
+        <% section.topics.forEach(function (topic) { %>
           <li>
             <a class="assignment-card" href="/trainer/theory/<%= topic.key %>">
               <span class="assignment-card-title"><%= topic.label %></span>
@@ -21,6 +23,7 @@
           </li>
         <% }) %>
       </ul>
+      <% }) %>
     </main>
   </div>
   <%- include('../partials/scripts') %>

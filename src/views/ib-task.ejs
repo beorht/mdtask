@@ -10,14 +10,21 @@
     <%- include('partials/sidebar') %>
     <main class="content ib-task-page">
       <nav class="breadcrumbs"><a href="/">Главная</a> / <a href="/subjects/ib"><%= subjectTitle %></a> / Задание №<%= task.number %></nav>
+      <% if (task.theory) { %>
+        <p class="ib-steps">
+          <a class="ib-step" href="/subjects/ib/<%= task.key %>/theory"><span aria-hidden="true">1</span> Теория</a>
+          <span class="ib-step-sep" aria-hidden="true">→</span>
+          <span class="ib-step is-current"><span aria-hidden="true">2</span> Практика в терминале</span>
+        </p>
+      <% } %>
       <div class="ib-task-head">
         <h1>Задание №<%= task.number %>. <%= task.title %></h1>
         <span class="status-pill status-pill-<%= task.solved ? 'done' : 'not_submitted' %>">
-          <span class="badge badge-<%= task.solved ? 'done' : 'not_submitted' %>"></span><%= task.solved ? 'Выполнено' : 'Не выполнено' %>
+          <span class="badge badge-<%= task.solved ? 'done' : 'not_submitted' %>"></span><%= task.solved ? 'Выполнено' : (task.passed ? 'Выполнено ' + (task.progressUnit || 'пунктов') + ': ' + task.passed + ' из ' + task.total : 'Не выполнено') %>
         </span>
       </div>
       <p class="ib-task-hint">
-        Войдите в терминал под своим логином (<code><%= user.id %></code>) и паролем от платформы. Условие задания — <code>cat TASK.md</code>, список команд — <code>help</code>.
+        Войдите в терминал под своим логином (<code><%= user.id %></code>) и паролем от платформы. <%- task.hint %>
         <a href="/ib/<%= task.key %>/terminal" target="_blank" rel="noopener">Открыть терминал во весь экран ↗</a>
       </p>
       <iframe class="ib-terminal" src="/ib/<%= task.key %>/terminal" title="Терминал SecLab"></iframe>

@@ -194,7 +194,7 @@ body{
           return;
         }
         showMsg('');
-        startTerminal();
+        startTerminal(data.welcome);
       })
       .catch(function(){
         showMsg('Ошибка соединения с сервером', 'bad');
@@ -299,13 +299,18 @@ body{
     });
   }
 
-  function startTerminal(){
+  function startTerminal(welcome){
     loginView.style.display = 'none';
     termView.style.display = 'block';
     setPrompt(typedUser + '@seclab:~$ ', 'shell');
     line('Last login: ' + new Date().toString());
     line('Введите "help" для списка команд.', 'dim');
     line('');
+    // Пошаговые задания присылают при входе инструкцию к текущему этапу.
+    if(welcome){
+      welcome.split('\n').forEach(function(text){ line(text); });
+      line('');
+    }
     termInput.focus();
   }
 
@@ -327,6 +332,29 @@ body{
       historyIndex = cmdHistory.length;
       draftCmd = '';
       runCommand(val);
+      return;
+    }
+
+    // Tab — дополнение имени команды или файла, как в bash: один вариант подставляется
+    // сразу, несколько — дописывается общая часть, а если её нет — показывается список.
+    if(e.key === 'Tab'){
+      e.preventDefault();
+      if(currentMode !== 'shell' || termInput.disabled) return;
+      var typed = termInput.value;
+      fetch(API + '/complete', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        credentials: 'include',
+        body: JSON.stringify({ line: typed })
+      }).then(function(r){ return r.ok ? r.json() : null; }).then(function(data){
+        if(!data || termInput.value !== typed) return;
+        termInput.value = data.line;
+        if(data.options && data.options.length){
+          echoPrompt(currentPrompt, typed);
+          line(data.options.join('  '));
+          screen.scrollTop = screen.scrollHeight;
+        }
+      }).catch(function(){});
       return;
     }
 

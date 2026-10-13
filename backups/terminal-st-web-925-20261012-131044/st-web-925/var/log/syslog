@@ -1,0 +1,2 @@
+Oct  1 08:00:01 seclab systemd[1]: Started Daily apt download activities.
+Oct  1 08:05:12 seclab CRON[812]: (root) CMD (run-parts /etc/cron.hourly)

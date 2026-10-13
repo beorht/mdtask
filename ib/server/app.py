@@ -9,10 +9,12 @@ SecLab Terminal — реальный backend для prototype/terminal-lab.html.
   - POST /api/login   {studentId, password} -> проверяет основной пароль студента
         (users.password_hash/salt, scrypt — как в mdtask). Пароль задания №3
         для входа не подходит: он открывает защищённую базу (см. ниже)
-  - POST /api/run     {cmd} -> выполняет команду терминала (ls/cd/pwd/cat/find/
-        whoami/id/date/echo/clear/help) в песочнице этого студента на диске
-        (mdtask/data/ctf/caesar/<id>/ — та же, что уже сгенерирована
-        ctf/caesar-secret/generate_challenge.py, ничего не дублируется)
+  - POST /api/run     {cmd} -> выполняет командную строку (эмулятор bash: shell.py,
+        find/grep/sed — cmd_find.py, cmd_grep.py, cmd_sed.py) в песочнице этого
+        студента на диске: data/ctf/caesar/<id>/ для задания №3,
+        data/ctf/configs/<id>/ для задания №4, data/ctf/terminal/<id>/ для №5
+        (задание выбирается при входе: task)
+  - POST /api/complete {line} -> дополнение по Tab (имя команды или пути)
   - POST /api/logout  -> завершает сессию
 
 Команда `sqlite3` переключает сессию в интерактивный режим SQLite
@@ -40,32 +42,30 @@ from http import cookies
 from pathlib import Path
 from urllib.parse import urlparse
 
+import config_task
+import lab_task
+import shell
+import terminal_task
 import sqlite_shell
+from vfs import FsError, Sandbox
 
 # Корень репозитория mdtask (этот каталог — mdtask/ib/server).
 REPO_ROOT = Path(__file__).resolve().parents[2]
 MDTASK_DB = os.environ.get("MDTASK_DB", str(REPO_ROOT / "data" / "mdtask.db"))
 CTF_CAESAR_DIR = Path(os.environ.get("CTF_CAESAR_DIR", str(REPO_ROOT / "data" / "ctf" / "caesar")))
+CTF_CONFIGS_DIR = Path(os.environ.get("CTF_CONFIGS_DIR", str(REPO_ROOT / "data" / "ctf" / "configs")))
+CTF_TERMINAL_DIR = Path(os.environ.get("CTF_TERMINAL_DIR", str(REPO_ROOT / "data" / "ctf" / "terminal")))
+# Пошаговые задания на общем движке lab_task.py (№6 incident, №7 ssh): data/ctf/<каталог>/<id>/
+CTF_LABS_DIR = Path(os.environ.get("CTF_LABS_DIR", str(REPO_ROOT / "data" / "ctf")))
+TASKS = ("caesar", config_task.TASK_KEY, terminal_task.TASK_KEY) + lab_task.keys()
 STATIC_DIR = Path(__file__).resolve().parent.parent / "prototype"
 PORT = int(os.environ.get("PORT", 8088))
 
-SESSIONS = {}  # sid -> {"student_id": str, "cwd": str, "sqlite": SqliteShell | PasswordPrompt | None}
+SESSIONS = {}  # sid -> {"student_id", "task", "sandbox": Sandbox, "cwd": str, "sqlite": SqliteShell | PasswordPrompt | None}
 MAX_CMD_LEN = 4000
 
-HELP_TEXT = """Доступные команды:
-  ls [-a] [путь]   - показать содержимое каталога (-a - включая скрытые файлы)
-  cd [путь]        - перейти в каталог
-  pwd              - показать текущий каталог
-  cat <файл>       - показать содержимое файла
-  find [путь]      - показать все файлы рекурсивно, включая скрытые
-  whoami           - показать текущего пользователя
-  id               - показать uid/gid текущего пользователя
-  date             - показать текущую дату и время
-  echo <текст>     - вывести текст
-  sqlite3 [файл]   - работа с базой данных SQLite (внутри: .help, .tables, .quit)
-  clear            - очистить экран
-  logout           - выйти из системы
-  help             - эта справка"""
+# Справка по командам — shell.HELP_TEXT.
+
 
 
 # ---------------------------------------------------------------- пароли ---
@@ -123,18 +123,26 @@ def get_solved(student_id):
 
 # --------------------------------------------------------- файловая система ---
 
-def sandbox_root(student_id):
-    return CTF_CAESAR_DIR / student_id
-
-
-def prompt_path(cwd_rel):
-    return f"~/{cwd_rel}" if cwd_rel else "~"
+def make_sandbox(task, student_id):
+    """Песочница задания: №3 — домашний каталог только для чтения, №4 — целый «сервер»."""
+    lab = lab_task.get(task)
+    if task in (config_task.TASK_KEY, terminal_task.TASK_KEY) or lab:
+        base = CTF_CONFIGS_DIR if task == config_task.TASK_KEY else CTF_TERMINAL_DIR
+        if lab:
+            base = CTF_LABS_DIR / lab.sandbox_dir
+        root = base / student_id
+        (root / "home" / student_id).mkdir(parents=True, exist_ok=True)
+        return Sandbox(root, student_id, f"home/{student_id}", mapped_home=False, writable=True)
+    root = CTF_CAESAR_DIR / student_id
+    root.mkdir(parents=True, exist_ok=True)
+    return Sandbox(root, student_id, "", mapped_home=True, writable=False)
 
 
 def shell_prompt(session):
     if session.get("sqlite"):
         return session["sqlite"].prompt
-    return f"{session['student_id']}@seclab:{prompt_path(session['cwd'])}$ "
+    sb = session["sandbox"]
+    return f"{session['student_id']}@seclab:{sb.prompt_path(session['cwd'])}$ "
 
 
 def input_mode(session):
@@ -144,143 +152,281 @@ def input_mode(session):
     return "sqlite" if state else "shell"
 
 
-def resolve_in_sandbox(root: Path, cwd_abs: Path, arg: str):
-    rel = (arg or ".").strip()
-    if rel == "~":
-        rel = "."
-    elif rel.startswith("~/"):
-        rel = rel[2:]
-    base = root if rel.startswith("/") else cwd_abs
-    rel = rel.lstrip("/")
-    target = (base / rel).resolve() if rel else base.resolve()
-    root_resolved = root.resolve()
-    try:
-        target.relative_to(root_resolved)
-    except ValueError:
-        if target != root_resolved:
-            return None
-    return target
-
-
-def list_recursive(showAll, dir_path: Path, prefix: str, out: list):
-    try:
-        entries = sorted(os.listdir(dir_path))
-    except OSError:
-        return
-    for entry in entries:
-        if not showAll and entry.startswith("."):
-            continue
-        full = dir_path / entry
-        rel = f"{prefix}/{entry}" if prefix else entry
-        is_dir = full.is_dir()
-        out.append(rel + ("/" if is_dir else ""))
-        if is_dir:
-            list_recursive(showAll, full, rel, out)
-
-
-def run_command(student_id, cwd_rel, line):
-    root = sandbox_root(student_id)
-    cwd_abs = root / (cwd_rel or "")
-    parts = line.strip().split()
-    cmd = parts[0] if parts else ""
-    rest = parts[1:]
-    raw_args = line.strip()[len(cmd):].strip()
-
-    if cmd == "":
-        return "", cwd_rel
-    if cmd == "help":
-        return HELP_TEXT, cwd_rel
-    if cmd == "whoami":
-        return student_id, cwd_rel
-    if cmd == "id":
-        return f"uid=1000({student_id}) gid=1000({student_id}) группы=1000({student_id})", cwd_rel
-    if cmd == "date":
-        return time.strftime("%a %b %d %Y %H:%M:%S GMT%z"), cwd_rel
-    if cmd == "echo":
-        return raw_args, cwd_rel
-    if cmd == "pwd":
-        return f"/home/{student_id}/{cwd_rel}".rstrip("/"), cwd_rel
-    if cmd == "clear":
-        return "__CLEAR__", cwd_rel
-
-    if cmd == "cd":
-        arg = rest[0] if rest else None
-        if not arg or arg == "~":
-            return "", ""
-        target = resolve_in_sandbox(root, cwd_abs, arg)
-        if target is None:
-            return "cd: доступ за пределы домашнего каталога запрещён", cwd_rel
-        if not target.exists():
-            return f"cd: {arg}: нет такого файла или каталога", cwd_rel
-        if not target.is_dir():
-            return f"cd: {arg}: это не каталог", cwd_rel
-        new_rel = str(target.relative_to(root.resolve())) if target != root.resolve() else ""
-        return "", ("" if new_rel == "." else new_rel)
-
-    if cmd == "ls":
-        show_all = "-a" in rest
-        path_arg = next((a for a in rest if a != "-a"), None)
-        target = resolve_in_sandbox(root, cwd_abs, path_arg)
-        if target is None:
-            return "ls: доступ за пределы домашнего каталога запрещён", cwd_rel
-        if not target.exists():
-            return f"ls: {path_arg or '.'}: нет такого файла или каталога", cwd_rel
-        if not target.is_dir():
-            return target.name, cwd_rel
-        entries = sorted(os.listdir(target))
-        entries = [e for e in entries if show_all or not e.startswith(".")]
-        if not entries:
-            return (". .." if show_all else "(пусто)"), cwd_rel
-        formatted = [e + ("/" if (target / e).is_dir() else "") for e in entries]
-        return "  ".join(formatted), cwd_rel
-
-    if cmd == "find":
-        path_arg = rest[0] if rest else None
-        target = resolve_in_sandbox(root, cwd_abs, path_arg)
-        if target is None:
-            return "find: доступ за пределы домашнего каталога запрещён", cwd_rel
-        if not target.exists():
-            return f"find: {path_arg or '.'}: нет такого файла или каталога", cwd_rel
-        out = ["."]
-        if target.is_dir():
-            list_recursive(True, target, "", out)
-        else:
-            out = [target.name]
-        return "\n".join(out), cwd_rel
-
-    if cmd == "cat":
-        if not rest:
-            return "cat: укажите файл", cwd_rel
-        target = resolve_in_sandbox(root, cwd_abs, rest[0])
-        if target is None:
-            return "cat: доступ за пределы домашнего каталога запрещён", cwd_rel
-        if not target.exists() or not target.is_file():
-            return f"cat: {rest[0]}: нет такого файла", cwd_rel
-        try:
-            return target.read_text(encoding="utf-8"), cwd_rel
-        except UnicodeDecodeError:
-            return f"cat: {rest[0]}: двоичный файл", cwd_rel
-
-    return f'{cmd}: команда не найдена. Наберите "help".', cwd_rel
-
-
-def db_path_resolver(student_id, cwd_rel):
+def db_path_resolver(session):
     """Резолвер путей к файлам БД для sqlite3 — только внутри песочницы."""
-    root = sandbox_root(student_id)
-    cwd_abs = root / (cwd_rel or "")
+    sb = session["sandbox"]
+    cwd = session["cwd"]
 
     def resolve(arg):
-        target = resolve_in_sandbox(root, cwd_abs, arg)
-        if target is None:
+        try:
+            vrel = sb.resolve(cwd, arg)
+        except FsError:
             raise sqlite_shell.ShellError("доступ за пределы домашнего каталога запрещён")
-        if target.is_dir():
+        if sb.isdir(vrel):
             raise sqlite_shell.ShellError(f"{arg}: это каталог")
-        if not target.parent.is_dir():
+        parent = vrel.rsplit("/", 1)[0] if "/" in vrel else ""
+        if not sb.isdir(parent):
             raise sqlite_shell.ShellError(f"{arg}: нет такого каталога")
-        rel = target.relative_to(root.resolve())
-        return str(target), f"/home/{student_id}/{rel}"
+        return sb.real(vrel), sb.display(vrel)
 
     return resolve
+
+
+# ------------------------------------------------- задание №4: проверка ---
+
+def config_stages(session):
+    student_id = session["student_id"]
+    conn = db_connect()
+    try:
+        config_task.ensure_table(conn)
+        row = config_task.load_row(conn, student_id)
+    finally:
+        conn.close()
+    if row is None:
+        return None
+    params = json.loads(row["params"])
+    return config_task.check(session["sandbox"].root, params, student_id)
+
+
+def config_autocheck(session):
+    """После записи в файлы: пересчитать прогресс. Возвращает сообщение, если задание засчитано."""
+    stages = config_stages(session)
+    if stages is None:
+        return None
+    conn = db_connect()
+    try:
+        newly = config_task.save_progress(conn, session["student_id"], stages)
+    finally:
+        conn.close()
+    if newly:
+        return "[Проверка] Все пункты задания №4 выполнены — задание засчитано! Подробности: check"
+    return None
+
+
+def config_check_text(session):
+    stages = config_stages(session)
+    if stages is None:
+        return "Задание №4 вам ещё не выдано."
+    conn = db_connect()
+    try:
+        config_task.save_progress(conn, session["student_id"], stages)
+    finally:
+        conn.close()
+    return config_task.report_text(stages)
+
+
+# ------------------------------------------------ задание №5: тренажёр ---
+
+class TerminalState:
+    """Строка ib_terminal_tasks студента: значения, прогресс и доступ к журналу команд."""
+
+    def __init__(self, session):
+        self.session = session
+        self.student_id = session["student_id"]
+        self.conn = db_connect()
+        terminal_task.ensure_tables(self.conn)
+        self.row = terminal_task.load_row(self.conn, self.student_id)
+        self.params = json.loads(self.row["params"]) if self.row else None
+        self.progress = terminal_task.load_progress(self.row)
+        self.root = session["sandbox"].root
+        self.fetch = terminal_task.entries_fetcher(self.conn, self.student_id)
+
+    def close(self):
+        self.conn.close()
+
+    def results(self, k=None):
+        k, env = terminal_task.current_env(self.root, self.student_id, self.params, self.progress, self.fetch, k)
+        return k, terminal_task.results_with_text(terminal_task.evaluate_stage(k, env), self.params, self.student_id)
+
+
+def terminal_hooks(session):
+    def with_state(fn):
+        def call(*args):
+            state = TerminalState(session)
+            try:
+                if state.row is None:
+                    return "Задание №5 вам ещё не выдано."
+                return fn(state, *args)
+            finally:
+                state.close()
+        return call
+
+    def check(state):
+        _, results = state.results()
+        return terminal_task.check_text(state.progress, results if state.progress["done"] < terminal_task.TOTAL else [])
+
+    def task(state, args):
+        done = state.progress["done"]
+        k = done + 1
+        if args:
+            try:
+                k = int(args[0])
+            except ValueError:
+                return f"task: номер этапа — число от 1 до {terminal_task.TOTAL}"
+            if not 1 <= k <= terminal_task.TOTAL:
+                return f"task: номер этапа — число от 1 до {terminal_task.TOTAL}"
+        if k > terminal_task.TOTAL:
+            return "Все этапы пройдены! Задание засчитано. Прогресс: check"
+        results = state.results(k)[1] if k == done + 1 else None
+        return terminal_task.stage_text(k, state.params, state.student_id, results, done)
+
+    def answer(args):
+        state = TerminalState(session)
+        try:
+            if state.row is None:
+                return "Задание №5 вам ещё не выдано.", False
+            text, ok = terminal_task.submit_answer(state.progress, state.params, state.student_id, state.root, args)
+            terminal_task.save_progress(state.conn, state.student_id, state.progress)
+            return text, ok
+        finally:
+            state.close()
+
+    return {"check": with_state(check), "task": with_state(task), "answer": answer}
+
+
+def terminal_record(session, raw, line, ctx):
+    """Записывает строку в журнал и засчитывает этапы. Возвращает сообщение о пройденных этапах."""
+    state = TerminalState(session)
+    try:
+        if state.row is None:
+            return None
+        log_id = terminal_task.log_line(state.conn, state.student_id, raw, line, ctx.trace, ctx.status)
+        state.conn.commit()
+        newly = terminal_task.advance(state.root, state.student_id, state.params, state.progress, state.fetch, log_id)
+        if not newly:
+            return None
+        solved = terminal_task.save_progress(state.conn, state.student_id, state.progress)
+        msgs = [f"[Этап {k} пройден ✔] {terminal_task.STAGES[k - 1]['title']}" for k in newly]
+        if solved or state.progress["done"] >= terminal_task.TOTAL:
+            msgs.append("[Проверка] Все этапы тренажёра пройдены — задание №5 засчитано! Подробности: check")
+        else:
+            k = state.progress["done"] + 1
+            msgs.append(f"Открыт этап {k} из {terminal_task.TOTAL}: «{terminal_task.STAGES[k - 1]['title']}». "
+                        "Что сделать: task")
+        return "\n".join(msgs)
+    finally:
+        state.close()
+
+
+# ------------------------------------- задания на движке lab_task (№6, №7) ---
+
+class LabState:
+    """Строка ib_lab_tasks студента для задания сессии."""
+
+    def __init__(self, session):
+        self.lab = lab_task.get(session["task"])
+        self.student_id = session["student_id"]
+        self.conn = db_connect()
+        lab_task.ensure_tables(self.conn)
+        self.row = self.lab.load_row(self.conn, self.student_id)
+        self.params = json.loads(self.row["params"]) if self.row else None
+        self.progress = lab_task.load_progress(self.row)
+        self.root = session["sandbox"].root
+        self.fetch = self.lab.entries_fetcher(self.conn, self.student_id)
+
+    def close(self):
+        self.conn.close()
+
+    def results(self, k=None):
+        k, env = self.lab.current_env(self.root, self.student_id, self.params, self.progress, self.fetch, k)
+        return k, self.lab.results_with_text(self.lab.evaluate_stage(k, env), self.params, self.student_id)
+
+    @property
+    def not_assigned(self):
+        return f"Задание №{self.lab.number} вам ещё не выдано."
+
+
+def lab_hooks(session):
+    def with_state(fn):
+        def call(*args):
+            state = LabState(session)
+            try:
+                if state.row is None:
+                    return state.not_assigned
+                return fn(state, *args)
+            finally:
+                state.close()
+        return call
+
+    def check(state):
+        _, results = state.results()
+        return state.lab.check_text(state.progress, results if state.progress["done"] < state.lab.total else [])
+
+    def task(state, args):
+        lab = state.lab
+        done = state.progress["done"]
+        k = done + 1
+        if args:
+            try:
+                k = int(args[0])
+            except ValueError:
+                return f"task: номер этапа — число от 1 до {lab.total}"
+            if not 1 <= k <= lab.total:
+                return f"task: номер этапа — число от 1 до {lab.total}"
+        if k > lab.total:
+            return "Все этапы пройдены! Задание засчитано. Прогресс: check"
+        results = state.results(k)[1] if k == done + 1 else None
+        return lab.stage_text(k, state.params, state.student_id, results, done)
+
+    def answer(args):
+        state = LabState(session)
+        try:
+            if state.row is None:
+                return state.not_assigned, False
+            text, ok = state.lab.submit_answer(state.progress, state.params, state.student_id, state.root, args)
+            state.lab.save_progress(state.conn, state.student_id, state.progress)
+            return text, ok
+        finally:
+            state.close()
+
+    return {"check": with_state(check), "task": with_state(task), "answer": answer}
+
+
+def lab_welcome(session):
+    """Текст при входе в пошаговое задание: что это за задание и инструкция к текущему этапу."""
+    if lab_task.get(session["task"]) is None:
+        return None
+    state = LabState(session)
+    try:
+        lab = state.lab
+        if state.row is None:
+            return state.not_assigned
+        head = [f"Задание №{lab.number}. {lab.title}",
+                "Команды задания: task — инструкция к текущему этапу, check — прогресс, "
+                "answer N.M ОТВЕТ — ответ на вопрос, cat TASK.md — все этапы.", ""]
+        if state.progress["done"] >= lab.total:
+            return "\n".join(head + ["Все этапы пройдены — задание засчитано. Прогресс: check"])
+        k, results = state.results()
+        return "\n".join(head + [lab.stage_text(k, state.params, state.student_id, results, state.progress["done"])])
+    finally:
+        state.close()
+
+
+def lab_record(session, raw, line, ctx):
+    """Журнал + засчитывание этапов + предупреждение о нарушенных критических пунктах."""
+    state = LabState(session)
+    try:
+        if state.row is None:
+            return None
+        lab = state.lab
+        log_id = lab.log_line(state.conn, state.student_id, raw, line, ctx.trace, ctx.status)
+        state.conn.commit()
+        newly = lab.advance(state.root, state.student_id, state.params, state.progress, state.fetch, log_id)
+        msgs = []
+        if ctx.wrote:
+            for text in lab.broken_critical(state.root, state.student_id, state.params, state.progress):
+                msgs.append(f"[Внимание, критично] Нарушено: {text}")
+        if newly:
+            solved = lab.save_progress(state.conn, state.student_id, state.progress)
+            msgs += [f"[Этап {k} пройден ✔] {lab.stages[k - 1]['title']}" for k in newly]
+            if solved or state.progress["done"] >= lab.total:
+                msgs.append(f"[Проверка] Все этапы пройдены — задание №{lab.number} засчитано! Подробности: check")
+            else:
+                k = state.progress["done"] + 1
+                msgs.append(f"Открыт этап {k} из {lab.total}: «{lab.stages[k - 1]['title']}». Что сделать: task")
+        return "\n".join(msgs) or None
+    finally:
+        state.close()
 
 
 def run_line(session, line):
@@ -288,26 +434,55 @@ def run_line(session, line):
     state = session.get("sqlite")
     if isinstance(state, sqlite_shell.PasswordPrompt):
         output, session["sqlite"], unlocked = state.submit(line)
-        if unlocked:
+        if unlocked and session["task"] == "caesar":
             mark_solved(session["student_id"])
         return output
 
-    shell = state
-    if shell:
-        output, done = shell.feed(line)
+    sqlite = state
+    if sqlite:
+        output, done = sqlite.feed(line)
         if done:
-            shell.close()
+            sqlite.close()
             session["sqlite"] = None
         return output
 
     parts = line.strip().split(maxsplit=1)
     if parts and parts[0] in ("sqlite3", "SQLite3"):
-        resolver = db_path_resolver(session["student_id"], session["cwd"])
-        output, shell = sqlite_shell.start(parts[1] if len(parts) > 1 else "", resolver)
-        session["sqlite"] = shell
+        output, sqlite = sqlite_shell.start(parts[1] if len(parts) > 1 else "", db_path_resolver(session))
+        session["sqlite"] = sqlite
         return output
 
-    output, session["cwd"] = run_command(session["student_id"], session["cwd"], line)
+    raw = line
+    line, error = shell.expand_history(session, line)
+    if error:
+        return error
+    echo = line if line != raw else ""
+    shell.add_history(session, line)
+
+    hooks = {}
+    if session["task"] == config_task.TASK_KEY:
+        hooks["check"] = lambda: config_check_text(session)
+    if session["task"] == terminal_task.TASK_KEY:
+        hooks = terminal_hooks(session)
+    is_lab = lab_task.get(session["task"]) is not None
+    if is_lab:
+        hooks = lab_hooks(session)
+    ctx = shell.Ctx(session, session["sandbox"], hooks)
+    output = shell.run(ctx, line)
+    session["last_status"] = ctx.status
+    if ctx.clear:
+        return "__CLEAR__"
+    if echo:
+        output = echo + ("\n" + output if output else "")
+    if ctx.wrote and session["task"] == config_task.TASK_KEY:
+        message = config_autocheck(session)
+        if message:
+            output = (output + "\n" if output else "") + message
+    if (session["task"] == terminal_task.TASK_KEY or is_lab) and line.strip():
+        record = lab_record if is_lab else terminal_record
+        message = record(session, raw, line, ctx)
+        if message:
+            output = (output + "\n" if output else "") + message
     return output
 
 
@@ -337,9 +512,17 @@ def handle_api(path, data, sid):
     if path == "/api/login":
         student_id = (data.get("studentId") or "").strip()
         password = data.get("password") or ""
+        task = data.get("task") or "caesar"
+        if task not in TASKS:
+            return 200, {"ok": False, "error": f"Неизвестное задание: {task}"}, None
         if not verify_login(student_id, password):
             return 200, {"ok": False, "error": "Неверный логин или пароль"}, None
-        return 200, {"ok": True, "studentId": student_id}, new_session(student_id)
+        sid = new_session(student_id, task)
+        body = {"ok": True, "studentId": student_id}
+        welcome = lab_welcome(SESSIONS[sid])
+        if welcome:
+            body["welcome"] = welcome
+        return 200, body, sid
 
     if not sid or sid not in SESSIONS:
         return 401, {"error": "not authenticated"}, None
@@ -370,6 +553,12 @@ def handle_api(path, data, sid):
             **prompt_state(session),
         }, None
 
+    if path == "/api/complete":
+        if input_mode(session) != "shell":
+            return 200, {"line": data.get("line") or "", "options": []}, None
+        ctx = shell.Ctx(session, session["sandbox"])
+        return 200, shell.complete(ctx, (data.get("line") or "")[:MAX_CMD_LEN]), None
+
     if path == "/api/logout":
         close_session(sid)
         return 200, {"ok": True}, ""
@@ -377,7 +566,8 @@ def handle_api(path, data, sid):
     if path == "/api/whoami":
         return 200, {
             "studentId": student_id,
-            "solved": get_solved(student_id),
+            "task": session["task"],
+            "solved": get_solved(student_id) if session["task"] == "caesar" else None,
             **prompt_state(session),
         }, None
 
@@ -386,12 +576,29 @@ def handle_api(path, data, sid):
 
 # ------------------------------------------------------------------- HTTP ---
 
-def new_session(student_id):
+def new_session(student_id, task="caesar"):
     # Студенту без сгенерированного задания — пустой домашний каталог,
     # иначе любая команда падает с «нет такого файла или каталога».
-    sandbox_root(student_id).mkdir(parents=True, exist_ok=True)
+    sandbox = make_sandbox(task, student_id)
     sid = secrets.token_hex(24)
-    SESSIONS[sid] = {"student_id": student_id, "cwd": "", "sqlite": None}
+    SESSIONS[sid] = {"student_id": student_id, "task": task, "sandbox": sandbox,
+                     "cwd": sandbox.home_vrel, "sqlite": None}
+    if task == terminal_task.TASK_KEY:
+        # история команд тренажёра переживает выход и перезапуск сервера
+        conn = db_connect()
+        try:
+            terminal_task.ensure_tables(conn)
+            SESSIONS[sid]["history"] = terminal_task.history_lines(conn, student_id)
+        finally:
+            conn.close()
+    lab = lab_task.get(task)
+    if lab:
+        conn = db_connect()
+        try:
+            lab_task.ensure_tables(conn)
+            SESSIONS[sid]["history"] = lab.history_lines(conn, student_id)
+        finally:
+            conn.close()
     return sid
 
 
@@ -473,7 +680,7 @@ def main():
     server = ThreadingHTTPServer(("0.0.0.0", PORT), Handler)
     print(f"SecLab Terminal backend: http://localhost:{PORT}")
     print(f"  mdtask DB:  {MDTASK_DB}")
-    print(f"  sandboxes:  {CTF_CAESAR_DIR}")
+    print(f"  sandboxes:  {CTF_CAESAR_DIR} (№3), {CTF_CONFIGS_DIR} (№4), {CTF_TERMINAL_DIR} (№5)")
     try:
         server.serve_forever()
     except KeyboardInterrupt:

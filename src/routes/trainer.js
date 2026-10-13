@@ -5,7 +5,7 @@ const { runPreview, checkSolution, getTableSchema, getTableData } = require('../
 const { getSqlExercises, getSqlAttempts, getSolvedSqlExerciseIds } = require('../db');
 const { renderMarkdown } = require('../lib/markdown');
 const { TOPIC_THEORY } = require('../content/sql-theory');
-const { TOPIC_LABELS, getAllowedTopicKeys, getTopicsForUser } = require('../lib/sql-topics');
+const { TOPIC_LABELS, getAllowedTopicKeys, getTopicsForUser, groupBySection } = require('../lib/sql-topics');
 const { withProgress } = require('../lib/sql-progress');
 const { describeExpected } = require('../lib/sql-expected');
 const { hasFullAccess } = require('../lib/test-access');
@@ -43,7 +43,7 @@ router.get('/trainer/theory', requireAuth, (req, res) => {
   res.render('trainer/theory-index', {
     user: req.session.user,
     sidebarTree: sidebarForRequest(req),
-    topics: getTopicsForUser(req.session.user),
+    sections: groupBySection(getTopicsForUser(req.session.user)),
     activeAssignmentId: null,
     activePath: '/trainer/theory',
   });
@@ -103,7 +103,7 @@ router.get('/trainer', requireRole('student'), (req, res) => {
   res.render('trainer/practice-index', {
     user: req.session.user,
     sidebarTree: sidebarForRequest(req),
-    topics,
+    sections: groupBySection(topics),
     activeAssignmentId: null,
     activePath: '/trainer',
   });

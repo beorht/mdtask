@@ -1,0 +1,72 @@
+<%- include('partials/start') %>
+<% const d = detail; const t = d.task; const total = t.total || d.meta.total; %>
+
+<nav class="a-breadcrumbs" aria-label="Навигация">
+  <a href="/admin/ib">Информационная безопасность</a><span>/</span><span>Задание №<%= d.meta.number %></span><span>/</span><span><%= d.student.name %></span>
+</nav>
+
+<div class="a-page-head">
+  <div>
+    <h1><%= d.student.name %></h1>
+    <p class="a-subtitle"><a href="/admin/students/<%= d.student.id %>"><%= d.student.id %></a> · <%= d.student.group || 'без группы' %> · Задание №<%= d.meta.number %>. <%= d.meta.title %><% if (d.meta.info) { %> · <%= d.meta.info %><% } %></p>
+  </div>
+</div>
+
+<div class="a-stats">
+  <div class="a-stat"><span class="a-stat-value"><%= t.passed %>/<%= total %></span><span class="a-stat-label"><%= t.solved ? 'Пройдено · ' + view.formatDateTime(t.solved_at) : 'Этапов пройдено' %></span></div>
+  <div class="a-stat"><span class="a-stat-value"><%= t.commands %></span><span class="a-stat-label">Команд выполнено</span></div>
+  <div class="a-stat"><span class="a-stat-value"><%= d.wrongAnswers %></span><span class="a-stat-label">Неверных ответов</span></div>
+</div>
+
+<section class="a-card">
+  <div class="a-card-head"><h2>Этапы</h2></div>
+  <ol class="a-term-stages">
+    <% d.stages.forEach(function (s) { %>
+      <li class="<%= s.done ? 'is-done' : (s.current ? 'is-current' : '') %>">
+        <span class="a-status a-status-<%= s.done ? 'done' : (s.current ? 'warning' : 'neutral') %>"><span class="a-status-icon" aria-hidden="true"><%= s.done ? '✓' : (s.current ? '▶' : '·') %></span><%= s.done ? 'Пройден' : (s.current ? 'Текущий' : 'Не открыт') %></span>
+        <span><%= s.number %>. <%= s.title %></span>
+        <span class="a-muted a-nowrap"><%= s.completedAt ? view.formatDateTime(s.completedAt) : '' %></span>
+      </li>
+    <% }) %>
+  </ol>
+  <p class="a-muted">Подробно по пунктам текущего этапа: <code><%= d.meta.checkCommand %></code></p>
+</section>
+
+<section class="a-card">
+  <div class="a-card-head"><h2>Ответы на вопросы</h2></div>
+  <% if (!d.answers.length) { %>
+    <%- include('partials/empty', { emptyIcon: 'shield', emptyTitle: 'Ответов пока нет', emptyText: 'Студент ещё не отвечал на вопросы командой answer.' }) %>
+  <% } else { %>
+    <div class="a-table-wrap">
+      <table class="a-table">
+        <thead><tr><th>Вопрос</th><th>Результат</th><th class="a-num">Попыток</th><th>Верный ответ студента</th><th>Когда</th></tr></thead>
+        <tbody>
+          <% d.answers.forEach(function (a) { %>
+            <tr>
+              <td><code><%= a.qid %></code></td>
+              <td><span class="a-status a-status-<%= a.ok ? 'done' : 'failed' %>"><span class="a-status-icon" aria-hidden="true"><%= a.ok ? '✓' : '×' %></span><%= a.ok ? 'Верно' : 'Нет верного ответа' %></span></td>
+              <td class="a-num"><%= a.attempts %></td>
+              <td><%= a.value ? a.value : '—' %></td>
+              <td class="a-muted a-nowrap"><%= a.at ? view.formatDateTime(a.at) : '—' %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</section>
+
+<section class="a-card">
+  <div class="a-card-head"><h2>Журнал команд<% if (d.log.length) { %> (последние <%= d.log.length %>)<% } %></h2></div>
+  <% if (!d.log.length) { %>
+    <%- include('partials/empty', { emptyIcon: 'shield', emptyTitle: 'Команд нет', emptyText: 'Студент ещё не работал в терминале этого задания.' }) %>
+  <% } else { %>
+    <ol class="a-term-log">
+      <% d.log.slice().reverse().forEach(function (l) { %>
+        <li class="<%= l.status ? 'is-error' : '' %>"><span class="a-term-time"><%= view.formatDateTime(l.created_at) %></span><span class="a-term-cmd">$ <%= l.raw %><% if (l.line !== l.raw) { %> <span class="a-term-expanded">→ <%= l.line %></span><% } %></span><% if (l.status) { %><span class="a-term-code">код <%= l.status %></span><% } %></li>
+      <% }) %>
+    </ol>
+  <% } %>
+</section>
+
+<%- include('partials/end') %>

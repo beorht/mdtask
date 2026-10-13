@@ -1,10 +1,33 @@
 // "Информационная безопасность" subject: practical tasks solved in the web terminal (ib/,
 // ported from IBEmulator). Each task has its own terminal page; a task is assigned to a
-// student once the teacher has generated it for them (its status row exists).
-const { getCaesarSecretForStudent } = require('../db');
+// student once the teacher has generated it for them (its status row exists). A task with
+// `theory` (Markdown under ib/) gets a theory page that comes before the terminal.
+const path = require('path');
+const {
+  getCaesarSecretForStudent,
+  getConfigTaskForStudent,
+  getTerminalTaskForStudent,
+  getLabTaskForStudent,
+} = require('../db');
+
+const IB_DIR = path.join(__dirname, '..', '..', 'ib');
 
 const IB_SUBJECT_KEY = 'ib';
 const IB_SUBJECT_TITLE = 'Информационная безопасность';
+
+// Status of a task on the shared ib/server/lab_task.py engine (row in ib_lab_tasks).
+function labStatus(key, total) {
+  return (studentId) => {
+    const row = getLabTaskForStudent(key, studentId);
+    return {
+      assigned: !!row,
+      solved: !!(row && row.solved),
+      solvedAt: row ? row.solved_at : null,
+      passed: row ? row.passed : 0,
+      total: row && row.total ? row.total : total,
+    };
+  };
+}
 
 const IB_TASKS = [
   {
@@ -15,10 +38,131 @@ const IB_TASKS = [
       'В домашнем каталоге лежит резервная копия базы компании, защищённая паролем. Найдите спрятанный файл, ' +
       'расшифруйте шифр Цезаря и откройте базу командой sqlite3.',
     skills: ['Linux-терминал', 'Шифр Цезаря', 'SQLite'],
+    hint: 'Условие задания — <code>cat TASK.md</code>, список команд — <code>help</code>.',
     status(studentId) {
       const row = getCaesarSecretForStudent(studentId);
       return { assigned: !!row, solved: !!(row && row.solved), solvedAt: row ? row.solved_at : null };
     },
+  },
+  {
+    key: 'configs',
+    number: 4,
+    title: 'Поиск и правка конфигурационных файлов',
+    summary:
+      'Учебный сервер с SSH, Apache, PHP и MariaDB настроен небезопасно. Найдите конфиги командами find и grep ' +
+      'и измените параметры через sed, не открывая файлы в редакторе.',
+    skills: ['find', 'grep', 'sed', 'sudo', '/etc'],
+    theory: path.join(IB_DIR, 'ctf', 'configs', 'THEORY.md'),
+    progressUnit: 'пунктов',
+    hint:
+      'Условие задания — <code>cat TASK.md</code>, список команд — <code>help</code>, справка — <code>man find</code>, ' +
+      'проверка прогресса — <code>check</code>.',
+    status(studentId) {
+      const row = getConfigTaskForStudent(studentId);
+      return {
+        assigned: !!row,
+        solved: !!(row && row.solved),
+        solvedAt: row ? row.solved_at : null,
+        passed: row ? row.passed : 0,
+        total: row && row.total ? row.total : 8,
+      };
+    },
+  },
+  {
+    key: 'terminal',
+    number: 5,
+    title: 'Основы работы в терминале Linux',
+    summary:
+      'Пошаговый тренажёр из 14 этапов: навигация, просмотр и создание файлов, копирование и удаление, права ' +
+      'доступа, ссылки, поиск, конвейеры, sudo и история команд. Каждый этап проверяется автоматически.',
+    skills: ['ls', 'cd', 'cp', 'mv', 'rm', 'chmod', 'ln', 'grep', '|', 'sudo'],
+    theory: path.join(IB_DIR, 'ctf', 'terminal', 'THEORY.md'),
+    progressUnit: 'этапов',
+    // Must match STAGES in ib/server/terminal_task.py (tests/routes/ib.test.js checks it).
+    stages: [
+      'Знакомство с терминалом',
+      'Просмотр каталогов: ls',
+      'Перемещение по каталогам: cd',
+      'Чтение файлов: cat, head, tail, wc',
+      'Создание каталогов и файлов: mkdir, touch, echo >',
+      'Копирование и перемещение: cp, mv',
+      'Удаление: rm, rmdir',
+      'Права доступа: chmod и запуск скриптов',
+      'Ссылки: ln -s, readlink',
+      'Поиск: find и grep',
+      'Конвейеры и перенаправления: |, sort, uniq, >, 2>/dev/null',
+      'Права администратора: sudo',
+      'История команд',
+      'Итоговое задание',
+    ],
+    hint:
+      'Текущий этап — <code>task</code>, прогресс — <code>check</code>, ответ на вопрос — <code>answer 4.1 42</code>, ' +
+      'все этапы — <code>cat TASK.md</code>, справка — <code>man ls</code>, Tab дополняет имена файлов.',
+    status(studentId) {
+      const row = getTerminalTaskForStudent(studentId);
+      return {
+        assigned: !!row,
+        solved: !!(row && row.solved),
+        solvedAt: row ? row.solved_at : null,
+        passed: row ? row.passed : 0,
+        total: row && row.total ? row.total : 14,
+      };
+    },
+  },
+  {
+    key: 'incident',
+    number: 6,
+    title: 'Расследование инцидента по журналам',
+    summary:
+      'Ночью на сервере много неудачных входов по SSH. Изучите журналы, сохраните доказательства, постройте ' +
+      'временную шкалу, отделите факты от гипотез, заблокируйте скомпрометированную учётную запись и составьте отчёт.',
+    skills: ['auth.log', 'grep', 'sha256sum', 'last', 'passwd -l', 'gpasswd'],
+    theory: path.join(IB_DIR, 'ctf', 'incident', 'THEORY.md'),
+    lab: true,
+    progressUnit: 'этапов',
+    // Must match STAGES in ib/server/incident_task.py (tests/routes/ib.test.js checks it).
+    stages: [
+      'Первичный осмотр журналов',
+      'Сохранение доказательств',
+      'Неудачные попытки входа',
+      'Успешный вход и действия после него',
+      'Временная шкала',
+      'Факты и гипотезы',
+      'Сдерживание',
+      'Отчёт об инциденте',
+    ],
+    hint:
+      'Текущий этап и подробная инструкция — <code>task</code>, прогресс — <code>check</code>, ответ — ' +
+      '<code>answer 3.1 20</code>, все этапы — <code>cat TASK.md</code>. Журналы читаются через <code>sudo</code> ' +
+      'и не должны меняться.',
+    status: labStatus('incident', 8),
+  },
+  {
+    key: 'ssh',
+    number: 7,
+    title: 'Безопасный удалённый доступ по SSH',
+    summary:
+      'SSH на сервере настроен небезопасно: вход root и по паролю, нет ограничения пользователей. Настройте вход ' +
+      'по ключу, приведите sshd_config к политике, проверьте и примените изменения, не потеряв собственный доступ.',
+    skills: ['ssh', 'sshd_config', 'authorized_keys', 'sshd -t', 'systemctl'],
+    theory: path.join(IB_DIR, 'ctf', 'ssh', 'THEORY.md'),
+    lab: true,
+    progressUnit: 'этапов',
+    // Must match STAGES in ib/server/ssh_task.py (tests/routes/ib.test.js checks it).
+    stages: [
+      'Аудит службы SSH',
+      'Учётные записи и группы',
+      'Резервная копия и план отката',
+      'Вход по ключу',
+      'Ужесточение конфигурации',
+      'Проверка и применение',
+      'Проверка доступа',
+    ],
+    hint:
+      'Текущий этап и подробная инструкция — <code>task</code>, прогресс — <code>check</code>, все этапы — ' +
+      '<code>cat TASK.md</code>, справка — <code>man ssh</code>, <code>man sshd</code>. Сначала проверьте вход по ' +
+      'ключу, потом отключайте пароли.',
+    status: labStatus('ssh', 7),
   },
 ];
 

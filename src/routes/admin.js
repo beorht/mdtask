@@ -414,8 +414,27 @@ router.get('/admin/ib', (req, res) => {
     pageTitle: 'Информационная безопасность',
     filters,
     results: data.ibResults(ctx, filters),
+    configs: data.ibConfigResults(ctx, filters),
+    terminal: data.ibTerminalResults(ctx, filters),
+    labs: data.ibLabResults(ctx, filters),
     groups: getDistinctStudentGroups(),
   });
+});
+
+// Task №5 (terminal trainer): one student's stages, answers and command log.
+router.get('/admin/ib/terminal/:id', (req, res) => {
+  const ctx = data.loadContext();
+  const detail = data.ibTerminalDetail(ctx, req.params.id);
+  if (!detail) return notFound(res, 'Задание №5 этому студенту не выдано.');
+  render(res, 'ib-terminal', 'ib', { pageTitle: `${detail.student.name} · терминал`, detail });
+});
+
+// Tasks №6, №7 (ib/server/lab_task.py): the same page as for №5.
+router.get('/admin/ib/lab/:task/:id', (req, res) => {
+  const ctx = data.loadContext();
+  const detail = data.ibLabDetail(ctx, req.params.task, req.params.id);
+  if (!detail) return notFound(res, 'Это задание студенту не выдано.');
+  render(res, 'ib-terminal', 'ib', { pageTitle: `${detail.student.name} · задание №${detail.meta.number}`, detail });
 });
 
 // --- Settings ---

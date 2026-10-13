@@ -57,7 +57,7 @@
         <% } else if (result.rows) { %>
           <% if (typeof result.isCorrect !== 'undefined') { %>
             <div class="sql-alert <%= result.isCorrect ? 'sql-alert-success' : 'sql-alert-error' %>" role="status">
-              <%= result.isCorrect ? '✓ Верно! Задание засчитано.' : '✕ Результат не совпадает с ожидаемым. Сравните с таблицей «Ожидаемый результат» и попробуйте ещё раз.' %>
+              <%= result.isCorrect ? '✓ Верно! Задание засчитано.' : (result.notice ? '✕ Решение не засчитано: ' + result.notice : '✕ Результат не совпадает с ожидаемым. Сравните с таблицей «Ожидаемый результат» и попробуйте ещё раз.') %>
             </div>
           <% } %>
           <% if (result.createdTables && result.createdTables.length) { %>
@@ -112,7 +112,11 @@
               </div>
             <% } else if (submitResult && submitResult.success) { %>
               <div class="sql-editor-notice sql-editor-notice-error" role="alert">
-                <p class="sql-editor-notice-text"><strong>✕ Решение не засчитано:</strong> результат не совпадает с ожидаемым. Сравните его с блоком «Ожидаемый результат» слева.</p>
+                <% if (submitResult.notice) { %>
+                  <p class="sql-editor-notice-text"><strong>✕ Решение не засчитано:</strong> <%= submitResult.notice %></p>
+                <% } else { %>
+                  <p class="sql-editor-notice-text"><strong>✕ Решение не засчитано:</strong> результат не совпадает с ожидаемым. Сравните его с блоком «Ожидаемый результат» слева.</p>
+                <% } %>
               </div>
             <% } else if (runResult && runResult.success) { %>
               <div class="sql-editor-notice" role="status">
@@ -261,7 +265,7 @@
                           <% } else if (a.isCorrect) { %>
                             <span class="badge badge-done"></span> верно
                           <% } else { %>
-                            <span class="badge badge-pending"></span> неверно
+                            <span class="badge badge-pending"></span> неверно<%= a.errorMessage ? ': ' + a.errorMessage : '' %>
                           <% } %>
                         </td>
                       </tr>

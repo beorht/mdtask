@@ -9,7 +9,7 @@ const {
   getDistinctStudentGroups,
   getLanguageExercises,
 } = require('../db');
-const { getTopicsForUser } = require('./sql-topics');
+const { getTopicsForUser, groupBySection } = require('./sql-topics');
 const { hasFullAccess } = require('./test-access');
 const { LANGUAGE_SUBJECTS } = require('./subjects');
 const { IB_SUBJECT_KEY, IB_SUBJECT_TITLE, ibTasksForUser } = require('./ib-tasks');
@@ -153,11 +153,16 @@ function buildSidebarTree({ role, studentId, studentGroup, subject }) {
     const header = { kind: 'header', icon: '🗄️', title: 'Базы данных (SQL)', href: role === 'student' ? '/subjects/sql' : null, children: [] };
 
     if (role !== 'student') {
-      const topics = TOPICS.map((t) => ({ kind: 'link', icon: '📖', title: t.label, href: `/trainer/theory/${t.key}`, children: [] }));
+      const theorySections = groupBySection(TOPICS).map((section) => ({
+        kind: 'section',
+        title: section.key === 'topics' ? 'Теория по темам' : `${section.title}: теория`,
+        filter: section.key === 'topics',
+        children: section.topics.map((t) => ({ kind: 'link', icon: '📖', title: t.label, href: `/trainer/theory/${t.key}`, children: [] })),
+      }));
       return [
         backLink(),
         header,
-        { kind: 'section', title: 'Теория по темам', filter: true, children: topics },
+        ...theorySections,
         { kind: 'section', title: 'Преподавателю', children: [{ kind: 'link', icon: '📊', title: 'Результаты тренажёра', href: '/admin/trainer/results', children: [] }] },
       ];
     }
@@ -166,7 +171,9 @@ function buildSidebarTree({ role, studentId, studentGroup, subject }) {
     let currentMarked = false;
     let solvedAll = 0;
     let totalAll = 0;
-    const groups = TOPICS.map((topic, i) => {
+    const sectionOf = Object.fromEntries(TOPICS.map((t) => [t.key, t.section || 'topics']));
+    const numberInSection = {};
+    const groups = TOPICS.map((topic) => {
       const list = exercisesByTopic[topic.key];
       const total = list.length;
       const solved = list.filter((e) => solvedIds.has(e.id)).length;
@@ -194,9 +201,12 @@ function buildSidebarTree({ role, studentId, studentGroup, subject }) {
           children: [],
         });
       }
+      const section = sectionOf[topic.key];
+      numberInSection[section] = (numberInSection[section] || 0) + 1;
       return {
         kind: 'group',
-        number: i + 1,
+        key: topic.key,
+        number: numberInSection[section],
         title: topic.label,
         status,
         meta: total > 0 ? `${solved}/${total}` : null,
@@ -208,19 +218,35 @@ function buildSidebarTree({ role, studentId, studentGroup, subject }) {
     return [
       backLink(),
       { ...header, done: solvedAll, total: totalAll, label: 'задач решено' },
-      { kind: 'section', title: 'Темы', filter: true, children: groups },
+      ...groupBySection(TOPICS).map((section) => ({
+        kind: 'section',
+        title: section.title,
+        filter: section.key === 'topics',
+        children: groups.filter((g) => sectionOf[g.key] === section.key),
+      })),
     ];
   }
 
   function ibSubjectNav() {
     const tasks = ibTasksForUser({ id: studentId }).filter((t) => t.assigned);
-    const links = tasks.map((t) => ({
-      kind: 'link',
-      icon: t.solved ? '✓' : '💻',
-      title: `№${t.number}. ${t.title}`,
-      href: `/subjects/${IB_SUBJECT_KEY}/${t.key}`,
-      children: [],
-    }));
+    const links = tasks.map((t) => {
+      const practice = `/subjects/${IB_SUBJECT_KEY}/${t.key}`;
+      if (!t.theory) {
+        return { kind: 'link', icon: t.solved ? '✓' : '💻', title: `№${t.number}. ${t.title}`, href: practice, children: [] };
+      }
+      return {
+        kind: 'group',
+        number: t.number,
+        title: t.title,
+        status: t.solved ? 'done' : 'open',
+        meta: t.solved ? null : `${t.passed}/${t.total}`,
+        open: !t.solved,
+        children: [
+          { kind: 'link', icon: '📖', title: 'Теория', href: `${practice}/theory`, children: [] },
+          { kind: 'link', icon: t.solved ? '✓' : '💻', title: 'Практика в терминале', href: practice, children: [] },
+        ],
+      };
+    });
     return [
       backLink(),
       {

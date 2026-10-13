@@ -1,5 +1,5 @@
 (function () {
-  const tabButtons = document.querySelectorAll('.tab-btn');
+  const tabButtons = document.querySelectorAll('.tab-btn[data-tab]');
   if (tabButtons.length) {
     function showTab(tab) {
       tabButtons.forEach(function (btn) {
@@ -16,7 +16,7 @@
       });
     });
 
-    const initial = document.querySelector('.tab-btn.active');
+    const initial = document.querySelector('.tab-btn[data-tab].active');
     showTab(initial ? initial.dataset.tab : 'main');
   }
 
