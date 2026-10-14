@@ -10,8 +10,10 @@
 
 const Database = require('better-sqlite3');
 const { structureChecker } = require('./sql-exercises-relations-data');
+const joinExercises = require('./sql-exercises-join-data');
 
-const FIRST_ORDER_INDEX = 129;
+// Right after the last JOIN exercise.
+const FIRST_ORDER_INDEX = joinExercises[joinExercises.length - 1].orderIndex + 1;
 
 const BASE = `
 CREATE TABLE groups (

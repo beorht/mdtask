@@ -54,6 +54,7 @@ function describeCreate(exercise) {
     if (c.is_unique) meta.push('UNIQUE');
     if (c.dflt_value !== undefined && c.dflt_value !== null) meta.push(`DEFAULT ${c.dflt_value}`);
     if (c.ref_table) meta.push(`FK → ${c.ref_table}.${c.ref_column || 'id'}`);
+    if (c.on_delete && c.on_delete !== 'NO ACTION') meta.push(`ON DELETE ${c.on_delete}`);
     return { name: c.name, meta: meta.join(' · ') };
   });
   return {
@@ -96,7 +97,8 @@ function describeDataChange(exercise) {
   const rows = exercise.expectedResult.map((values) => ({ values, changed: !beforeKeys.has(rowKey(values)) }));
   const removed = before.filter((r) => !afterKeys.has(rowKey(r))).map((values) => ({ values }));
 
-  const verb = { INSERT: 'добавления', UPDATE: 'изменения', DELETE: 'удаления' }[exercise.allowedStatement] || 'запроса';
+  const multi = !!(exercise.allowedStatements && exercise.allowedStatements.length);
+  const verb = multi ? 'всех операторов' : { INSERT: 'добавления', UPDATE: 'изменения', DELETE: 'удаления' }[exercise.allowedStatement] || 'запроса';
   return {
     kind: 'rows',
     title: tableName ? `Ожидаемое содержимое таблицы ${tableName} после ${verb}` : 'Ожидаемое содержимое таблицы',
@@ -114,6 +116,7 @@ function describeExpected(exercise) {
   let view = null;
   try {
     if (exercise.checkType === 'select_match') view = describeSelect(exercise);
+    else if (exercise.allowedStatements && exercise.allowedStatements.length) view = describeDataChange(exercise);
     else if (exercise.allowedStatement === 'CREATE TABLE') view = describeCreate(exercise);
     else if (exercise.allowedStatement === 'DROP TABLE') view = describeDrop(exercise);
     else view = describeDataChange(exercise);

@@ -1,10 +1,13 @@
 // Sequential unlock rule for the SQL trainer, shared by the trainer routes and the student
 // home page: exercise N opens only once exercise N-1 is solved (global order_index chain).
+// A solved exercise always stays open: when new exercises are inserted in the middle of the
+// chain, students who are already further along keep access to what they solved (and the
+// exercise after it), and the new ones open for them right away.
 // `openAll` (test accounts) skips the chain and unlocks everything.
 function withProgress(exercises, solvedIds, openAll = false) {
   return exercises.map((ex, i) => {
     const prev = exercises[i - 1];
-    const unlocked = openAll || i === 0 || solvedIds.has(prev.id);
+    const unlocked = openAll || i === 0 || solvedIds.has(ex.id) || solvedIds.has(prev.id);
     return { ...ex, solved: solvedIds.has(ex.id), unlocked };
   });
 }

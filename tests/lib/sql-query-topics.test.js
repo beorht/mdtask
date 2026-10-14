@@ -55,6 +55,7 @@ test('seeding adds missing exercises to an already populated table without touch
     checker_sql TEXT, order_matters INTEGER NOT NULL DEFAULT 0, expected_result TEXT NOT NULL)`);
   // what addColumnIfMissing in src/db/index.js adds before seeding
   conn.exec('ALTER TABLE sql_exercises ADD COLUMN required_keyword TEXT');
+  conn.exec('ALTER TABLE sql_exercises ADD COLUMN allowed_statements TEXT');
   conn
     .prepare(`INSERT INTO sql_exercises (id, order_index, topic, title, description_md, schema_sql, allowed_statement, check_type, checker_sql, order_matters, expected_result)
       VALUES ('distinct-1', 91, 'distinct', 'old title', '', '', 'SELECT', 'select_match', NULL, 0, '[]')`)

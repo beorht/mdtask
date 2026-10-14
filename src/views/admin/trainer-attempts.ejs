@@ -16,6 +16,24 @@
   <div class="a-markdown"><%- descriptionHtml %></div>
 </details>
 
+<% if (review && review.wrong > 0) { %>
+  <section class="a-card">
+    <div class="a-card-head">
+      <h2>Разбор ошибок</h2>
+      <span class="a-muted"><%= review.solved ? (review.attempts + ' ' + view.plural(review.attempts, 'попытка', 'попытки', 'попыток') + ' до верного решения') : 'ещё не решено' %> · неверных: <%= review.wrong %></span>
+    </div>
+    <ul class="a-mistakes">
+      <% review.items.forEach(function (item) { %>
+        <li>
+          <p><strong><%= item.title %></strong> <span class="a-tag">× <%= item.count %></span></p>
+          <p class="a-muted"><%= item.explain %></p>
+          <% if (item.details.length) { %><p class="a-mistake-details"><%= item.details.join(' · ') %></p><% } %>
+        </li>
+      <% }) %>
+    </ul>
+  </section>
+<% } %>
+
 <section class="a-card">
   <div class="a-card-head"><h2>История попыток (<%= attempts.length %>)</h2></div>
   <% if (!attempts.length) { %>
@@ -29,6 +47,9 @@
             <span class="a-muted"><%= view.formatDateTime(a.createdAt) %></span>
             <% if (i === 0) { %><span class="a-tag a-tag-accent">последняя</span><% } %>
           </div>
+          <% const mistake = mistakeOf(a); if (mistake) { %>
+            <p class="a-mistake-tag"><span class="a-tag a-tag-warn"><%= mistake.title %></span><% if (mistake.detail) { %> <span class="a-muted"><%= mistake.detail %></span><% } %></p>
+          <% } %>
           <pre class="a-sql"><code><%= a.submittedSql %></code></pre>
           <% if (a.isError) { %>
             <p class="a-attempt-error"><strong>Ошибка SQLite:</strong> <%= a.errorMessage %></p>

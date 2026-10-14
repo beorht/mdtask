@@ -13,6 +13,7 @@ const {
   getLabLog,
 } = require('../db');
 const { TOPICS } = require('./sql-topics');
+const { mistakesByExercise } = require('./sql-mistakes');
 const { TEST_GROUP } = require('./test-access');
 const { findIbTask, IB_TASKS } = require('./ib-tasks');
 
@@ -398,6 +399,19 @@ function trainerMatrix(ctx, filters) {
   return { topics, exercises, rows };
 }
 
+// Most common mistakes per trainer exercise (src/lib/sql-mistakes.js), for the students under
+// the filters; topic narrows the exercises. Exercises are grouped under their topic.
+function trainerMistakes(ctx, filters) {
+  const studentIds = new Set(
+    ctx.students.filter((s) => (!filters.group || s.group === filters.group) && matchesQuery(filters.q, s.name, s.group)).map((s) => s.id)
+  );
+  const exercises = getSqlExercises().filter((e) => !filters.topic || e.topic === filters.topic);
+  const attempts = getAllSqlAttempts().filter((a) => studentIds.has(a.studentId));
+  const stats = mistakesByExercise(exercises, attempts);
+  const topics = TOPICS.map((t) => ({ ...t, rows: stats.filter((s) => s.exercise.topic === t.key) })).filter((t) => t.rows.length > 0);
+  return { topics, exerciseCount: stats.length };
+}
+
 function search(ctx, q) {
   const query = (q || '').trim();
   if (!query) return { query, students: [], assignments: [], courses: [], works: [] };
@@ -583,6 +597,7 @@ function ibLabDetail(ctx, key, studentId) {
 
 module.exports = {
   STATUS_META,
+  trainerMistakes,
   loadContext,
   submissionStatusKey,
   isAssignedTo,

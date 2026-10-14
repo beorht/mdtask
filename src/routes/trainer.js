@@ -9,6 +9,7 @@ const { TOPIC_LABELS, getAllowedTopicKeys, getTopicsForUser, groupBySection } = 
 const { withProgress } = require('../lib/sql-progress');
 const { describeExpected } = require('../lib/sql-expected');
 const { hasFullAccess } = require('../lib/test-access');
+const { buildReport } = require('../lib/sql-mistakes');
 
 const router = express.Router();
 
@@ -147,6 +148,7 @@ router.get('/trainer/:id', requireRole('student'), findExerciseWithProgress, (re
     topicLabel: TOPIC_LABELS[exercise.topic],
     expected: describeExpected(exercise),
     attempts,
+    review: exercise.solved ? buildReport(attempts, exercise) : null,
     schema,
     data,
     next,
@@ -176,6 +178,7 @@ router.post('/trainer/:id/run', requireRole('student'), findExerciseWithProgress
     topicLabel: TOPIC_LABELS[exercise.topic],
     expected: describeExpected(exercise),
     attempts,
+    review: exercise.solved ? buildReport(attempts, exercise) : null,
     schema,
     data,
     next,
@@ -207,6 +210,7 @@ router.post('/trainer/:id/submit', requireRole('student'), findExerciseWithProgr
     topicLabel: TOPIC_LABELS[exercise.topic],
     expected: describeExpected(exercise),
     attempts,
+    review: solvedIds.has(exercise.id) ? buildReport(attempts, exercise) : null,
     schema,
     data,
     next,

@@ -1,0 +1,72 @@
+<%- include('partials/start') %>
+
+<nav class="a-breadcrumbs" aria-label="Навигация"><a href="/admin/trainer">Тренажёр</a><span>/</span><span>Частые ошибки</span></nav>
+
+<div class="a-page-head">
+  <div>
+    <h1>Частые ошибки</h1>
+    <p class="a-subtitle">По каждому упражнению — какие ошибки делали студенты до верного решения: сколько студентов с ней столкнулись и сколько было таких попыток.</p>
+  </div>
+</div>
+
+<form class="a-filters" method="get" action="/admin/trainer/mistakes" data-autosubmit>
+  <label class="a-input-search">
+    <%- icon('search') %>
+    <input type="search" name="q" value="<%= filters.q %>" placeholder="Поиск студента" aria-label="Поиск студента">
+  </label>
+  <select name="group" aria-label="Группа">
+    <option value="">Все группы</option>
+    <% groups.forEach(function (g) { %><option value="<%= g %>" <%= filters.group === g ? 'selected' : '' %>><%= g %></option><% }) %>
+  </select>
+  <select name="topic" aria-label="Тема">
+    <option value="">Все темы</option>
+    <% topics.forEach(function (t) { %><option value="<%= t.key %>" <%= filters.topic === t.key ? 'selected' : '' %>><%= t.label %></option><% }) %>
+  </select>
+  <button type="submit" class="a-btn a-btn-secondary a-noscript-only">Применить</button>
+  <% if (filters.q || filters.group || filters.topic) { %><a class="a-btn a-btn-ghost" href="/admin/trainer/mistakes">Сбросить</a><% } %>
+</form>
+
+<% if (!mistakes.topics.length) { %>
+  <section class="a-card">
+    <%- include('partials/empty', { emptyIcon: 'trainer', emptyTitle: 'Ошибок нет', emptyText: 'Под выбранный фильтр нет неверных попыток.', emptyHref: '/admin/trainer/mistakes', emptyAction: 'Сбросить фильтры' }) %>
+  </section>
+<% } %>
+
+<% mistakes.topics.forEach(function (topic) { %>
+  <section class="a-card a-card-flush">
+    <div class="a-card-head a-card-head-pad"><h2><%= topic.label %></h2></div>
+    <div class="a-table-wrap">
+      <table class="a-table a-mistakes-table">
+        <thead>
+          <tr>
+            <th>Упражнение</th>
+            <th class="a-num">Студентов с ошибками</th>
+            <th class="a-num">Неверных попыток</th>
+            <th>Ошибки (студентов · попыток)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% topic.rows.forEach(function (row) { %>
+            <tr>
+              <td><strong><%= row.exercise.title %></strong><br><span class="a-muted"><%= row.exercise.id %></span></td>
+              <td class="a-num"><%= row.students %></td>
+              <td class="a-num"><%= row.wrong %></td>
+              <td>
+                <ul class="a-mistakes a-mistakes-compact">
+                  <% row.items.forEach(function (item) { %>
+                    <li>
+                      <%= item.title %> <span class="a-muted">· <%= item.students %> · <%= item.attempts %></span>
+                      <% if (item.details.length) { %><br><span class="a-mistake-details"><%= item.details.join(' · ') %></span><% } %>
+                    </li>
+                  <% }) %>
+                </ul>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+<% }) %>
+
+<%- include('partials/end') %>

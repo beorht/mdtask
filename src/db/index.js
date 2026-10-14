@@ -42,10 +42,17 @@ addColumnIfMissing('assignments', 'target_group', 'TEXT');
 // JSON list of file names (e.g. ["mydb.py","main.py"]): the student writes them in the
 // on-site Python editor instead of uploading an archive. NULL = archive upload.
 addColumnIfMissing('assignments', 'code_files', 'TEXT');
+// Course subject of the assignment (src/lib/subjects.js COURSE_SUBJECTS, e.g. 'pis'); NULL = the
+// shared Python/JavaScript assignments. upload_types: JSON list of allowed extensions, NULL = .zip/.rar.
+addColumnIfMissing('assignments', 'subject', 'TEXT');
+addColumnIfMissing('assignments', 'upload_types', 'TEXT');
 // Set by the admin "На пересдачу" verdict: a not_done submission the student may
 // replace even after the due date (plain not_done only allows it before the deadline).
 // SQL trainer: keyword a solution must contain (the "Практикум" JOIN tasks).
 addColumnIfMissing('sql_exercises', 'required_keyword', 'TEXT');
+// JSON list of statement types (e.g. ["SELECT","INSERT"]) for exercises that accept several
+// statements separated by `;`; NULL = exactly one statement of allowed_statement.
+addColumnIfMissing('sql_exercises', 'allowed_statements', 'TEXT');
 addColumnIfMissing('submissions', 'resubmit_allowed', 'INTEGER NOT NULL DEFAULT 0');
 // Task variants of ib/ctf/caesar-secret (its generator adds them too).
 addColumnIfMissing('ctf_caesar_secrets', 'variant', "TEXT NOT NULL DEFAULT 'password'");
@@ -105,6 +112,8 @@ function rowToAssignment(row) {
     targetGroup: row.target_group,
     dueDate: row.due_date,
     codeFiles: row.code_files ? JSON.parse(row.code_files) : null,
+    subject: row.subject || null,
+    uploadTypes: row.upload_types ? JSON.parse(row.upload_types) : null,
   };
 }
 
@@ -347,6 +356,14 @@ function setAssignmentCodeFiles(id, codeFiles) {
   prepared('UPDATE assignments SET code_files = ? WHERE id = ?').run(codeFiles ? JSON.stringify(codeFiles) : null, id);
 }
 
+function setAssignmentSubject(id, { subject = null, uploadTypes = null } = {}) {
+  prepared('UPDATE assignments SET subject = ?, upload_types = ? WHERE id = ?').run(
+    subject,
+    uploadTypes ? JSON.stringify(uploadTypes) : null,
+    id
+  );
+}
+
 // { fileName: code } of a student's unsent editor work, or null.
 function getCodeDraft(assignmentId, studentId) {
   const row = prepared('SELECT files, updated_at FROM code_drafts WHERE assignment_id = ? AND student_id = ?').get(
@@ -386,6 +403,7 @@ function rowToSqlExercise(row) {
     checkerSql: row.checker_sql,
     orderMatters: !!row.order_matters,
     requiredKeyword: row.required_keyword || null,
+    allowedStatements: row.allowed_statements ? JSON.parse(row.allowed_statements) : null,
     expectedResult: JSON.parse(row.expected_result),
   };
 }
@@ -592,6 +610,7 @@ module.exports = {
   updateSubmissionFiles,
   createAssignment,
   setAssignmentCodeFiles,
+  setAssignmentSubject,
   getCodeDraft,
   saveCodeDraft,
   updateAssignmentTitle,

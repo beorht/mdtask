@@ -62,6 +62,8 @@ CREATE TABLE IF NOT EXISTS sql_exercises (
   order_matters INTEGER NOT NULL DEFAULT 0,
   -- an SQL keyword the solution must contain (e.g. 'JOIN'), NULL = any query with the right result
   required_keyword TEXT,
+  -- JSON list of statement types for exercises that accept several statements (`;`), NULL = one
+  allowed_statements TEXT,
   expected_result TEXT NOT NULL
 );
 

@@ -8,6 +8,7 @@ const { TOPICS, groupBySection } = require('../../src/lib/sql-topics');
 const { TOPIC_THEORY } = require('../../src/content/sql-theory');
 const keysJoinExercises = require('../../src/db/sql-exercises-keys-join-data');
 const db = require('../../src/db');
+const joinExercises = require('../../src/db/sql-exercises-join-data');
 
 const { SOLUTIONS } = keysJoinExercises;
 
@@ -38,7 +39,7 @@ test('12 exercises continue the order right after JOIN: 6 easy + 2 medium, then 
   assert.strictEqual(keysJoinExercises.length, 12);
   keysJoinExercises.forEach((e, i) => {
     assert.strictEqual(e.id, `keys-${i + 1}`);
-    assert.strictEqual(e.orderIndex, 129 + i);
+    assert.strictEqual(e.orderIndex, joinExercises[joinExercises.length - 1].orderIndex + 1 + i);
   });
   const levels = keysJoinExercises.map((e) => (/Уровень:\*\* среднее/.test(e.descriptionMd) ? 'M' : 'E'));
   assert.strictEqual(levels.join(''), 'EEEEEEMMEEMM');
