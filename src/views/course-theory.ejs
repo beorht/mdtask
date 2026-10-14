@@ -1,0 +1,33 @@
+<!-- src/views/course-theory.ejs — a theory page of a course subject (Markdown from content/<key>/theory/) -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <%- include('partials/head', { pageTitle: page.title }) %>
+</head>
+<body>
+  <%- include('partials/header') %>
+  <div class="app-layout">
+    <%- include('partials/sidebar') %>
+    <main class="content course-theory">
+      <nav class="breadcrumbs"><a href="/">Главная</a> / <a href="/subjects/<%= subject.key %>"><%= subject.title %></a> / Учебные материалы</nav>
+      <%- html %>
+      <p class="ib-theory-next">
+        <% if (next) { %>
+          <a class="btn btn-primary" href="/subjects/<%= subject.key %>/theory/<%= next.slug %>">Следующий материал: <%= next.title %> →</a>
+        <% } else { %>
+          <a class="btn btn-primary" href="/subjects/<%= subject.key %>#assignments">К заданиям →</a>
+        <% } %>
+      </p>
+    </main>
+    <aside class="toc">
+      <h3>На этой странице</h3>
+      <ul>
+        <% toc.forEach(function (h) { %>
+          <li class="toc-level-<%= h.level %>"><a href="#<%= h.slug %>"><%= h.text %></a></li>
+        <% }) %>
+      </ul>
+    </aside>
+  </div>
+  <%- include('partials/scripts') %>
+</body>
+</html>

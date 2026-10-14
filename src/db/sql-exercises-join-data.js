@@ -8,9 +8,12 @@
 // result columns (two `name` columns from students and groups would otherwise collide).
 
 const Database = require('better-sqlite3');
-const { SCHOOL_SCHEMA_EXT } = require('./sql-exercises-relations-data');
+const relationsExercises = require('./sql-exercises-relations-data');
 
-const FIRST_ORDER_INDEX = 119;
+const { SCHOOL_SCHEMA_EXT } = relationsExercises;
+
+// Right after the last relations exercise (more of them may be added later).
+const FIRST_ORDER_INDEX = relationsExercises[relationsExercises.length - 1].orderIndex + 1;
 
 const DEFINITIONS = [
   {

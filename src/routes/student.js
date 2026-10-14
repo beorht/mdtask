@@ -18,21 +18,22 @@ const { parseCodeFiles, storeCodeSubmission, initialCode } = require('../lib/cod
 const { renderMarkdown, extractHeadings } = require('../lib/markdown');
 const { UPLOAD_DIR } = require('../lib/submission-files');
 const { hasFullAccess } = require('../lib/test-access');
-const { LANGUAGE_SUBJECTS } = require('../lib/subjects');
+const { LANGUAGE_SUBJECTS, COURSE_SUBJECTS, uploadTypesOf } = require('../lib/subjects');
 const {
   buildStudentHome,
   buildLanguageSubject,
+  buildCourseSubject,
   sqlSummary,
   SQL_SUBJECT_KEY,
   SQL_SUBJECT_TITLE,
 } = require('../lib/student-home');
 
 const CONTENT_DIR = path.join(__dirname, '..', '..', 'content', 'src');
-const ALLOWED_EXTENSIONS = ['.zip', '.rar'];
-
 const router = express.Router();
 
 const upload = multer({
+  // Browsers send file names as UTF-8; busboy's default (latin1) turned «Задача 1.zip» into mojibake.
+  defParamCharset: 'utf8',
   storage: multer.diskStorage({
     destination: (req, file, cb) => {
       const dir = path.join(UPLOAD_DIR, req.params.id, req.session.user.id);
@@ -44,9 +45,13 @@ const upload = multer({
       cb(null, `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safeName}`);
     },
   }),
+  // Allowed extensions are per assignment (assignments.upload_types, default .zip/.rar).
   fileFilter: (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
-    cb(null, ALLOWED_EXTENSIONS.includes(ext));
+    const assignment = getAssignments().find((a) => a.id === req.params.id);
+    const ok = uploadTypesOf(assignment).includes(ext);
+    if (!ok) (req.rejectedFiles = req.rejectedFiles || []).push(file.originalname);
+    cb(null, ok);
   },
 });
 
@@ -104,10 +109,38 @@ router.get('/subjects/:key', requireRole('student'), (req, res) => {
     return res.render('subject-sql', { ...common, title: SQL_SUBJECT_TITLE, sql: sqlSummary(user) });
   }
 
+  if (COURSE_SUBJECTS[key]) {
+    const course = buildCourseSubject(user, key);
+    if (!course) return res.status(404).render('404');
+    return res.render('subject-course', { ...common, subject: course });
+  }
+
   const subject = buildLanguageSubject(user, key);
   if (!subject) return res.status(404).render('404');
   req.session.lastSubject = key;
   res.render('subject-language', { ...common, subject });
+});
+
+// Theory page of a course subject (visible once the student has an assignment in it).
+router.get('/subjects/:key/theory/:slug', requireRole('student'), (req, res) => {
+  const user = req.session.user;
+  const key = req.params.key;
+  const course = buildCourseSubject(user, key);
+  const page = course && course.theory.find((th) => th.slug === req.params.slug);
+  if (!page) return res.status(404).render('404');
+  const md = fs.readFileSync(page.file, 'utf-8');
+  const index = course.theory.indexOf(page);
+  res.render('course-theory', {
+    user,
+    sidebarTree: subjectSidebar(user, key),
+    activeAssignmentId: null,
+    activePath: `/subjects/${key}/theory/${page.slug}`,
+    subject: course,
+    page,
+    next: course.theory[index + 1] || null,
+    html: renderMarkdown(md),
+    toc: extractHeadings(md).filter((h) => h.level === 2),
+  });
 });
 
 // A task from the language bank: read-only practice material, nothing to submit.
@@ -155,19 +188,23 @@ router.get('/assignment/:id', requireRole('student'), (req, res) => {
     .filter((s) => s.assignmentId === assignment.id && s.studentId === user.id)
     .sort((a, b) => (a.parentSubmissionId ? 1 : -1));
 
-  const language = currentLanguage(req);
+  // A course-subject assignment lives in that subject; the shared ones in Python/JavaScript.
+  const course = COURSE_SUBJECTS[assignment.subject];
+  const language = course ? null : currentLanguage(req);
   const latest = getLatestSubmission(assignment.id, user.id);
   const draft = assignment.codeFiles ? getCodeDraft(assignment.id, user.id) : null;
 
   res.render('assignment-view', {
     user,
-    sidebarTree: subjectSidebar(user, language),
+    sidebarTree: subjectSidebar(user, course ? course.key : language),
     assignment,
     html,
     toc,
     submissions,
     canSubmit: canSubmit(assignment, latest),
-    subject: { key: language, title: LANGUAGE_SUBJECTS[language] },
+    subject: course ? { key: course.key, title: course.title } : { key: language, title: LANGUAGE_SUBJECTS[language] },
+    uploadTypes: uploadTypesOf(assignment),
+    uploadError: req.query.upload === 'bad',
     activeAssignmentId: assignment.id,
     code: assignment.codeFiles
       ? { files: initialCode(assignment, draft), savedAt: draft ? draft.updatedAt : null }
@@ -207,6 +244,9 @@ router.post('/assignment/:id/submit', requireRole('student'), handleUpload, (req
     }
   }
 
+  if (!files.length && req.rejectedFiles && req.rejectedFiles.length) {
+    return res.redirect(`/assignment/${assignment.id}?upload=bad`);
+  }
   res.redirect(`/assignment/${assignment.id}`);
 });
 

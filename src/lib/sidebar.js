@@ -11,7 +11,7 @@ const {
 } = require('../db');
 const { getTopicsForUser, groupBySection } = require('./sql-topics');
 const { hasFullAccess } = require('./test-access');
-const { LANGUAGE_SUBJECTS } = require('./subjects');
+const { LANGUAGE_SUBJECTS, COURSE_SUBJECTS } = require('./subjects');
 const { IB_SUBJECT_KEY, IB_SUBJECT_TITLE, ibTasksForUser } = require('./ib-tasks');
 
 const SUMMARY_PATH = path.join(__dirname, '..', '..', 'content', 'SUMMARY.md');
@@ -63,6 +63,7 @@ function buildSidebarTree({ role, studentId, studentGroup, subject }) {
           title: node.title,
           path: node.path,
           assignmentId: assignment ? assignment.id : null,
+          subject: assignment ? assignment.subject || null : null,
           status,
           children: attach(node.children),
         };
@@ -142,6 +143,7 @@ function buildSidebarTree({ role, studentId, studentGroup, subject }) {
   if (subject === 'sql') return sqlSubjectNav();
   if (LANGUAGE_SUBJECTS[subject]) return languageSubjectNav(subject);
   if (subject === IB_SUBJECT_KEY) return ibSubjectNav();
+  if (COURSE_SUBJECTS[subject]) return courseSubjectNav(COURSE_SUBJECTS[subject]);
 
   function backLink() {
     return role === 'teacher'
@@ -263,15 +265,17 @@ function buildSidebarTree({ role, studentId, studentGroup, subject }) {
     ];
   }
 
-  function languageSubjectNav(language) {
+  // SUMMARY tree → nav groups/links for the assignments of one subject (null = Python/JavaScript).
+  function assignmentTreeNav(subjectKey, query) {
     const toNav = (nodes) =>
       nodes
         .map((node) => {
+          if (node.assignmentId && (node.subject || null) !== subjectKey) return null;
           if (node.assignmentId) {
             return {
               kind: 'link',
               title: node.title,
-              href: `/assignment/${node.assignmentId}?subject=${language}`,
+              href: `/assignment/${node.assignmentId}${query}`,
               assignmentId: node.assignmentId,
               status: node.status,
               children: [],
@@ -298,6 +302,40 @@ function buildSidebarTree({ role, studentId, studentGroup, subject }) {
     (function walk(nodes) {
       nodes.forEach((n) => (n.assignmentId ? allLeaves.push(n) : walk(n.children)));
     })(assignmentNav);
+    return { assignmentNav, allLeaves };
+  }
+
+  function courseSubjectNav(course) {
+    const { assignmentNav, allLeaves } = assignmentTreeNav(course.key, '');
+    return [
+      backLink(),
+      {
+        kind: 'header',
+        icon: course.icon,
+        title: course.title,
+        href: `/subjects/${course.key}`,
+        done: allLeaves.filter((l) => l.status === 'done').length,
+        total: allLeaves.length,
+        label: 'заданий принято',
+        children: [],
+      },
+      {
+        kind: 'section',
+        title: 'Учебные материалы',
+        children: course.theory.map((th) => ({
+          kind: 'link',
+          icon: '📖',
+          title: th.title,
+          href: `/subjects/${course.key}/theory/${th.slug}`,
+          children: [],
+        })),
+      },
+      { kind: 'section', title: 'Задания со сдачей', children: assignmentNav },
+    ];
+  }
+
+  function languageSubjectNav(language) {
+    const { assignmentNav, allLeaves } = assignmentTreeNav(null, `?subject=${language}`);
 
     const bankGroups = [];
     for (const ex of getLanguageExercises(language)) {

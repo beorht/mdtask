@@ -20,15 +20,15 @@
       <h2 id="subjectsTitle" class="home-section-title">Предметы</h2>
       <ul class="subject-grid">
         <% home.subjects.forEach(function (s) { %>
-          <% const isSql = s.kind === 'sql'; const isIb = s.kind === 'ib'; %>
+          <% const isSql = s.kind === 'sql'; const isIb = s.kind === 'ib'; const isCourse = s.kind === 'course'; %>
           <% const done = isSql || isIb ? s.solved : s.counts.done; %>
           <% const total = isSql || isIb ? s.total : s.counts.total; %>
           <% const pct = total ? Math.round((done / total) * 100) : 0; %>
           <li>
             <a class="subject-card subject-card-<%= s.key %>" href="/subjects/<%= s.key %>">
               <span class="subject-card-head">
-                <span class="subject-card-icon" aria-hidden="true"><%= ICONS[s.key] %></span>
-                <span class="subject-card-kind"><%= isSql ? 'Тренажёр' : isIb ? 'Практикум' : 'Программирование' %></span>
+                <span class="subject-card-icon" aria-hidden="true"><%= s.icon || ICONS[s.key] %></span>
+                <span class="subject-card-kind"><%= isSql ? 'Тренажёр' : isIb ? 'Практикум' : isCourse ? s.kindLabel : 'Программирование' %></span>
               </span>
               <span class="subject-card-title"><%= s.title %></span>
               <span class="subject-card-meta">
@@ -36,6 +36,8 @@
                   <%= plural(s.total, 'задание', 'задания', 'заданий') %> в веб-терминале с автопроверкой<% if (s.next) { %><br>Сейчас: №<%= s.next.number %>. <%= s.next.title %><% } %>
                 <% } else if (isSql) { %>
                   <%= plural(s.topicsCount, 'тема', 'темы', 'тем') %> · <%= plural(s.total, 'задача', 'задачи', 'задач') %> с автопроверкой<% if (s.currentTopic) { %><br>Сейчас: <%= s.currentTopic.label %><% } %>
+                <% } else if (isCourse) { %>
+                  <%= plural(s.theoryCount, 'учебный материал', 'учебных материала', 'учебных материалов') %> · <%= plural(s.counts.total, 'задание', 'задания', 'заданий') %> со сдачей<% if (s.nextDue) { %><br>Ближайший срок: <%= s.nextDue %><% } %>
                 <% } else { %>
                   <%= plural(s.counts.total, 'задание', 'задания', 'заданий') %> со сдачей · <%= plural(s.bankCount, 'задача', 'задачи', 'задач') %> в банке<% if (s.nextDue) { %><br>Ближайший срок: <%= s.nextDue %><% } %>
                 <% } %>

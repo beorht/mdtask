@@ -70,6 +70,7 @@ const currentVerdict = submission.status === 'done' ? 'done' : submission.status
                   <span class="a-tag a-tag-warn">нет на сервере</span>
                 <% } else { %>
                   <% if (f.zip && f.entries && f.entries.length) { %><span class="a-muted"><%= f.entries.length %> <%= view.plural(f.entries.length, 'файл', 'файла', 'файлов') %> внутри</span><% } %>
+                  <% if (f.media) { %><a class="a-btn a-btn-secondary a-btn-sm" href="/admin/submissions/<%= submission.id %>?file=<%= f.index %>#preview"><%- icon('eye') %> Открыть</a><% } %>
                   <a class="a-btn a-btn-secondary a-btn-sm" href="/admin/submissions/<%= submission.id %>/files/<%= f.index %>" download><%- icon('download') %> Скачать</a>
                 <% } %>
               </div>
@@ -90,8 +91,10 @@ const currentVerdict = submission.status === 'done' ? 'done' : submission.status
                     <% }) %>
                   </ul>
                 <% } %>
-              <% } else if (f.available) { %>
+              <% } else if (f.available && f.rar) { %>
                 <p class="a-muted a-file-note">RAR-архивы нельзя открыть в браузере — скачайте файл.</p>
+              <% } else if (f.available && !f.media) { %>
+                <p class="a-muted a-file-note">Этот файл нельзя показать в браузере — скачайте его и откройте в программе (Word, draw.io, Visio, PowerPoint).</p>
               <% } %>
             </li>
           <% }) %>
@@ -100,7 +103,17 @@ const currentVerdict = submission.status === 'done' ? 'done' : submission.status
     </section>
 
     <section class="a-card a-card-flush" id="preview">
-      <% if (preview && preview.html !== undefined) { %>
+      <% if (preview && preview.media) { %>
+        <div class="a-code-head">
+          <span class="a-code-name"><%- icon('file') %><%= preview.name %></span>
+          <a class="a-muted" href="<%= preview.url %>" target="_blank" rel="noopener">Открыть в новой вкладке ↗</a>
+        </div>
+        <% if (preview.media === 'image') { %>
+          <div class="a-media"><img src="<%= preview.url %>" alt="<%= preview.name %>"></div>
+        <% } else { %>
+          <iframe class="a-media-pdf" src="<%= preview.url %>" title="<%= preview.name %>"></iframe>
+        <% } %>
+      <% } else if (preview && preview.html !== undefined) { %>
         <div class="a-code-head">
           <span class="a-code-name"><%- icon('file') %><%= preview.entry.name %></span>
           <span class="a-muted"><%= preview.lineCount %> <%= view.plural(preview.lineCount, 'строка', 'строки', 'строк') %> · <%= view.formatSize(preview.entry.size) %></span>
@@ -113,7 +126,7 @@ const currentVerdict = submission.status === 'done' ? 'done' : submission.status
       <% } else if (preview && preview.error) { %>
         <%- include('partials/empty', { emptyIcon: 'eye', emptyTitle: 'Не удалось показать файл', emptyText: preview.error }) %>
       <% } else { %>
-        <%- include('partials/empty', { emptyIcon: 'eye', emptyTitle: 'Просмотр работы', emptyText: files.some(function (f) { return f.zip; }) ? 'Выберите файл в архиве, чтобы посмотреть его содержимое.' : 'В работе нет файлов, которые можно открыть в браузере. Скачайте архив для проверки.' }) %>
+        <%- include('partials/empty', { emptyIcon: 'eye', emptyTitle: 'Просмотр работы', emptyText: files.some(function (f) { return f.zip; }) ? 'Выберите файл в архиве, чтобы посмотреть его содержимое.' : 'В работе нет файлов, которые можно открыть в браузере. Скачайте файл для проверки.' }) %>
       <% } %>
     </section>
 

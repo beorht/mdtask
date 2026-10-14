@@ -1,0 +1,29 @@
+<!-- src/views/trainer/review.ejs — «Разбор ваших попыток» (src/lib/sql-mistakes.js buildReport),
+     shown on a solved exercise; open right after the solution was accepted. -->
+<details class="sql-review" <%= open ? 'open' : '' %>>
+  <summary>
+    Разбор ваших попыток
+    <span class="sql-hint">
+      <% if (review.firstTry) { %>решено с первой попытки<% } else { %><%= review.attempts %> <%= review.attempts % 10 === 1 && review.attempts % 100 !== 11 ? 'попытка' : (review.attempts % 10 >= 2 && review.attempts % 10 <= 4 && (review.attempts % 100 < 10 || review.attempts % 100 >= 20) ? 'попытки' : 'попыток') %> до верного решения<% } %>
+    </span>
+  </summary>
+  <% if (review.firstTry || !review.items.length) { %>
+    <p class="sql-review-good">✓ Ошибок не было — так держать.</p>
+  <% } else { %>
+    <p class="sql-review-lead">Неверных попыток: <strong><%= review.wrong %></strong>. Вот что мешало и что запомнить на будущее:</p>
+    <ul class="sql-review-list">
+      <% review.items.forEach(function (item) { %>
+        <li class="sql-review-item">
+          <p class="sql-review-title"><strong><%= item.title %></strong> <span class="sql-review-count">× <%= item.count %></span></p>
+          <p><%= item.explain %></p>
+          <% if (item.details.length) { %>
+            <ul class="sql-review-details">
+              <% item.details.forEach(function (d) { %><li><%= d %></li><% }) %>
+            </ul>
+          <% } %>
+          <p class="sql-review-tip">💡 <%= item.tip %></p>
+        </li>
+      <% }) %>
+    </ul>
+  <% } %>
+</details>

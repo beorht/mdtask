@@ -1,7 +1,9 @@
+const path = require('path');
 const express = require('express');
 const { requireRole } = require('../middleware/auth');
 const { getDistinctStudentGroups, getSubmissionById, reviewSubmission, getSqlExercise, getSqlAttempts } = require('../db');
-const { TOPIC_LABELS } = require('../lib/sql-topics');
+const { TOPIC_LABELS, TOPICS } = require('../lib/sql-topics');
+const { buildReport, classifyAttempt, MISTAKES } = require('../lib/sql-mistakes');
 const { renderMarkdown, highlightToHtml } = require('../lib/markdown');
 const {
   listSections,
@@ -85,10 +87,24 @@ router.get('/admin/submissions', (req, res) => {
   });
 });
 
+// Uploaded images and PDFs (diagram assignments) are shown right on the review page.
+const MEDIA_TYPES = { '.png': 'image', '.jpg': 'image', '.jpeg': 'image', '.gif': 'image', '.webp': 'image', '.pdf': 'pdf' };
+
+function mediaKind(name) {
+  return MEDIA_TYPES[path.extname(name).toLowerCase()] || null;
+}
+
 function buildFiles(submission, selectedFile, selectedEntry) {
   return submission.files.map((name, index) => {
     const resolved = resolveSubmissionFile(submission, index);
-    const file = { index, name, available: !resolved.error, zip: isZip(name) };
+    const file = {
+      index,
+      name,
+      available: !resolved.error,
+      zip: isZip(name),
+      rar: path.extname(name).toLowerCase() === '.rar',
+      media: mediaKind(name),
+    };
     if (file.available && file.zip) {
       const listing = listZip(resolved.path);
       file.entries = listing.entries || [];
@@ -108,12 +124,27 @@ function pickPreview(submission, files, query) {
 
   if (fileIndex === null) {
     const firstZip = files.find((f) => f.zip && f.entries && f.entries.some((e) => e.previewable));
-    if (!firstZip) return null;
-    fileIndex = firstZip.index;
-    entryIndex = firstZip.entries.find((e) => e.previewable).index;
+    const firstMedia = files.find((f) => f.available && f.media);
+    if (firstZip) {
+      fileIndex = firstZip.index;
+      entryIndex = firstZip.entries.find((e) => e.previewable).index;
+    } else if (firstMedia) {
+      fileIndex = firstMedia.index;
+    } else {
+      return null;
+    }
   }
 
   const file = files[fileIndex];
+  if (file && file.available && file.media) {
+    return {
+      media: file.media,
+      fileIndex,
+      entryIndex: null,
+      name: file.name,
+      url: `/admin/submissions/${submission.id}/files/${fileIndex}?inline=1`,
+    };
+  }
   if (!file || !file.available || !file.zip || entryIndex === null) return null;
   const resolved = resolveSubmissionFile(submission, fileIndex);
   const preview = previewZipEntry(resolved.path, entryIndex);
@@ -207,6 +238,13 @@ router.get('/admin/submissions/:id/files/:index', (req, res) => {
   const file = resolveSubmissionFile(submission, req.params.index);
   if (file.error === 'invalid') return res.status(400).send('Invalid file path');
   if (file.error) return notFound(res, 'Файл не найден на сервере.');
+  // Images and PDFs open in the page (?inline=1); everything else is downloaded.
+  if (req.query.inline === '1' && mediaKind(file.name)) {
+    res.type(path.extname(file.name).toLowerCase());
+    res.set('Content-Disposition', 'inline');
+    res.set('X-Content-Type-Options', 'nosniff');
+    return res.sendFile(file.path);
+  }
   res.download(file.path, file.name);
 });
 
@@ -390,18 +428,36 @@ router.get('/admin/trainer/results', (req, res) => {
   });
 });
 
+router.get('/admin/trainer/mistakes', (req, res) => {
+  const ctx = data.loadContext();
+  const filters = { q: (req.query.q || '').trim(), group: req.query.group || '', topic: req.query.topic || '' };
+  render(res, 'trainer-mistakes', 'trainer', {
+    pageTitle: 'Частые ошибки в тренажёре',
+    filters,
+    mistakes: data.trainerMistakes(ctx, filters),
+    groups: getDistinctStudentGroups(),
+    topics: TOPICS,
+  });
+});
+
 router.get('/admin/trainer/:studentId/:exerciseId', (req, res) => {
   const ctx = data.loadContext();
   const student = ctx.students.find((s) => s.id === req.params.studentId);
   const exercise = getSqlExercise(req.params.exerciseId);
   if (!student || !exercise) return notFound(res, 'Студент или упражнение не найдены.');
+  const attempts = getSqlAttempts(exercise.id, student.id);
   render(res, 'trainer-attempts', 'trainer', {
     pageTitle: `${student.name} — ${exercise.title}`,
     student,
     exercise,
     descriptionHtml: renderMarkdown(exercise.descriptionMd),
     topicLabel: TOPIC_LABELS[exercise.topic] || exercise.topic,
-    attempts: getSqlAttempts(exercise.id, student.id),
+    attempts,
+    review: buildReport(attempts, exercise),
+    mistakeOf: (a) => {
+      const m = classifyAttempt(a, exercise);
+      return m ? { title: MISTAKES[m.key].title, detail: m.detail || null } : null;
+    },
   });
 });
 

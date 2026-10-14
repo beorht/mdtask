@@ -7,7 +7,7 @@ const { parseSummary } = require('./summary-parser');
 const { getTopicsForUser, groupBySection } = require('./sql-topics');
 const { withProgress, topicProgress } = require('./sql-progress');
 const { hasFullAccess } = require('./test-access');
-const { LANGUAGE_SUBJECTS } = require('./subjects');
+const { LANGUAGE_SUBJECTS, COURSE_SUBJECTS } = require('./subjects');
 const { IB_SUBJECT_KEY, IB_SUBJECT_TITLE, ibSummary } = require('./ib-tasks');
 const {
   getAssignmentsForStudent,
@@ -60,10 +60,14 @@ function withStatus(assignments, submissions, now) {
   });
 }
 
-function studentAssignments(user, now, tree = readSummaryTree()) {
+// subject: undefined — all assignments; null — the shared Python/JavaScript ones; a COURSE_SUBJECTS key.
+function studentAssignments(user, now, tree = readSummaryTree(), subject) {
   const submissions = getSubmissions().filter((s) => s.studentId === user.id);
   const positions = summaryPositions(tree);
-  return withStatus(getAssignmentsForStudent(user.id, user.group), submissions, now).map((a) => ({
+  const visible = getAssignmentsForStudent(user.id, user.group).filter(
+    (a) => subject === undefined || (a.subject || null) === subject
+  );
+  return withStatus(visible, submissions, now).map((a) => ({
     ...a,
     summaryIndex: positions.has(a.mdPath) ? positions.get(a.mdPath) : Number.MAX_SAFE_INTEGER,
   }));
@@ -116,14 +120,34 @@ function buildStudentHome(user, now = Date.now()) {
   const counts = countByStatus(assignments);
   const open = assignments.filter((a) => a.status !== 'done' && !a.overdue).sort(byDueThenCreated);
 
+  const shared = assignments.filter((a) => !a.subject);
+  const sharedOpen = open.filter((a) => !a.subject);
   const languageSubjects = Object.entries(LANGUAGE_SUBJECTS).map(([key, title]) => ({
     key,
     kind: 'language',
     title,
     bankCount: getLanguageExercises(key).length,
-    counts,
-    nextDue: open.length ? open[0].dueDate : null,
+    counts: countByStatus(shared),
+    nextDue: sharedOpen.length ? sharedOpen[0].dueDate : null,
   }));
+
+  // Shown only once the student has an assignment in it.
+  const courseSubjects = Object.values(COURSE_SUBJECTS)
+    .map((c) => {
+      const items = assignments.filter((a) => a.subject === c.key);
+      const next = open.find((a) => a.subject === c.key);
+      return {
+        key: c.key,
+        kind: 'course',
+        title: c.title,
+        icon: c.icon,
+        kindLabel: c.kind,
+        theoryCount: c.theory.length,
+        counts: countByStatus(items),
+        nextDue: next ? next.dueDate : null,
+      };
+    })
+    .filter((c) => c.counts.total > 0);
 
   const sql = sqlSummary(user);
   const sqlSubject = {
@@ -143,7 +167,7 @@ function buildStudentHome(user, now = Date.now()) {
     : [];
 
   return {
-    subjects: [sqlSubject, ...languageSubjects, ...ibSubjects],
+    subjects: [sqlSubject, ...languageSubjects, ...ibSubjects, ...courseSubjects],
     counts,
     // Anything the student still has to act on (or is waiting on), nearest deadline first.
     upcoming: open.slice(0, UPCOMING_LIMIT),
@@ -154,9 +178,9 @@ function buildStudentHome(user, now = Date.now()) {
 // File-submission assignments grouped by the SUMMARY.md section they live in, in SUMMARY
 // order; assignments outside any section (e.g. individual ones) go last. Shared by the
 // Python and JavaScript subjects — the same tasks are solved in either language.
-function buildAssignmentSections(user, now = Date.now()) {
+function buildAssignmentSections(user, now = Date.now(), subject = null) {
   const tree = readSummaryTree();
-  const list = studentAssignments(user, now, tree);
+  const list = studentAssignments(user, now, tree, subject);
 
   const placed = new Set();
   const sections = [];
@@ -197,9 +221,19 @@ function buildLanguageSubject(user, language, now = Date.now()) {
   };
 }
 
+// A course subject page: theory pages and its own assignments (null if unknown or nothing assigned).
+function buildCourseSubject(user, key, now = Date.now()) {
+  const course = COURSE_SUBJECTS[key];
+  if (!course) return null;
+  const sections = buildAssignmentSections(user, now, key);
+  if (!sections.counts.total) return null;
+  return { ...course, ...sections };
+}
+
 module.exports = {
   buildStudentHome,
   buildLanguageSubject,
+  buildCourseSubject,
   languageBank,
   sqlSummary,
   SQL_SUBJECT_KEY,

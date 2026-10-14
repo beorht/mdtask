@@ -114,7 +114,8 @@ test('changes of linked data can be written with subqueries instead of hard-code
   assert.strictEqual(wrongRow.isCorrect, false);
 });
 
-test('there are 12 relations exercises in a continuous order after the query topics', () => {
-  assert.strictEqual(relationsExercises.length, 12);
+test('there are 21 relations exercises in a continuous order after the query topics', () => {
+  assert.strictEqual(relationsExercises.length, 21);
+  assert.deepStrictEqual(relationsExercises.map((e) => e.id), Array.from({ length: 21 }, (_, i) => `relations-${i + 1}`));
   relationsExercises.forEach((e, i) => assert.strictEqual(e.orderIndex, 107 + i));
 });

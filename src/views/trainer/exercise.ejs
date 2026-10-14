@@ -25,7 +25,11 @@
         <h1 class="sql-task-title"><%= exercise.title %></h1>
         <div class="sql-task-meta">
           <span class="sql-chip sql-chip-<%= exercise.solved ? 'done' : 'open' %>"><%= exercise.solved ? '✓ Решено' : '○ Не решено' %></span>
-          <span class="sql-chip">Оператор: <code><%= exercise.allowedStatement %></code></span>
+          <% if (exercise.allowedStatements && exercise.allowedStatements.length) { %>
+            <span class="sql-chip">Операторы: <% exercise.allowedStatements.forEach(function (t, i) { %><code><%= t %></code><%= i < exercise.allowedStatements.length - 1 ? ', ' : '' %><% }) %></span>
+          <% } else { %>
+            <span class="sql-chip">Оператор: <code><%= exercise.allowedStatement %></code></span>
+          <% } %>
           <a class="sql-chip sql-chip-link" href="/trainer/theory/<%= exercise.topic %>">📖 Теория темы</a>
         </div>
       </header>
@@ -75,10 +79,16 @@
               </div>
             <% }) %>
           <% } else if (result.rows.length) { %>
+            <% if (result.stateCaption) { %>
+              <p class="sql-result-count">Выполнено операторов: <strong><%= result.statementCount %></strong>. Состояние базы после них (то, что проверяется):</p>
+            <% } else if (result.statementCount > 1) { %>
+              <p class="sql-result-count">Выполнено операторов: <strong><%= result.statementCount %></strong> · результат последнего SELECT, строк: <strong><%= result.rows.length %></strong></p>
+            <% } else { %>
             <p class="sql-result-count">Строк в результате: <strong><%= result.rows.length %></strong></p>
+            <% } %>
             <% resultTable(result.columns, result.rows) %>
           <% } else { %>
-            <p class="sql-result-empty">Запрос выполнен, строк в результате нет<% if (typeof result.changes !== 'undefined') { %> · изменено строк: <strong><%= result.changes %></strong><% } %>.</p>
+            <p class="sql-result-empty"><% if (result.statementCount > 1) { %>Выполнено операторов: <%= result.statementCount %>. <% } %>Запрос выполнен, строк в результате нет<% if (typeof result.changes !== 'undefined') { %> · изменено строк: <strong><%= result.changes %></strong><% } %>.</p>
           <% } %>
         <% } %>
       <% } %>
@@ -88,7 +98,11 @@
         <section class="task-panel sql-editor-panel" aria-labelledby="editorTitle">
           <div class="sql-panel-head">
             <h3 class="task-panel-title" id="editorTitle">SQL-редактор</h3>
-            <span class="sql-hint">Один запрос <code><%= exercise.allowedStatement %></code></span>
+            <% if (exercise.allowedStatements && exercise.allowedStatements.length) { %>
+              <span class="sql-hint">Можно несколько операторов через <code>;</code></span>
+            <% } else { %>
+              <span class="sql-hint">Один запрос <code><%= exercise.allowedStatement %></code></span>
+            <% } %>
           </div>
           <form method="post" action="/trainer/<%= exercise.id %>/run#workspace" class="sql-console-form" id="sqlForm">
             <textarea name="sql" id="sqlEditor" class="sql-console" rows="12" spellcheck="false" autocomplete="off" aria-label="SQL-запрос" placeholder="Введите SQL-запрос…"><%= submittedSql %></textarea>
@@ -143,6 +157,9 @@
           <% } %>
           <% renderResult(runResult, null) %>
           <% renderResult(submitResult, 'проверка') %>
+          <% if (review) { %>
+            <%- include('review', { review: review, open: !!(submitResult && submitResult.isCorrect) }) %>
+          <% } %>
           <% if (expected) { %>
             <details class="sql-expected" open>
               <summary><%= expected.title %> <span class="sql-hint">(<%= expected.note %>)</span></summary>

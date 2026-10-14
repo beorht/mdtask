@@ -1,0 +1,72 @@
+<!-- src/views/subject-course.ejs — a course subject (src/lib/subjects.js COURSE_SUBJECTS): theory pages + its own assignments -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <%- include('partials/head', { pageTitle: subject.title }) %>
+</head>
+<body>
+  <%- include('partials/header') %>
+  <div class="app-layout">
+    <%- include('partials/sidebar') %>
+    <main class="content">
+      <nav class="breadcrumbs"><a href="/">Главная</a> / <%= subject.title %></nav>
+      <h1><%= subject.title %></h1>
+      <p class="subject-block-lead"><%= subject.lead %></p>
+
+      <nav class="subject-tabs" aria-label="Разделы предмета">
+        <a href="#theory">Учебные материалы</a>
+        <a href="#assignments">Задания со сдачей</a>
+      </nav>
+
+      <section id="theory" class="subject-block">
+        <h2 class="subject-block-title">Учебные материалы</h2>
+        <p class="subject-block-lead">Прочитайте материалы перед заданиями: в них нотации, правила и разобранные примеры схем.</p>
+        <ul class="assignment-list">
+          <% subject.theory.forEach(function (th) { %>
+            <li>
+              <a class="assignment-card" href="/subjects/<%= subject.key %>/theory/<%= th.slug %>">
+                <span class="assignment-card-title">📖 <%= th.title %></span>
+                <span class="due-date"><%= th.summary %></span>
+                <span class="bank-card-go">Читать →</span>
+              </a>
+            </li>
+          <% }) %>
+        </ul>
+      </section>
+
+      <section id="assignments" class="subject-block">
+        <h2 class="subject-block-title">Задания со сдачей</h2>
+        <p class="subject-block-lead">Нарисуйте схему удобным способом (draw.io, MS Office, Paint или от руки) и загрузите файл на странице задания: картинку, PDF, документ Word или файл draw.io. Преподаватель проверяет работу и ставит статус.</p>
+        <% const c = subject.counts; const pct = c.total ? Math.round((c.done / c.total) * 100) : 0; %>
+        <div class="subject-summary">
+          <span>Выполнено <strong><%= c.done %> / <%= c.total %></strong></span>
+          <span>На проверке: <strong><%= c.pending %></strong></span>
+          <span>Нужно сделать: <strong><%= c.todo %></strong></span>
+          <% if (c.overdue) { %><span class="subject-summary-alert">Просрочено: <strong><%= c.overdue %></strong></span><% } %>
+          <span class="progress subject-summary-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<%= pct %>" aria-label="Прогресс">
+            <span class="progress-fill" style="width: <%= pct %>%"></span>
+          </span>
+        </div>
+        <% subject.sections.forEach(function (section) { %>
+          <div class="subject-section">
+            <h3 class="subject-section-title"><%= section.title %> <span class="subject-section-count"><%= section.items.filter(function (a) { return a.status === 'done'; }).length %> / <%= section.items.length %></span></h3>
+            <ul class="assignment-list">
+              <% section.items.forEach(function (a) { %>
+                <li>
+                  <a class="assignment-card" href="/assignment/<%= a.id %>">
+                    <span class="assignment-card-title"><%= a.title %></span>
+                    <% if (a.targetType === 'individual') { %><span class="tag">доп. задание</span><% } %>
+                    <%- include('partials/status-label', { a: a }) %>
+                    <span class="due-date<%= a.dueSoon ? ' due-soon' : '' %>">до <%= a.dueDate %></span>
+                  </a>
+                </li>
+              <% }) %>
+            </ul>
+          </div>
+        <% }) %>
+      </section>
+    </main>
+  </div>
+  <%- include('partials/scripts') %>
+</body>
+</html>

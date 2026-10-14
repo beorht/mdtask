@@ -7,6 +7,9 @@ const { DEFAULT_PASSWORD } = require('../../src/lib/password');
 const { TOPICS } = require('../../src/lib/sql-topics');
 const { TOPIC_THEORY } = require('../../src/content/sql-theory');
 const joinExercises = require('../../src/db/sql-exercises-join-data');
+const relationsExercises = require('../../src/db/sql-exercises-relations-data');
+
+const relationsLast = relationsExercises[relationsExercises.length - 1].orderIndex;
 const db = require('../../src/db');
 
 const { SOLUTIONS } = joinExercises;
@@ -34,7 +37,7 @@ test('the JOIN topic is the last regular topic, has theory on the college databa
 
 test('there are 10 JOIN exercises in a continuous order right after the relations ones', () => {
   assert.strictEqual(joinExercises.length, 10);
-  joinExercises.forEach((e, i) => assert.strictEqual(e.orderIndex, 119 + i));
+  joinExercises.forEach((e, i) => assert.strictEqual(e.orderIndex, relationsLast + 1 + i));
 });
 
 test('every reference solution is graded as correct', () => {
