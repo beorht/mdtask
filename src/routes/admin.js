@@ -493,6 +493,29 @@ router.get('/admin/ib/lab/:task/:id', (req, res) => {
   render(res, 'ib-terminal', 'ib', { pageTitle: `${detail.student.name} · задание №${detail.meta.number}`, detail });
 });
 
+// --- «Простое программирование на Python» ---
+
+router.get('/admin/python-basics', (req, res) => {
+  const ctx = data.loadContext();
+  const filters = { q: (req.query.q || '').trim(), group: req.query.group || '' };
+  render(res, 'python-basics', 'pybasics', {
+    pageTitle: 'Python: первые шаги',
+    filters,
+    results: data.pythonBasicsResults(ctx, filters),
+    groups: getDistinctStudentGroups(),
+  });
+});
+
+router.get('/admin/python-basics/:student/:task', (req, res) => {
+  const detail = data.pythonBasicsDetail(data.loadContext(), req.params.student, req.params.task);
+  if (!detail) return notFound(res, 'Нет такого студента или задания.');
+  render(res, 'python-basics-attempts', 'pybasics', {
+    pageTitle: `${detail.student.name} · ${detail.task.title}`,
+    detail,
+    taskHtml: renderMarkdown(detail.task.taskMd),
+  });
+});
+
 // --- Settings ---
 
 router.get('/admin/settings', (req, res) => {

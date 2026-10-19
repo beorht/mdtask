@@ -26,10 +26,13 @@ function createApp() {
   const trainerRoutes = require('./routes/trainer');
   const adminRoutes = require('./routes/admin');
   const ibRoutes = require('./routes/ib');
+  const pythonBasicsRoutes = require('./routes/python-basics');
 
   app.use(authRoutes);
-  // Before studentRoutes: its /subjects/:key would otherwise answer /subjects/ib with a 404.
+  // Before studentRoutes: its /subjects/:key would otherwise answer /subjects/ib and
+  // /subjects/pybasics with a 404.
   app.use(ibRoutes);
+  app.use(pythonBasicsRoutes);
   app.use(studentRoutes);
   app.use(teacherRoutes);
   app.use(trainerRoutes);

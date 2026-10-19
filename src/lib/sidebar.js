@@ -13,6 +13,7 @@ const { getTopicsForUser, groupBySection } = require('./sql-topics');
 const { hasFullAccess } = require('./test-access');
 const { LANGUAGE_SUBJECTS, COURSE_SUBJECTS } = require('./subjects');
 const { IB_SUBJECT_KEY, IB_SUBJECT_TITLE, ibTasksForUser } = require('./ib-tasks');
+const pybasics = require('./python-basics');
 
 const SUMMARY_PATH = path.join(__dirname, '..', '..', 'content', 'SUMMARY.md');
 
@@ -143,6 +144,7 @@ function buildSidebarTree({ role, studentId, studentGroup, subject }) {
   if (subject === 'sql') return sqlSubjectNav();
   if (LANGUAGE_SUBJECTS[subject]) return languageSubjectNav(subject);
   if (subject === IB_SUBJECT_KEY) return ibSubjectNav();
+  if (subject === pybasics.PYBASICS_KEY) return pythonBasicsNav();
   if (COURSE_SUBJECTS[subject]) return courseSubjectNav(COURSE_SUBJECTS[subject]);
 
   function backLink() {
@@ -226,6 +228,39 @@ function buildSidebarTree({ role, studentId, studentGroup, subject }) {
         filter: section.key === 'topics',
         children: groups.filter((g) => sectionOf[g.key] === section.key),
       })),
+    ];
+  }
+
+  function pythonBasicsNav() {
+    const { tasks, solved, total } = pybasics.summaryForStudent({ id: studentId, role, group: studentGroup });
+    const base = `/subjects/${pybasics.PYBASICS_KEY}`;
+    // The course is in Uzbek: its navigation too.
+    return [
+      { kind: 'back', title: 'Barcha fanlar', href: '/', children: [] },
+      {
+        kind: 'header',
+        icon: pybasics.PYBASICS_ICON,
+        title: pybasics.PYBASICS_TITLE,
+        href: base,
+        sub: 'Kurs sahifasi',
+        done: solved,
+        total,
+        countOf: 'ta topshiriq bajarildi',
+        children: [],
+      },
+      {
+        kind: 'section',
+        title: pybasics.PYBASICS_TOPIC,
+        children: tasks.map((t) => ({
+          kind: 'link',
+          icon: t.solved ? '✓' : t.unlocked ? '🧪' : '🔒',
+          title: `${t.number}. ${t.title}`,
+          href: `${base}/${t.id}`,
+          locked: !t.unlocked,
+          lockedTitle: 'Oldingi topshiriq bajarilgandan keyin ochiladi',
+          children: [],
+        })),
+      },
     ];
   }
 

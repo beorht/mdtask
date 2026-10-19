@@ -1,0 +1,70 @@
+<%- include('partials/start') %>
+<% const d = detail; const t = d.task; %>
+
+<nav class="a-breadcrumbs" aria-label="Навигация">
+  <a href="/admin/python-basics">Python: первые шаги</a><span>/</span><span><%= d.student.name %></span>
+</nav>
+
+<div class="a-page-head">
+  <div>
+    <h1>Задание <%= t.number %>. <%= t.title %></h1>
+    <p class="a-subtitle"><a href="/admin/students/<%= d.student.id %>"><%= d.student.name %></a> · <%= d.student.group || '—' %> ·
+      <% if (d.progress && d.progress.solvedAt) { %>решено <%= view.formatDateTime(d.progress.solvedAt) %><% } else { %>не решено<% } %>
+      · <%= d.attempts.length %> <%= view.plural(d.attempts.length, 'проверка', 'проверки', 'проверок') %></p>
+  </div>
+</div>
+
+<details class="a-card a-collapse">
+  <summary><h2>Условие и тесты</h2><%- icon('chevronDown') %></summary>
+  <div class="a-markdown"><%- taskHtml %></div>
+  <div class="a-table-wrap">
+    <table class="a-table">
+      <thead><tr><th>№</th><th>Ввод</th><th>Ожидаемый вывод</th><th>Студенту</th></tr></thead>
+      <tbody>
+        <% t.tests.forEach(function (test, i) { %>
+          <tr>
+            <td><%= i + 1 %></td>
+            <td><pre class="a-sql"><code><%= test.input.join('\n') %></code></pre></td>
+            <td><pre class="a-sql"><code><%= test.output %></code></pre></td>
+            <td class="a-muted"><%= i < t.openTests ? 'открытый' : 'закрытый' %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</details>
+
+<% if (d.progress && d.progress.draft && (!d.attempts.length || d.attempts[0].code !== d.progress.draft)) { %>
+  <section class="a-card">
+    <div class="a-card-head"><h2>Текущий черновик</h2><span class="a-muted">сохранён <%= view.formatDateTime(d.progress.updatedAt) %></span></div>
+    <pre class="a-sql"><code><%= d.progress.draft %></code></pre>
+  </section>
+<% } %>
+
+<section class="a-card">
+  <div class="a-card-head"><h2>Проверки (<%= d.attempts.length %>)</h2></div>
+  <% if (!d.attempts.length) { %>
+    <%- include('partials/empty', { emptyIcon: 'book', emptyTitle: 'Проверок нет', emptyText: 'Студент ещё не нажимал «Проверить».' }) %>
+  <% } else { %>
+    <ol class="a-attempts">
+      <% d.attempts.forEach(function (a, i) { const ok = a.passed === a.total; %>
+        <li class="a-attempt">
+          <div class="a-attempt-head">
+            <span class="a-status a-status-<%= ok ? 'done' : 'warning' %>"><span class="a-status-icon" aria-hidden="true"><%= ok ? '✓' : '×' %></span><%= ok ? 'Все тесты пройдены' : 'Пройдено ' + a.passed + ' из ' + a.total %></span>
+            <span class="a-muted"><%= view.formatDateTime(a.createdAt) %></span>
+            <% if (i === 0) { %><span class="a-tag a-tag-accent">последняя</span><% } %>
+          </div>
+          <p class="a-mistake-tag">
+            <% a.results.forEach(function (r, n) { %><span class="a-tag<%= r.passed ? '' : ' a-tag-warn' %>" title="<%= r.error || '' %>">тест <%= n + 1 %>: <%= r.passed ? '✓' : r.error === 'timeout' ? 'время' : r.error ? 'ошибка' : '✕' %></span> <% }) %>
+          </p>
+          <pre class="a-sql"><code><%= a.code %></code></pre>
+          <% const errs = a.results.filter(function (r) { return r.error && r.error !== 'timeout'; }); if (errs.length) { %>
+            <p class="a-attempt-error"><strong>Ошибка:</strong> <%= errs[0].error %></p>
+          <% } %>
+        </li>
+      <% }) %>
+    </ol>
+  <% } %>
+</section>
+
+<%- include('partials/end') %>

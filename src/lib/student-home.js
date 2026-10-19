@@ -9,6 +9,7 @@ const { withProgress, topicProgress } = require('./sql-progress');
 const { hasFullAccess } = require('./test-access');
 const { LANGUAGE_SUBJECTS, COURSE_SUBJECTS } = require('./subjects');
 const { IB_SUBJECT_KEY, IB_SUBJECT_TITLE, ibSummary } = require('./ib-tasks');
+const pybasics = require('./python-basics');
 const {
   getAssignmentsForStudent,
   getLanguageExercises,
@@ -166,8 +167,24 @@ function buildStudentHome(user, now = Date.now()) {
     ? [{ key: IB_SUBJECT_KEY, kind: 'ib', title: IB_SUBJECT_TITLE, solved: ib.solved, total: ib.total, next: ib.next }]
     : [];
 
+  // Only for the groups it's opened to (src/lib/python-basics.js PYBASICS_GROUPS) and TEST.
+  const pybasicsSubjects = [];
+  if (pybasics.canSeePythonBasics(user)) {
+    const pb = pybasics.summaryForStudent(user);
+    pybasicsSubjects.push({
+      key: pybasics.PYBASICS_KEY,
+      kind: 'pybasics',
+      title: pybasics.PYBASICS_TITLE,
+      icon: pybasics.PYBASICS_ICON,
+      topic: pybasics.PYBASICS_TOPIC,
+      solved: pb.solved,
+      total: pb.total,
+      next: pb.next,
+    });
+  }
+
   return {
-    subjects: [sqlSubject, ...languageSubjects, ...ibSubjects, ...courseSubjects],
+    subjects: [sqlSubject, ...pybasicsSubjects, ...languageSubjects, ...ibSubjects, ...courseSubjects],
     counts,
     // Anything the student still has to act on (or is waiting on), nearest deadline first.
     upcoming: open.slice(0, UPCOMING_LIMIT),

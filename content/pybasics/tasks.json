@@ -1,0 +1,245 @@
+{
+  "_comment": "Простое программирование на Python: задания и тесты. Ожидаемый вывод сверяется с эталонами scripts/python-basics/solutions/<id>.py (python3 scripts/python-basics/check.py --reference). Первые openTests тестов показываются ученику целиком, у остальных — только ввод.",
+  "tasks": [
+    {
+      "id": "greeting",
+      "number": 1,
+      "title": "Tanishuv",
+      "dir": "01-greeting",
+      "topics": [
+        "o‘zgaruvchi",
+        "satr",
+        "input()",
+        "print()"
+      ],
+      "openTests": 2,
+      "tests": [
+        {
+          "input": [
+            "Анна"
+          ],
+          "output": "Привет, Анна!\nРад знакомству, Анна.\n"
+        },
+        {
+          "input": [
+            "Тимур"
+          ],
+          "output": "Привет, Тимур!\nРад знакомству, Тимур.\n"
+        },
+        {
+          "input": [
+            "Ли"
+          ],
+          "output": "Привет, Ли!\nРад знакомству, Ли.\n"
+        },
+        {
+          "input": [
+            "Анна-Мария"
+          ],
+          "output": "Привет, Анна-Мария!\nРад знакомству, Анна-Мария.\n"
+        },
+        {
+          "input": [
+            "Alexander"
+          ],
+          "output": "Привет, Alexander!\nРад знакомству, Alexander.\n"
+        }
+      ]
+    },
+    {
+      "id": "calculator",
+      "number": 2,
+      "title": "Ikki son uchun kalkulyator",
+      "dir": "02-calculator",
+      "topics": [
+        "int",
+        "float",
+        "arifmetika",
+        "/ va //"
+      ],
+      "openTests": 2,
+      "tests": [
+        {
+          "input": [
+            "7",
+            "2"
+          ],
+          "output": "7 + 2 = 9\n7 - 2 = 5\n7 * 2 = 14\n7 / 2 = 3.5\n7 // 2 = 3\n"
+        },
+        {
+          "input": [
+            "10",
+            "5"
+          ],
+          "output": "10 + 5 = 15\n10 - 5 = 5\n10 * 5 = 50\n10 / 5 = 2.0\n10 // 5 = 2\n"
+        },
+        {
+          "input": [
+            "-7",
+            "2"
+          ],
+          "output": "-7 + 2 = -5\n-7 - 2 = -9\n-7 * 2 = -14\n-7 / 2 = -3.5\n-7 // 2 = -4\n"
+        },
+        {
+          "input": [
+            "0",
+            "3"
+          ],
+          "output": "0 + 3 = 3\n0 - 3 = -3\n0 * 3 = 0\n0 / 3 = 0.0\n0 // 3 = 0\n"
+        },
+        {
+          "input": [
+            "100",
+            "7"
+          ],
+          "output": "100 + 7 = 107\n100 - 7 = 93\n100 * 7 = 700\n100 / 7 = 14.285714285714286\n100 // 7 = 14\n"
+        },
+        {
+          "input": [
+            "15",
+            "4"
+          ],
+          "output": "15 + 4 = 19\n15 - 4 = 11\n15 * 4 = 60\n15 / 4 = 3.75\n15 // 4 = 3\n"
+        }
+      ]
+    },
+    {
+      "id": "purchase",
+      "number": 3,
+      "title": "Xarid",
+      "dir": "03-purchase",
+      "topics": [
+        "float",
+        "turlarni o‘zgartirish",
+        "nuqtadan keyin ikki xona"
+      ],
+      "openTests": 2,
+      "tests": [
+        {
+          "input": [
+            "45.5",
+            "3"
+          ],
+          "output": "Стоимость: 136.50\nСо скидкой 10%: 122.85\n"
+        },
+        {
+          "input": [
+            "100",
+            "1"
+          ],
+          "output": "Стоимость: 100.00\nСо скидкой 10%: 90.00\n"
+        },
+        {
+          "input": [
+            "19.99",
+            "4"
+          ],
+          "output": "Стоимость: 79.96\nСо скидкой 10%: 71.96\n"
+        },
+        {
+          "input": [
+            "0.5",
+            "7"
+          ],
+          "output": "Стоимость: 3.50\nСо скидкой 10%: 3.15\n"
+        },
+        {
+          "input": [
+            "1250.75",
+            "2"
+          ],
+          "output": "Стоимость: 2501.50\nСо скидкой 10%: 2251.35\n"
+        }
+      ]
+    },
+    {
+      "id": "word",
+      "number": 4,
+      "title": "So‘z",
+      "dir": "04-word",
+      "topics": [
+        "satrlar",
+        "len()",
+        "indekslar",
+        "upper()"
+      ],
+      "openTests": 2,
+      "tests": [
+        {
+          "input": [
+            "Python"
+          ],
+          "output": "Длина: 6\nЗаглавными: PYTHON\nПервая буква: P\nПоследняя буква: n\n"
+        },
+        {
+          "input": [
+            "кот"
+          ],
+          "output": "Длина: 3\nЗаглавными: КОТ\nПервая буква: к\nПоследняя буква: т\n"
+        },
+        {
+          "input": [
+            "А"
+          ],
+          "output": "Длина: 1\nЗаглавными: А\nПервая буква: А\nПоследняя буква: А\n"
+        },
+        {
+          "input": [
+            "Программирование"
+          ],
+          "output": "Длина: 16\nЗаглавными: ПРОГРАММИРОВАНИЕ\nПервая буква: П\nПоследняя буква: е\n"
+        },
+        {
+          "input": [
+            "hello"
+          ],
+          "output": "Длина: 5\nЗаглавными: HELLO\nПервая буква: h\nПоследняя буква: o\n"
+        }
+      ]
+    },
+    {
+      "id": "adult",
+      "number": 5,
+      "title": "Voyaga yetganlik",
+      "dir": "05-adult",
+      "topics": [
+        "bool",
+        "taqqoslash",
+        "type()"
+      ],
+      "openTests": 2,
+      "tests": [
+        {
+          "input": [
+            "17"
+          ],
+          "output": "Через год: 18\nСовершеннолетний: False\nТип значения: <class 'bool'>\n"
+        },
+        {
+          "input": [
+            "18"
+          ],
+          "output": "Через год: 19\nСовершеннолетний: True\nТип значения: <class 'bool'>\n"
+        },
+        {
+          "input": [
+            "0"
+          ],
+          "output": "Через год: 1\nСовершеннолетний: False\nТип значения: <class 'bool'>\n"
+        },
+        {
+          "input": [
+            "45"
+          ],
+          "output": "Через год: 46\nСовершеннолетний: True\nТип значения: <class 'bool'>\n"
+        },
+        {
+          "input": [
+            "5"
+          ],
+          "output": "Через год: 6\nСовершеннолетний: False\nТип значения: <class 'bool'>\n"
+        }
+      ]
+    }
+  ]
+}

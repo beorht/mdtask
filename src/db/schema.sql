@@ -201,3 +201,30 @@ CREATE TABLE IF NOT EXISTS ib_lab_log (
   created_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_ib_lab_log_task_student ON ib_lab_log(task, student_id, id);
+
+-- «Простое программирование на Python» (src/lib/python-basics.js): черновик кода и итог по
+-- заданию для студента. Код выполняется в браузере студента, сервер сверяет только вывод.
+CREATE TABLE IF NOT EXISTS python_basics_progress (
+  student_id TEXT NOT NULL REFERENCES users(id),
+  task_id TEXT NOT NULL,
+  draft TEXT NOT NULL DEFAULT '',
+  attempts INTEGER NOT NULL DEFAULT 0,
+  best_passed INTEGER NOT NULL DEFAULT 0,
+  total INTEGER NOT NULL DEFAULT 0,
+  solved_at TEXT,
+  updated_at TEXT NOT NULL,
+  PRIMARY KEY (student_id, task_id)
+);
+
+-- Каждая проверка: код и результат по тестам (JSON: passed, error на каждый тест).
+CREATE TABLE IF NOT EXISTS python_basics_attempts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  student_id TEXT NOT NULL REFERENCES users(id),
+  task_id TEXT NOT NULL,
+  code TEXT NOT NULL,
+  passed INTEGER NOT NULL,
+  total INTEGER NOT NULL,
+  results TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_python_basics_attempts_student ON python_basics_attempts(student_id, task_id, id);

@@ -1,0 +1,91 @@
+<!-- src/views/pybasics/task.ejs — one task of «Простое программирование на Python».
+     LEFT: theory + statement + examples; RIGHT (sticky): editor, input for «Запустить», output,
+     «Проверить» results (public/js/python-basics.js). Narrow screens: one column. -->
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <%- include('../partials/head', { pageTitle: task.title }) %>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css">
+</head>
+<body>
+  <%- include('../partials/header') %>
+  <div class="app-layout">
+    <%- include('../partials/sidebar') %>
+    <main class="content pyb-page">
+      <nav class="breadcrumbs"><a href="/">Bosh sahifa</a> / <a href="<%= base %>"><%= title %></a> / <%= topic %> / <%= task.title %></nav>
+
+      <header class="sql-task-head">
+        <h1 class="sql-task-title"><%= task.number %>-topshiriq. <%= task.title %></h1>
+        <div class="sql-task-meta">
+          <span class="sql-chip sql-chip-<%= task.solved ? 'done' : 'open' %>" data-pyb-chip><%= task.solved ? '✓ Bajarildi' : '○ Bajarilmagan' %></span>
+          <span class="sql-chip"><%= task.number %> / <%= total %></span>
+          <a class="sql-chip sql-chip-link" href="#pybTask">📝 Shartga o‘tish</a>
+        </div>
+      </header>
+
+      <div class="pyb-workspace">
+        <div class="pyb-left">
+          <section class="task-panel pyb-theory">
+            <h2 class="task-panel-title">📖 Nazariya</h2>
+            <%- theoryHtml %>
+          </section>
+
+          <section class="task-panel pyb-statement" id="pybTask">
+            <h2 class="task-panel-title">📝 Topshiriq</h2>
+            <%- taskHtml %>
+            <h3>Misollar</h3>
+            <div class="sql-table-wrap">
+              <table class="pyb-examples">
+                <thead><tr><th>Kiritish</th><th>Chiqish</th></tr></thead>
+                <tbody>
+                  <% examples.forEach(function (ex) { %>
+                    <tr><td><pre><%= ex.input.join('\n') %></pre></td><td><pre><%= ex.output %></pre></td></tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+            <p class="pyb-note">Har bir kiritish qatori alohida <code>input()</code> bilan o‘qiladi. Tekshiruvda dastur <%= tests.length %> ta testda ishga tushiriladi: shu misollarda va boshqa ma’lumotlarda. Tekshiruvda <code>input()</code> ichidagi izohlar chiqarilmaydi.</p>
+          </section>
+        </div>
+
+        <section class="task-panel pyb-editor-panel" id="pybEditor"
+                 data-draft-url="<%= base %>/<%= task.id %>/draft"
+                 data-check-url="<%= base %>/<%= task.id %>/check">
+          <div class="sql-panel-head">
+            <h2 class="task-panel-title">Sizning kodingiz</h2>
+            <span class="sql-hint">Ctrl+Enter — ishga tushirish</span>
+          </div>
+          <div class="code-file-pane">
+            <textarea class="sql-console code-file-source" data-pyb-code rows="14" spellcheck="false" autocomplete="off" aria-label="Python dasturi kodi"><%= code %></textarea>
+          </div>
+
+          <label class="pyb-stdin-label" for="pybStdin">«Ishga tushirish» uchun kiritish — har bir qiymat yangi qatordan</label>
+          <textarea id="pybStdin" class="pyb-stdin" rows="2" spellcheck="false" data-pyb-stdin><%= examples.length ? examples[0].input.join('\n') : '' %></textarea>
+
+          <div class="code-editor-actions">
+            <button type="button" class="btn btn-secondary" data-pyb-action="run">▶ Ishga tushirish</button>
+            <button type="button" class="btn btn-primary" data-pyb-action="check">✓ Tekshirish</button>
+            <button type="button" class="btn btn-secondary" data-pyb-action="stop" hidden>■ To‘xtatish</button>
+            <span class="code-editor-status" data-pyb-status aria-live="polite"></span>
+          </div>
+
+          <div class="code-output-head">Chiqish</div>
+          <pre class="code-output pyb-output" data-pyb-output aria-live="polite">Dasturni yozing va «Ishga tushirish» yoki «Tekshirish» tugmasini bosing.</pre>
+
+          <div class="pyb-results" data-pyb-results hidden></div>
+          <p class="pyb-next" data-pyb-next <%= task.solved ? '' : 'hidden' %>>
+            <% if (next) { %><a class="btn btn-primary" href="<%= base %>/<%= next.id %>">Keyingi topshiriq: <%= next.title %> →</a><% } else { %><a class="btn btn-primary" href="<%= base %>">Mavzuning barcha topshiriqlari →</a><% } %>
+          </p>
+        </section>
+      </div>
+      <script type="application/json" id="pybTests"><%- JSON.stringify(tests).replace(/</g, '\\u003c') %></script>
+    </main>
+  </div>
+  <%- include('../partials/scripts') %>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js" defer></script>
+  <script src="/js/python-basics.js" defer></script>
+</body>
+</html>

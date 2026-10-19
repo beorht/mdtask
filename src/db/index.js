@@ -42,6 +42,10 @@ addColumnIfMissing('assignments', 'target_group', 'TEXT');
 // JSON list of file names (e.g. ["mydb.py","main.py"]): the student writes them in the
 // on-site Python editor instead of uploading an archive. NULL = archive upload.
 addColumnIfMissing('assignments', 'code_files', 'TEXT');
+// Editor assignments: what each file starts with ({ fileName: code }, JSON) and which files
+// the student can't edit (JSON list; their content is always the starter, e.g. a data generator).
+addColumnIfMissing('assignments', 'code_starter', 'TEXT');
+addColumnIfMissing('assignments', 'code_readonly', 'TEXT');
 // Course subject of the assignment (src/lib/subjects.js COURSE_SUBJECTS, e.g. 'pis'); NULL = the
 // shared Python/JavaScript assignments. upload_types: JSON list of allowed extensions, NULL = .zip/.rar.
 addColumnIfMissing('assignments', 'subject', 'TEXT');
@@ -112,6 +116,8 @@ function rowToAssignment(row) {
     targetGroup: row.target_group,
     dueDate: row.due_date,
     codeFiles: row.code_files ? JSON.parse(row.code_files) : null,
+    codeStarter: row.code_starter ? JSON.parse(row.code_starter) : null,
+    codeReadonly: row.code_readonly ? JSON.parse(row.code_readonly) : [],
     subject: row.subject || null,
     uploadTypes: row.upload_types ? JSON.parse(row.upload_types) : null,
   };
@@ -352,8 +358,14 @@ function createAssignment({ courseId, title, mdPath, targetType, targetStudentId
   return rowToAssignment(prepared('SELECT * FROM assignments WHERE id = ?').get(id));
 }
 
-function setAssignmentCodeFiles(id, codeFiles) {
-  prepared('UPDATE assignments SET code_files = ? WHERE id = ?').run(codeFiles ? JSON.stringify(codeFiles) : null, id);
+// starter: { fileName: code } the editor opens with; readonly: files the student can't change.
+function setAssignmentCodeFiles(id, codeFiles, { starter = null, readonly = null } = {}) {
+  prepared('UPDATE assignments SET code_files = ?, code_starter = ?, code_readonly = ? WHERE id = ?').run(
+    codeFiles ? JSON.stringify(codeFiles) : null,
+    starter ? JSON.stringify(starter) : null,
+    readonly && readonly.length ? JSON.stringify(readonly) : null,
+    id
+  );
 }
 
 function setAssignmentSubject(id, { subject = null, uploadTypes = null } = {}) {
@@ -561,6 +573,70 @@ function seedLabTaskForTests(task, studentId, { passed = 0, total = 8, solved = 
   }
 }
 
+function rowToPythonBasicsProgress(row) {
+  return {
+    studentId: row.student_id,
+    taskId: row.task_id,
+    draft: row.draft,
+    attempts: row.attempts,
+    bestPassed: row.best_passed,
+    total: row.total,
+    solvedAt: row.solved_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+// studentId omitted: everyone's rows (admin results page).
+function getPythonBasicsProgress(studentId) {
+  const rows = studentId
+    ? prepared('SELECT * FROM python_basics_progress WHERE student_id = ?').all(studentId)
+    : prepared('SELECT * FROM python_basics_progress').all();
+  return rows.map(rowToPythonBasicsProgress);
+}
+
+function savePythonBasicsDraft(studentId, taskId, code) {
+  const now = new Date().toISOString();
+  prepared(
+    `INSERT INTO python_basics_progress (student_id, task_id, draft, updated_at) VALUES (?, ?, ?, ?)
+     ON CONFLICT (student_id, task_id) DO UPDATE SET draft = excluded.draft, updated_at = excluded.updated_at`
+  ).run(studentId, taskId, code, now);
+  return now;
+}
+
+// One check: stores the attempt and updates the totals; solved_at is set by the first full pass.
+const recordPythonBasicsAttempt = db.transaction((studentId, taskId, code, check) => {
+  const now = new Date().toISOString();
+  const results = check.tests.map((t) => ({ passed: t.passed, error: t.error }));
+  prepared(
+    `INSERT INTO python_basics_attempts (student_id, task_id, code, passed, total, results, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`
+  ).run(studentId, taskId, code, check.passed, check.total, JSON.stringify(results), now);
+  prepared(
+    `INSERT INTO python_basics_progress (student_id, task_id, draft, attempts, best_passed, total, solved_at, updated_at)
+     VALUES (?, ?, ?, 1, ?, ?, ?, ?)
+     ON CONFLICT (student_id, task_id) DO UPDATE SET
+       draft = excluded.draft,
+       attempts = attempts + 1,
+       best_passed = MAX(best_passed, excluded.best_passed),
+       total = excluded.total,
+       solved_at = COALESCE(solved_at, excluded.solved_at),
+       updated_at = excluded.updated_at`
+  ).run(studentId, taskId, code, check.passed, check.total, check.solved ? now : null, now);
+});
+
+function getPythonBasicsAttempts(studentId, taskId) {
+  return prepared('SELECT * FROM python_basics_attempts WHERE student_id = ? AND task_id = ? ORDER BY id DESC')
+    .all(studentId, taskId)
+    .map((row) => ({
+      id: row.id,
+      code: row.code,
+      passed: row.passed,
+      total: row.total,
+      results: JSON.parse(row.results),
+      createdAt: row.created_at,
+    }));
+}
+
 // Tests only: the row ib/ctf/caesar-secret/generate_challenge.py writes for a student.
 function seedCaesarSecretForTests(studentId, { solved = false } = {}) {
   prepared(
@@ -570,7 +646,7 @@ function seedCaesarSecretForTests(studentId, { solved = false } = {}) {
 }
 
 function __resetForTests() {
-  db.exec('DELETE FROM code_drafts; DELETE FROM ib_lab_log; DELETE FROM ib_lab_tasks; DELETE FROM ib_terminal_log; DELETE FROM ib_terminal_tasks; DELETE FROM ib_config_tasks; DELETE FROM ctf_caesar_secrets; DELETE FROM sql_attempts; DELETE FROM submissions; DELETE FROM assignments; DELETE FROM courses; DELETE FROM users;');
+  db.exec('DELETE FROM python_basics_attempts; DELETE FROM python_basics_progress; DELETE FROM code_drafts; DELETE FROM ib_lab_log; DELETE FROM ib_lab_tasks; DELETE FROM ib_terminal_log; DELETE FROM ib_terminal_tasks; DELETE FROM ib_config_tasks; DELETE FROM ctf_caesar_secrets; DELETE FROM sql_attempts; DELETE FROM submissions; DELETE FROM assignments; DELETE FROM courses; DELETE FROM users;');
   seed(db);
 }
 
@@ -613,6 +689,10 @@ module.exports = {
   setAssignmentSubject,
   getCodeDraft,
   saveCodeDraft,
+  getPythonBasicsProgress,
+  savePythonBasicsDraft,
+  recordPythonBasicsAttempt,
+  getPythonBasicsAttempts,
   updateAssignmentTitle,
   setAssignmentDueDateForTests,
   getLanguageExercises,
