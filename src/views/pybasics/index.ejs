@@ -1,0 +1,50 @@
+<!-- src/views/pybasics/index.ejs — «Простое программирование на Python» (in Uzbek): the topic's tasks (src/lib/python-basics.js) -->
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <%- include('../partials/head', { pageTitle: title }) %>
+</head>
+<body>
+  <%- include('../partials/header') %>
+  <div class="app-layout">
+    <%- include('../partials/sidebar') %>
+    <main class="content">
+      <nav class="breadcrumbs"><a href="/">Bosh sahifa</a> / <%= title %></nav>
+      <h1><%= title %></h1>
+      <p class="subject-block-lead">Python’dagi ilk qadamlar. Har bir topshiriqda chapda — nazariya va shart, o‘ngda — muharrir: dasturni o‘zingiz yozasiz, to‘g‘ridan-to‘g‘ri brauzerda ishga tushirasiz va «Tekshirish» tugmasini bosasiz. Topshiriqlar tartib bilan ochiladi.</p>
+
+      <% const pct = summary.total ? Math.round((summary.solved / summary.total) * 100) : 0; %>
+      <section class="subject-block">
+        <h2 class="subject-block-title">1-mavzu. <%= topic %></h2>
+        <div class="subject-summary">
+          <span>Bajarildi: <strong><%= summary.solved %> / <%= summary.total %></strong></span>
+          <span class="progress subject-summary-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<%= pct %>" aria-label="Natija">
+            <span class="progress-fill" style="width: <%= pct %>%"></span>
+          </span>
+        </div>
+        <ol class="pyb-task-list">
+          <% summary.tasks.forEach(function (t) { %>
+            <li>
+              <% if (t.unlocked) { %>
+                <a class="ib-task-card pyb-task-card pyb-status-<%= t.status %>" href="/subjects/pybasics/<%= t.id %>">
+              <% } else { %>
+                <span class="ib-task-card pyb-task-card pyb-status-locked" title="Oldingi topshiriq bajarilgandan keyin ochiladi">
+              <% } %>
+                <span class="ib-task-num"><%= t.solved ? '✓' : t.unlocked ? t.number : '🔒' %></span>
+                <span class="pyb-task-body">
+                  <span class="pyb-task-title"><%= t.number %>. <%= t.title %></span>
+                  <span class="pyb-task-topics"><% t.topics.forEach(function (topicName) { %><span class="tag"><%= topicName %></span><% }) %></span>
+                </span>
+                <span class="pyb-task-state">
+                  <% if (t.solved) { %>Bajarildi<% } else if (!t.unlocked) { %>Yopiq<% } else if (t.progress && t.progress.attempts) { %>O‘tgan testlar: <%= t.progress.bestPassed %> / <%= t.progress.total %><% } else { %>Boshlanmagan<% } %>
+                </span>
+              <%- t.unlocked ? '</a>' : '</span>' %>
+            </li>
+          <% }) %>
+        </ol>
+      </section>
+    </main>
+  </div>
+  <%- include('../partials/scripts') %>
+</body>
+</html>

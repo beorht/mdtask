@@ -37,3 +37,7 @@
 - [Мои доп. задания]()
   - [Свой модуль для работы с базой данных](individual/st-ib-218/svoi-modul-dlya-raboty-s-bazoi-dannyh.md)
   - [Свой модуль для работы с базой данных](individual/st-ib-125/svoi-modul-dlya-raboty-s-bazoi-dannyh.md)
+  - [Учёт библиотеки: анализ выдачи книг на Python и SQLite](individual/st-ib-125/uchet-biblioteki-analiz-vydachi-knig-na-python-i-sqlite.md)
+  - [Учёт библиотеки: анализ выдачи книг на Python и SQLite](individual/st-ib-601/uchet-biblioteki-analiz-vydachi-knig-na-python-i-sqlite.md)
+  - [Учёт библиотеки: анализ выдачи книг на Python и SQLite](individual/st-ib-218/uchet-biblioteki-analiz-vydachi-knig-na-python-i-sqlite.md)
+  - [Учёт библиотеки: анализ выдачи книг на Python и SQLite](individual/st-ib-902/uchet-biblioteki-analiz-vydachi-knig-na-python-i-sqlite.md)

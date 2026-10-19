@@ -17,6 +17,10 @@ function parseCodeFiles(assignment, body) {
   if (!input) return { error: 'Нет файлов решения.' };
   const files = {};
   for (const name of assignment.codeFiles) {
+    if (isReadonly(assignment, name)) {
+      files[name] = starterCode(assignment, name);
+      continue;
+    }
     const code = input[name];
     if (code !== undefined && typeof code !== 'string') return { error: `Файл ${name}: неверные данные.` };
     const text = (code || '').replace(/\r\n/g, '\n');
@@ -95,13 +99,24 @@ function storeCodeSubmission(assignment, studentId, files) {
   return { files: [SUBMISSION_ARCHIVE_NAME], storedFiles: [stored] };
 }
 
-// What the editor opens with: the saved draft (a submit saves it too), else empty files.
+function isReadonly(assignment, name) {
+  return (assignment.codeReadonly || []).includes(name);
+}
+
+function starterCode(assignment, name) {
+  const starter = assignment.codeStarter && assignment.codeStarter[name];
+  return typeof starter === 'string' ? starter : `# ${name}\n`;
+}
+
+// What the editor opens with: the saved draft (a submit saves it too), else the starter code.
+// Read-only files always show the starter.
 function initialCode(assignment, draft) {
   const files = {};
   for (const name of assignment.codeFiles) {
-    files[name] = draft && typeof draft.files[name] === 'string' ? draft.files[name] : `# ${name}\n`;
+    const saved = draft && typeof draft.files[name] === 'string' ? draft.files[name] : null;
+    files[name] = saved !== null && !isReadonly(assignment, name) ? saved : starterCode(assignment, name);
   }
   return files;
 }
 
-module.exports = { SUBMISSION_ARCHIVE_NAME, MAX_FILE_BYTES, parseCodeFiles, createZip, storeCodeSubmission, initialCode };
+module.exports = { SUBMISSION_ARCHIVE_NAME, MAX_FILE_BYTES, parseCodeFiles, createZip, storeCodeSubmission, initialCode, isReadonly };

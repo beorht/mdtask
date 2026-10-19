@@ -11,10 +11,13 @@ const {
   getTerminalLog,
   getLabTasks,
   getLabLog,
+  getPythonBasicsProgress,
+  getPythonBasicsAttempts,
 } = require('../db');
 const { TOPICS } = require('./sql-topics');
 const { mistakesByExercise } = require('./sql-mistakes');
 const { TEST_GROUP } = require('./test-access');
+const pybasics = require('./python-basics');
 const { findIbTask, IB_TASKS } = require('./ib-tasks');
 
 // Every status the admin UI can show. Status is never conveyed by colour alone —
@@ -595,8 +598,55 @@ function ibLabDetail(ctx, key, studentId) {
   return stageTaskDetail(student, task, lab.stages, getLabLog(key, studentId), meta);
 }
 
+// «Простое программирование на Python»: students who can see the subject (its groups + TEST)
+// or already have progress, with per-task state.
+function pythonBasicsResults(ctx, filters) {
+  const q = (filters.q || '').toLowerCase();
+  const progress = getPythonBasicsProgress();
+  const byStudent = new Map();
+  for (const p of progress) {
+    if (!byStudent.has(p.studentId)) byStudent.set(p.studentId, new Map());
+    byStudent.get(p.studentId).set(p.taskId, p);
+  }
+  const rows = ctx.students
+    .filter((s) => byStudent.has(s.id) || pybasics.canSeePythonBasics(s))
+    .filter((s) => !filters.group || s.group === filters.group)
+    .filter((s) => !q || s.name.toLowerCase().includes(q) || s.id.toLowerCase().includes(q))
+    .map((student) => {
+      const mine = byStudent.get(student.id) || new Map();
+      const cells = pybasics.TASKS.map((t) => {
+        const p = mine.get(t.id) || null;
+        return { task: t, progress: p, state: p && p.solvedAt ? 'done' : p && p.attempts ? 'started' : 'none' };
+      });
+      return {
+        student,
+        cells,
+        solved: cells.filter((c) => c.state === 'done').length,
+        attempts: cells.reduce((n, c) => n + (c.progress ? c.progress.attempts : 0), 0),
+      };
+    })
+    .sort((a, b) => b.solved - a.solved || a.student.name.localeCompare(b.student.name, 'ru'));
+  return {
+    rows,
+    tasks: pybasics.TASKS,
+    groups: pybasics.PYBASICS_GROUPS,
+    total: rows.length,
+    solvedAll: rows.filter((r) => r.solved === pybasics.TASKS.length).length,
+  };
+}
+
+function pythonBasicsDetail(ctx, studentId, taskId) {
+  const student = ctx.students.find((s) => s.id === studentId);
+  const task = pybasics.getTask(taskId);
+  if (!student || !task) return null;
+  const progress = getPythonBasicsProgress(studentId).find((p) => p.taskId === taskId) || null;
+  return { student, task, progress, attempts: getPythonBasicsAttempts(studentId, taskId) };
+}
+
 module.exports = {
   STATUS_META,
+  pythonBasicsResults,
+  pythonBasicsDetail,
   trainerMistakes,
   loadContext,
   submissionStatusKey,

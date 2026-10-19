@@ -25,12 +25,18 @@
           <p class="code-editor-hint">Пишите код прямо здесь. «Запустить» выполняет <code><%= assignment.codeFiles.includes('main.py') ? 'main.py' : assignment.codeFiles[0] %></code> в браузере (Python 3 с модулем <code>sqlite3</code>); при каждом запуске база создаётся заново. Код сохраняется автоматически.</p>
           <div class="tabs code-file-tabs" role="tablist">
             <% assignment.codeFiles.forEach(function (name, i) { %>
-              <button type="button" class="tab-btn<%= i === 0 ? ' active' : '' %>" role="tab" data-code-file="<%= name %>"><%= name %></button>
+              <% const locked = (assignment.codeReadonly || []).includes(name); %>
+              <button type="button" class="tab-btn<%= i === 0 ? ' active' : '' %>" role="tab" data-code-file="<%= name %>"<% if (locked) { %> title="Только для чтения"<% } %>><%= locked ? '🔒 ' : '' %><%= name %></button>
             <% }) %>
           </div>
           <% assignment.codeFiles.forEach(function (name, i) { %>
             <div class="code-file-pane" data-code-pane="<%= name %>"<%= i === 0 ? '' : ' hidden' %>>
+              <% if ((assignment.codeReadonly || []).includes(name)) { %>
+                <p class="code-readonly-note">🔒 Этот файл только для чтения: его нельзя изменить, но можно читать и импортировать.</p>
+                <textarea class="sql-console code-file-source" data-code-source="<%= name %>" data-code-readonly="1" readonly rows="20" spellcheck="false" autocomplete="off" aria-label="<%= name %> (только для чтения)"><%= code.files[name] %></textarea>
+              <% } else { %>
               <textarea class="sql-console code-file-source" data-code-source="<%= name %>" rows="20" spellcheck="false" autocomplete="off" aria-label="<%= name %>"><%= code.files[name] %></textarea>
+              <% } %>
             </div>
           <% }) %>
           <div class="code-editor-actions">

@@ -128,3 +128,41 @@ test('archive upload is refused for an editor assignment', async () => {
   assert.strictEqual(res.status, 400);
   assert.strictEqual(db.getSubmissions().length, 0);
 });
+
+test('starter code fills the editor, and a read-only file always keeps its starter content', async () => {
+  const a = seedAssignment({
+    title: 'Анализ продаж',
+    mdPath: 'individual/student-1/shop.md',
+    targetType: 'individual',
+    targetStudentId: 'student-1',
+    markdown: '# Анализ продаж\n',
+  });
+  const generator = 'STUDENT = "student-1"\ndef create(path):\n    return path\n';
+  db.setAssignmentCodeFiles(a.id, ['main.py', 'analysis.py', 'create_db.py'], {
+    starter: { 'main.py': 'import create_db\n', 'create_db.py': generator },
+    readonly: ['create_db.py'],
+  });
+  const agent = await loginAs(createApp(), 'student-1');
+
+  const page = await agent.get(`/assignment/${a.id}`);
+  assert.match(page.text, /data-code-file="create_db.py" title="Только для чтения">🔒 create_db.py/);
+  assert.match(page.text, /data-code-source="create_db.py" data-code-readonly="1" readonly/);
+  assert.match(page.text, /STUDENT = &#34;student-1&#34;/);
+  assert.match(page.text, />import create_db\n<\/textarea>/);
+  assert.match(page.text, />\# analysis.py\n<\/textarea>/);
+
+  // a tampered read-only file is ignored both in the draft and in the submitted archive
+  const tampered = { 'main.py': 'print(1)\n', 'analysis.py': 'x = 1\n', 'create_db.py': 'STUDENT = "someone-else"\n' };
+  await agent.post(`/assignment/${a.id}/code/draft`).send({ files: tampered }).expect(200);
+  const again = await agent.get(`/assignment/${a.id}`);
+  assert.match(again.text, />print\(1\)\n<\/textarea>/);
+  assert.match(again.text, /STUDENT = &#34;student-1&#34;/);
+
+  await agent.post(`/assignment/${a.id}/code/submit`).send({ files: tampered }).expect(200);
+  const sub = db.getSubmissions().find((s) => s.assignmentId === a.id);
+  const { entries } = listZip(path.join(UPLOAD_DIR, a.id, 'student-1', sub.storedFiles[0]));
+  const archive = path.join(UPLOAD_DIR, a.id, 'student-1', sub.storedFiles[0]);
+  assert.deepStrictEqual(entries.map((e) => e.name), ['main.py', 'analysis.py', 'create_db.py']);
+  assert.strictEqual(previewZipEntry(archive, 2).text, generator);
+  assert.strictEqual(previewZipEntry(archive, 0).text, 'print(1)\n');
+});

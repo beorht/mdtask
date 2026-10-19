@@ -20,9 +20,11 @@
   var editors = {};
   root.querySelectorAll('[data-code-source]').forEach(function (area) {
     var name = area.dataset.codeSource;
+    var readOnly = area.dataset.codeReadonly === '1';
     if (window.CodeMirror) {
       var cm = window.CodeMirror.fromTextArea(area, {
         mode: 'python',
+        readOnly: readOnly,
         theme: 'material-darker',
         lineNumbers: true,
         indentUnit: 4,

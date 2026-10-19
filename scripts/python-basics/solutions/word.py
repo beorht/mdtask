@@ -1,0 +1,5 @@
+word = input()
+print("Длина:", len(word))
+print("Заглавными:", word.upper())
+print("Первая буква:", word[0])
+print("Последняя буква:", word[-1])
