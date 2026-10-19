@@ -1,0 +1,8 @@
+{
+  "bug": [
+    [
+      "    limit = int(input())",
+      "    limit = input()"
+    ]
+  ]
+}

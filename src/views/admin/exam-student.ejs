@@ -1,0 +1,189 @@
+<%- include('partials/start') %>
+<% const kindLabel = { flag: 'вопрос', algorithm: 'алгоритм', bug: 'ошибка в программе', sql: 'SQL', report: 'отчёт' }; %>
+
+<nav class="a-breadcrumbs" aria-label="Навигация">
+  <a href="/admin/exam/<%= def.id %>"><%= def.title %></a><span>/</span><span><%= d.student.name %></span>
+</nav>
+
+<div class="a-page-head">
+  <div>
+    <h1><%= d.student.name %></h1>
+    <p class="a-subtitle"><a href="/admin/students/<%= d.student.id %>"><%= d.student.id %></a> · <%= d.student.group %> · вариант №<%= d.variant.index + 1 %>, тема «<%= d.themeLabel %>»
+      · учётка злоумышленника <code><%= d.scenario.params.attacker %></code> · сдвиг Цезаря <%= d.scenario.caesar.shift %>, ключ в <code><%= d.scenario.caesar.keyFile %></code></p>
+  </div>
+  <div class="a-page-actions">
+    <a class="a-btn a-btn-secondary" href="/admin/exam/<%= def.id %>/students/<%= d.student.id %>/log.jsonl"><%- icon('download') %><span>Журнал (JSONL)</span></a>
+  </div>
+</div>
+
+<div class="a-stats a-stats-sm">
+  <div class="a-stat a-stat-accent"><span class="a-stat-value"><%= d.score.total %> / <%= d.score.max %></span><span class="a-stat-label"><%= d.grade ? 'Оценка ' + d.grade : 'Отчёт не оценён' %></span></div>
+  <div class="a-stat"><span class="a-stat-value"><%= d.counts.events %></span><span class="a-stat-label">Событий в журнале</span></div>
+  <div class="a-stat"><span class="a-stat-value"><%= d.counts.commands %></span><span class="a-stat-label">Команд в терминале</span></div>
+  <div class="a-stat <%= d.counts.pastes ? 'a-stat-warn' : '' %>"><span class="a-stat-value"><%= d.counts.pastes %></span><span class="a-stat-label">Вставок из буфера</span></div>
+  <div class="a-stat <%= d.counts.away ? 'a-stat-warn' : '' %>"><span class="a-stat-value"><%= d.counts.away %></span><span class="a-stat-label">Уходов со страницы</span></div>
+  <div class="a-stat"><span class="a-stat-value"><%= Math.round(d.counts.idleSeconds / 60) %> мин</span><span class="a-stat-label">Бездействия</span></div>
+</div>
+
+<section class="a-card">
+  <div class="a-card-head"><h2>Карта действий</h2><p class="a-muted">Полоса по времени: где был студент (цвет — этап) и что делал. Наведите на метку — время и действие.</p></div>
+  <% if (!d.span) { %>
+    <p class="a-muted">Студент ещё не открывал контрольную.</p>
+  <% } else { %>
+    <% const W = 1000, rowH = 22, top = 24, total = d.span.to - d.span.from;
+       const x = function (ts) { return Math.round(((Date.parse(ts) - d.span.from) / total) * W); };
+       const stageRows = [1, 2, 3, 4, 5, 6]; %>
+    <div class="a-exam-map-wrap">
+      <svg class="a-exam-map" viewBox="-70 0 <%= W + 80 %> <%= top + rowH * 7 + 20 %>" role="img" aria-label="Карта действий студента по времени">
+        <% for (let m = 0; m <= 10; m += 1) { const ts = d.span.from + (total * m) / 10; %>
+          <line x1="<%= (W * m) / 10 %>" y1="<%= top - 6 %>" x2="<%= (W * m) / 10 %>" y2="<%= top + rowH * 7 %>" class="a-exam-grid"/>
+          <text x="<%= (W * m) / 10 %>" y="14" class="a-exam-tick" text-anchor="middle"><%= view.formatDateTime(new Date(ts).toISOString()).split(', ')[1] %></text>
+        <% } %>
+        <% stageRows.concat([0]).forEach(function (n, i) { %>
+          <text x="-8" y="<%= top + rowH * i + 15 %>" class="a-exam-label" text-anchor="end"><%= n ? 'Этап ' + n : 'Обзор' %></text>
+        <% }) %>
+        <% d.visits.forEach(function (v) { const i = v.stage ? v.stage - 1 : 6; const x1 = x(v.start); const w = Math.max(2, x(v.end) - x1); %>
+          <rect x="<%= x1 %>" y="<%= top + rowH * i + 3 %>" width="<%= w %>" height="<%= rowH - 6 %>" rx="3" class="a-exam-visit a-exam-stage-<%= v.stage || 0 %>"><title><%= v.place %>: <%= Math.round(v.seconds / 60) %> мин, действий <%= v.actions %></title></rect>
+        <% }) %>
+        <% d.marks.forEach(function (mk) { const i = mk.stage ? mk.stage - 1 : 6; %>
+          <circle cx="<%= x(mk.ts) %>" cy="<%= mk.kind === 'away' ? top + rowH * 7 + 8 : top + rowH * i + rowH / 2 %>" r="<%= mk.kind === 'cmd' || mk.kind === 'run' ? 2 : 4 %>" class="a-exam-mark a-exam-mark-<%= mk.kind %>"><title><%= mk.title %></title></circle>
+        <% }) %>
+      </svg>
+    </div>
+    <p class="a-exam-legend"><span class="a-exam-key a-exam-mark-ok"></span>верно <span class="a-exam-key a-exam-mark-bad"></span>неверно <span class="a-exam-key a-exam-mark-sent"></span>отправка
+      <span class="a-exam-key a-exam-mark-run"></span>запуск / команда <span class="a-exam-key a-exam-mark-paste-big"></span>вставка больше 200 символов <span class="a-exam-key a-exam-mark-away"></span>ушёл со страницы (нижняя строка)
+      <span class="a-exam-key a-exam-mark-blocked"></span>отклонено</p>
+
+    <h3>Путь по заданиям</h3>
+    <ol class="a-exam-path">
+      <% d.path.steps.forEach(function (s) { %>
+        <li class="a-exam-stage-<%= s.stage || 0 %>"><strong><%= s.place %></strong> <span class="a-muted"><%= Math.max(1, Math.round(s.seconds / 60)) %> мин · <%= s.actions %> дейст.</span></li>
+      <% }) %>
+    </ol>
+    <% if (d.path.moves.length) { %>
+      <details><summary>Переходы между заданиями (сколько раз)</summary>
+        <ul class="a-exam-moves"><% d.path.moves.forEach(function (m) { %><li><%= m.move %> — <%= m.count %></li><% }) %></ul>
+      </details>
+    <% } %>
+  <% } %>
+</section>
+
+<section class="a-card">
+  <div class="a-card-head"><h2>Устройства</h2>
+    <form method="post" action="/admin/exam/<%= def.id %>/students/<%= d.student.id %>/any-device">
+      <input type="hidden" name="allowed" value="<%= d.variant.anyDevice ? '0' : '1' %>">
+      <button type="submit" class="a-btn a-btn-secondary a-btn-sm"><%= d.variant.anyDevice ? 'Снова только ПК аудитории' : 'Разрешить любое устройство' %></button>
+    </form>
+  </div>
+  <% if (d.variant.anyDevice) { %><p class="a-tag a-tag-warn">Студенту разрешено писать контрольную с любого устройства.</p><% } %>
+  <% if (!d.devices.length) { %>
+    <p class="a-muted">Студент ещё не открывал контрольную.</p>
+  <% } else { %>
+    <div class="a-table-wrap">
+      <table class="a-table">
+        <thead><tr><th>Время</th><th>Событие</th><th>IP</th><th>ПК</th><th>MAC (ARP)</th><th>Браузер / устройство</th></tr></thead>
+        <tbody>
+          <% d.devices.forEach(function (x) { %>
+            <tr class="<%= x.type === 'device_blocked' || x.type === 'device_change' ? 'a-exam-warn-row' : '' %>">
+              <td class="a-nowrap a-muted"><%= view.formatDateTime(x.ts) %></td>
+              <td class="a-nowrap"><%= { device: 'Вход', device_change: 'Смена устройства', device_blocked: 'Отказано', device_info: 'Данные браузера' }[x.type] %></td>
+              <% if (x.type === 'device_info') { %>
+                <td colspan="3"></td>
+                <td><%= x.platform %> · экран <%= x.screen %> · окно <%= x.window %> · ядер <%= x.cores || '?' %> · память <%= x.memory || '?' %> ГБ · <%= x.language %> · <%= x.timeZone %><%= x.touch ? ' · сенсорный' : '' %></td>
+              <% } else { %>
+                <td><code><%= x.ip %></code></td>
+                <td><%= x.pc || '—' %><%= x.reason === 'mac_mismatch' || x.macMismatch ? ' (MAC другой!)' : '' %></td>
+                <td><code><%= x.mac || '—' %></code></td>
+                <td class="a-exam-answer"><%= x.userAgent || '' %></td>
+              <% } %>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</section>
+
+<section class="a-card a-card-flush">
+  <div class="a-card-head a-card-head-pad"><h2>Задания</h2></div>
+  <div class="a-table-wrap">
+    <table class="a-table">
+      <thead><tr><th>Задание</th><th>Итог</th><th class="a-num">Баллы</th><th>Ответ студента</th><th>Правильно / подробности</th><th class="a-num">Попыток</th></tr></thead>
+      <tbody>
+        <% d.tasks.forEach(function (t, i) { const it = d.score.items[i]; const row = t.row; %>
+          <tr>
+            <td><strong><%= t.task.id %></strong> <%= t.task.title %><div class="a-muted"><%= kindLabel[t.task.kind] %></div></td>
+            <td class="a-exam-cell a-exam-cell-<%= t.state %>"><%= t.text %></td>
+            <td class="a-num"><%= it.points === null ? '—' : it.points %> / <%= t.task.points %></td>
+            <td>
+              <% if (!row) { %><span class="a-muted">—</span>
+              <% } else if (t.task.kind === 'flag' || t.task.kind === 'sql') { %><code class="a-exam-answer"><%= row.answer || row.draft || '—' %></code>
+              <% } else if (t.task.kind === 'algorithm' || t.task.kind === 'bug') { %>
+                <details><summary>код (<%= (row.answer || row.draft || '').split('\n').length %> строк)<%= t.task.kind === 'bug' ? ', запусков ' + row.runs : '' %></summary><pre class="a-code"><%= row.answer || row.draft %></pre></details>
+              <% } else if (t.task.kind === 'report') { %><%= row.submittedAt ? 'отправлен ' + view.formatDateTime(row.submittedAt) + (row.submitKind === 'timeout' ? ' (по окончании времени)' : '') : 'не отправлен' %><% } %>
+            </td>
+            <td>
+              <% if (t.task.kind === 'flag') { %><code><%= t.expected %></code>
+              <% } else if (t.task.kind === 'sql') { %><details><summary>эталон</summary><pre class="a-code"><%= t.task.solution %></pre></details><% if (row && row.result && row.result.error) { %><div class="a-muted">ошибка: <%= row.result.error %></div><% } %>
+              <% } else if (t.task.kind === 'algorithm') { %><%= t.task.algo %> / <%= t.task.form %><% if (row && row.result) { %> · тестов <%= row.result.passed %>/<%= row.result.total %><% if (row.result.forbidden && row.result.forbidden.length) { %> · запрещено: <%= row.result.forbidden.join(', ') %><% } %><% } %>
+              <% } else if (t.task.kind === 'bug') { %><%= t.task.program %> (<%= t.task.bugTypeLabel %>)<% if (row && row.submittedAt) { %> · отправлено <%= { manual: 'вручную', runs: 'после 4-го запуска', timeout: 'по окончании времени' }[row.submitKind] || '' %><% if (row.result) { %> · тестов <%= row.result.passed %>/<%= row.result.total %><% } else { %> · <strong>нет прогона</strong><% } %><% } %>
+              <% } %>
+            </td>
+            <td class="a-num"><%= row ? row.attempts : 0 %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="a-card">
+  <div class="a-card-head"><h2>Отчёт об инциденте</h2></div>
+  <% if (!d.report) { %>
+    <p class="a-muted">Студент не писал отчёт.</p>
+  <% } else { %>
+    <dl class="a-exam-report">
+      <% d.report.forEach(function (f) { %><dt><%= f.label %></dt><dd><%= f.value || '—' %></dd><% }) %>
+    </dl>
+  <% } %>
+  <form class="a-exam-window" method="post" action="/admin/exam/<%= def.id %>/students/<%= d.student.id %>/report-score">
+    <label>Баллы за отчёт (0–10) <input type="text" inputmode="decimal" name="score" value="<%= d.reportRow && d.reportRow.teacherScore !== null && d.reportRow.teacherScore !== undefined ? d.reportRow.teacherScore : '' %>" size="4"></label>
+    <button type="submit" class="a-btn a-btn-primary">Сохранить оценку</button>
+  </form>
+</section>
+
+<section class="a-card a-card-flush">
+  <div class="a-card-head a-card-head-pad"><h2>Журнал действий</h2><p class="a-muted">Все события по порядку (seq). Снимки кода открываются по ссылке.</p></div>
+  <div class="a-table-wrap a-exam-log">
+    <table class="a-table">
+      <thead><tr><th class="a-num">#</th><th>Время</th><th>Где</th><th>Событие</th><th>Подробности</th></tr></thead>
+      <tbody>
+        <% d.events.forEach(function (e) { %>
+          <tr class="a-exam-ev a-exam-ev-<%= e.type %>">
+            <td class="a-num a-muted"><%= e.seq %></td>
+            <td class="a-nowrap a-muted"><%= view.formatDateTime(e.ts).split(', ')[1] %>:<%= e.ts.slice(17, 19) %></td>
+            <td class="a-nowrap"><%= e.task || (e.stage ? 'этап ' + e.stage : '') %></td>
+            <td class="a-nowrap"><%= e.label %></td>
+            <td><code class="a-exam-answer"><%= e.text %></code><% if (e.type === 'terminal_cmd' && e.data.output) { %><details><summary>вывод</summary><pre class="a-code"><%= e.data.output %></pre></details><% } %><% if (e.type === 'paste' && e.data.text) { %><details><summary>вставленный текст</summary><pre class="a-code"><%= e.data.text %></pre></details><% } %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="a-card">
+  <div class="a-card-head"><h2>Служебное</h2></div>
+  <div class="a-exam-actions">
+    <form method="post" action="/admin/exam/<%= def.id %>/students/<%= d.student.id %>/sandbox" data-confirm="Пересоздать песочницу терминала?|Файлы сервера вернутся к исходным, изменения студента в терминале пропадут. Ответы и прогресс останутся.|Пересоздать">
+      <button type="submit" class="a-btn a-btn-secondary">Пересоздать песочницу терминала</button>
+    </form>
+    <form class="a-exam-window" method="post" action="/admin/exam/<%= def.id %>/students/<%= d.student.id %>/reissue" data-confirm="Выдать вариант заново?|Будут новые данные, все ответы студента по контрольной удалятся (журнал действий останется).|Выдать">
+      <label>Вариант №<input type="number" name="index" min="1" max="18" value="<%= d.variant.index + 1 %>"></label>
+      <button type="submit" class="a-btn a-btn-secondary">Выдать заново</button>
+    </form>
+  </div>
+  <p class="a-muted">Выдать заново можно до начала контрольной или тестовому аккаунту: новые данные, прежние ответы удаляются (журнал остаётся).</p>
+</section>
+
+<%- include('partials/end') %>

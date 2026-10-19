@@ -1,0 +1,8 @@
+{
+  "bug": [
+    [
+      "    for i in range(len(rows)):",
+      "    for i in range(len(rows) - 1):"
+    ]
+  ]
+}

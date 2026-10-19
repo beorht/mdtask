@@ -1,0 +1,8 @@
+{
+  "bug": [
+    [
+      "        visits.append((ticket, int(hours) * 60 + int(minutes)))",
+      "        visits.append((ticket, hours * 60 + minutes))"
+    ]
+  ]
+}

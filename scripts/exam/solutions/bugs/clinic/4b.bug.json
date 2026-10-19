@@ -1,0 +1,8 @@
+{
+  "bug": [
+    [
+      "            return False\n    return True",
+      "            return False\n        return True"
+    ]
+  ]
+}

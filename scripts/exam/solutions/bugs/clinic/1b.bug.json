@@ -1,0 +1,8 @@
+{
+  "bug": [
+    [
+      "    for i in range(len(payments)):",
+      "    for i in range(len(payments) - 1):"
+    ]
+  ]
+}

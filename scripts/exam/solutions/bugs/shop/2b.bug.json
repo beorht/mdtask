@@ -1,0 +1,8 @@
+{
+  "bug": [
+    [
+      "    if total >= FREE_FROM or status == \"VIP\":",
+      "    if total >= FREE_FROM and status == \"VIP\":"
+    ]
+  ]
+}

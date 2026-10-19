@@ -11,6 +11,9 @@
     <main class="content">
       <nav class="breadcrumbs"><a href="/">Главная</a> / <%= title %></nav>
       <h1><%= title %></h1>
+      <% if (typeof examLock !== 'undefined' && examLock) { %>
+        <p class="exam-lock-note">🔒 Пока идёт «<%= examLock.title %>», задания закрыты — они откроются после её окончания. <a href="/exam/<%= examLock.id %>">Перейти к контрольной →</a></p>
+      <% } %>
       <% const pct = ib.total ? Math.round((ib.solved / ib.total) * 100) : 0; %>
       <div class="subject-summary">
         <span>Выполнено <strong><%= ib.solved %> / <%= ib.total %></strong></span>

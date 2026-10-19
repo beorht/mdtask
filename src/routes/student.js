@@ -18,6 +18,7 @@ const { parseCodeFiles, storeCodeSubmission, initialCode } = require('../lib/cod
 const { renderMarkdown, extractHeadings } = require('../lib/markdown');
 const { UPLOAD_DIR } = require('../lib/submission-files');
 const { hasFullAccess } = require('../lib/test-access');
+const { blockDuringExam } = require('../middleware/exam-lock');
 const { LANGUAGE_SUBJECTS, COURSE_SUBJECTS, uploadTypesOf } = require('../lib/subjects');
 const {
   buildStudentHome,
@@ -106,6 +107,7 @@ router.get('/subjects/:key', requireRole('student'), (req, res) => {
   const common = { user, sidebarTree: subjectSidebar(user, key), activeAssignmentId: null, activePath: `/subjects/${key}` };
 
   if (key === SQL_SUBJECT_KEY) {
+    if (require('../lib/exam').examLockFor(user)) return blockDuringExam(req, res, () => {});
     return res.render('subject-sql', { ...common, title: SQL_SUBJECT_TITLE, sql: sqlSummary(user) });
   }
 

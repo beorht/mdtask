@@ -1,0 +1,8 @@
+{
+  "bug": [
+    [
+      "        sums[login] += amount",
+      "        sums[login] = amount"
+    ]
+  ]
+}

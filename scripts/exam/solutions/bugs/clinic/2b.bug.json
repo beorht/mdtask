@@ -1,0 +1,8 @@
+{
+  "bug": [
+    [
+      "    return age >= AGE or disability == \"да\"",
+      "    return age >= AGE and disability == \"да\""
+    ]
+  ]
+}

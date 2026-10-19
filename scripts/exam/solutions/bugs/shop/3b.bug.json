@@ -1,0 +1,8 @@
+{
+  "bug": [
+    [
+      "        stock.append((code, int(left), int(minimum)))",
+      "        stock.append((code, left, minimum))"
+    ]
+  ]
+}

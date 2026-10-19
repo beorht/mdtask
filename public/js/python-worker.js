@@ -1,8 +1,9 @@
 // Runs a student's Python program in the browser (Pyodide = CPython in WebAssembly), off
 // the main thread so an endless loop can be stopped by terminating the worker.
-// Message in:  { files: { name: code }, main: 'main.py', stdin?: [lines], echo?: bool }
+// Message in:  { files: { name: code }, main: 'main.py', stdin?: [lines], echo?: bool, eofMessage?: text }
 //   stdin — input() returns these lines in order (EOFError when they run out); without it
 //   input() is disabled. echo — print the prompt and the entered line, like a terminal.
+//   eofMessage — the EOFError text (default: Uzbek, for the pybasics course).
 // Messages out: { type: 'status' | 'running' | 'out' | 'err' | 'done' | 'fail', text }
 var PYODIDE_URL = 'https://cdn.jsdelivr.net/pyodide/v0.26.4/full/';
 
@@ -32,18 +33,18 @@ var RUNNER = [
   'import builtins, os, sys, traceback',
   'def __no_input(prompt=""):',
   '    raise RuntimeError("input() здесь не работает: ввода с клавиатуры нет, задайте данные прямо в коде")',
-  'def __feeder(lines, echo):',
+  'def __feeder(lines, echo, eof_message=None):',
   '    queue = list(lines)',
   '    def __input(prompt=""):',
   '        if not queue:',
-  '            raise EOFError("input(): kiritish qatorlari tugadi — dastur berilganidan ko‘proq ma’lumot so‘rayapti")',
+  '            raise EOFError(eof_message or "input(): kiritish qatorlari tugadi — dastur berilganidan ko‘proq ma’lumot so‘rayapti")',
   '        value = queue.pop(0)',
   '        if echo:',
   '            print(str(prompt) + value)',
   '        return value',
   '    return __input',
-  'def __run(files, main, workdir, stdin=None, echo=False):',
-  '    builtins.input = __no_input if stdin is None else __feeder(stdin, echo)',
+  'def __run(files, main, workdir, stdin=None, echo=False, eof_message=None):',
+  '    builtins.input = __no_input if stdin is None else __feeder(stdin, echo, eof_message)',
   '    os.makedirs(workdir)',
   '    os.chdir(workdir)',
   '    for name, code in files.items():',
@@ -77,7 +78,7 @@ self.onmessage = function (event) {
       py.runPython(RUNNER);
       var files = py.toPy(msg.files);
       var stdin = Array.isArray(msg.stdin) ? py.toPy(msg.stdin) : null;
-      var ok = py.globals.get('__run')(files, msg.main, '/run/' + runCount, stdin, !!msg.echo);
+      var ok = py.globals.get('__run')(files, msg.main, '/run/' + runCount, stdin, !!msg.echo, msg.eofMessage || null);
       files.destroy();
       if (stdin) stdin.destroy();
       self.postMessage({ type: 'done', ok: ok });

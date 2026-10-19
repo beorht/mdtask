@@ -1,0 +1,8 @@
+{
+  "bug": [
+    [
+      "        if card not in result:\n            result[card] = []\n",
+      "        result[card] = []\n"
+    ]
+  ]
+}

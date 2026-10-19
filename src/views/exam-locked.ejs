@@ -1,0 +1,18 @@
+<!-- src/views/exam-locked.ejs — an IB task or the SQL trainer opened while the group's final exam runs. -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <%- include('partials/head', { pageTitle: 'Закрыто на время контрольной' }) %>
+</head>
+<body>
+  <%- include('partials/header') %>
+  <main class="content home">
+    <section class="task-panel exam-locked">
+      <h1>🔒 Закрыто на время контрольной</h1>
+      <p>Пока идёт «<%= exam.title %>», задания по информационной безопасности и SQL-тренажёр закрыты. Они откроются автоматически, когда контрольная закончится.</p>
+      <p><a class="btn btn-primary" href="/exam/<%= exam.id %>">Перейти к контрольной →</a> <a class="btn btn-secondary" href="/">На главную</a></p>
+    </section>
+  </main>
+  <%- include('partials/scripts') %>
+</body>
+</html>

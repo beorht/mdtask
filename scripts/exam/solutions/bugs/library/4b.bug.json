@@ -1,0 +1,8 @@
+{
+  "bug": [
+    [
+      "            return name\n    return None",
+      "            return name\n        return None"
+    ]
+  ]
+}

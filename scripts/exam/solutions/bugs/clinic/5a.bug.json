@@ -1,0 +1,8 @@
+{
+  "bug": [
+    [
+      "        if doctor not in stats:\n            stats[doctor] = [0, 0]\n",
+      "        stats[doctor] = [0, 0]\n"
+    ]
+  ]
+}

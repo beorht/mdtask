@@ -228,3 +228,75 @@ CREATE TABLE IF NOT EXISTS python_basics_attempts (
   created_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_python_basics_attempts_student ON python_basics_attempts(student_id, task_id, id);
+
+-- Итоговая контрольная работа (src/lib/exam/): окно проведения, публикация результатов и
+-- отметка, что после окончания неотправленные задания отправлены автоматически.
+CREATE TABLE IF NOT EXISTS exams (
+  id TEXT PRIMARY KEY,
+  starts_at TEXT NOT NULL,
+  ends_at TEXT NOT NULL,
+  published_at TEXT,
+  finalized_at TEXT,
+  updated_at TEXT NOT NULL
+);
+
+-- Вариант студента: тема, номер в списке группы и зерно, из которого строятся все его данные
+-- (журналы, база, тесты); variant — JSON с выбранными алгоритмами и программами с ошибками.
+CREATE TABLE IF NOT EXISTS exam_variants (
+  exam_id TEXT NOT NULL,
+  student_id TEXT NOT NULL REFERENCES users(id),
+  theme TEXT NOT NULL,
+  seed TEXT NOT NULL,
+  variant TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  PRIMARY KEY (exam_id, student_id)
+);
+
+-- Состояние каждого задания контрольной у студента. answer — последний ответ (флаг, SQL) или
+-- окончательный код; result — JSON последней проверки; runs — запуски программы с ошибкой;
+-- submitted_at/submit_kind — единственная отправка (manual | runs | timeout); locked — менять нельзя;
+-- teacher_score — баллы, поставленные преподавателем (отчёт).
+CREATE TABLE IF NOT EXISTS exam_tasks (
+  exam_id TEXT NOT NULL,
+  student_id TEXT NOT NULL REFERENCES users(id),
+  task_id TEXT NOT NULL,
+  draft TEXT NOT NULL DEFAULT '',
+  attempts INTEGER NOT NULL DEFAULT 0,
+  runs INTEGER NOT NULL DEFAULT 0,
+  solved INTEGER NOT NULL DEFAULT 0,
+  solved_at TEXT,
+  answer TEXT,
+  result TEXT,
+  submitted_at TEXT,
+  submit_kind TEXT,
+  locked INTEGER NOT NULL DEFAULT 0,
+  teacher_score REAL,
+  updated_at TEXT NOT NULL,
+  PRIMARY KEY (exam_id, student_id, task_id)
+);
+
+-- Краткая копия журнала действий для таблиц админки. Полный журнал — файл на каждого студента:
+-- data/exam/<exam>/logs/<student>.jsonl (src/lib/exam/log.js).
+CREATE TABLE IF NOT EXISTS exam_events (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  exam_id TEXT NOT NULL,
+  student_id TEXT NOT NULL,
+  seq INTEGER NOT NULL,
+  ts TEXT NOT NULL,
+  stage INTEGER,
+  task TEXT,
+  type TEXT NOT NULL,
+  summary TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_exam_events_student ON exam_events(exam_id, student_id, seq);
+
+-- Компьютеры аудитории, с которых разрешено писать итоговую контрольную (src/lib/exam/devices.js):
+-- имя, IP и MAC; импорт из data/data_pc_ib.sqlite (scripts/exam/import-pcs.js) или из админки.
+CREATE TABLE IF NOT EXISTS exam_pcs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL UNIQUE,
+  ip TEXT NOT NULL,
+  mac TEXT,
+  room TEXT,
+  updated_at TEXT NOT NULL
+);

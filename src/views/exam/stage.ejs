@@ -1,0 +1,86 @@
+<!-- src/views/exam/stage.ejs — one stage of the exam.
+     Flag stages (1, 2, 5): questions on the left, the terminal on the student's sandbox on the right.
+     Stages 3 and 4: the list of their tasks (4 also shows the database). Stage 6: the report form. -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <%- include('../partials/head', { pageTitle: pageTitle }) %>
+</head>
+<body>
+  <%- include('../partials/header') %>
+  <div class="app-layout">
+    <%- include('../partials/sidebar') %>
+    <main class="content exam-page">
+      <%- include('bar', { logStage: stage.n }) %>
+      <nav class="breadcrumbs"><a href="<%= base %>"><%= exam.title %></a> / Этап <%= stage.n %></nav>
+      <h1><%= stage.icon %> Этап <%= stage.n %>. <%= stage.title %></h1>
+      <section class="task-panel exam-intro"><%- introHtml %></section>
+
+      <% if (stage.kind === 'flags') { %>
+        <div class="exam-flags-layout">
+          <section class="task-panel exam-questions">
+            <h2 class="task-panel-title">Вопросы</h2>
+            <% stageTasks.forEach(function (t) { %>
+              <form class="exam-flag" id="q<%= t.id %>" data-exam-flag="<%= base %>/flag/<%= t.id %>" data-task="<%= t.id %>">
+                <div class="exam-flag-head"><strong><%= t.id %>. <%= t.title %></strong> <span class="exam-state exam-state-<%= t.state %>" data-flag-state><%= t.label %></span></div>
+                <div class="exam-flag-text"><%- t.textHtml %></div>
+                <% if (t.state === 'done') { %>
+                  <p class="exam-flag-accepted">Ответ принят: <code><%= t.row.answer %></code></p>
+                <% } else { %>
+                  <div class="exam-flag-row">
+                    <input type="text" name="answer" class="exam-flag-input" autocomplete="off" spellcheck="false" maxlength="300" aria-label="Ответ на вопрос <%= t.id %>" <%= phase !== 'open' ? 'disabled' : '' %>>
+                    <button type="submit" class="btn btn-primary" <%= phase !== 'open' ? 'disabled' : '' %>>Ответить</button>
+                  </div>
+                  <p class="exam-flag-msg" data-flag-msg aria-live="polite"></p>
+                <% } %>
+              </form>
+            <% }) %>
+          </section>
+          <section class="exam-terminal-wrap">
+            <% if (phase === 'open') { %>
+              <p class="exam-terminal-hint">Войдите в терминал под своим логином (<code><%= user.id %></code>) и паролем от платформы.
+                <a href="<%= base %>/terminal" target="_blank" rel="noopener">Открыть терминал во весь экран ↗</a></p>
+              <iframe class="ib-terminal exam-terminal" src="<%= base %>/terminal" title="Терминал сервера"></iframe>
+            <% } else { %>
+              <p class="exam-closed-note">Контрольная завершена — терминал закрыт.</p>
+            <% } %>
+          </section>
+        </div>
+      <% } else if (stage.kind === 'code' || stage.kind === 'sql') { %>
+        <section class="task-panel">
+          <h2 class="task-panel-title">Задания этапа</h2>
+          <ul class="exam-task-list exam-task-list-big">
+            <% stageTasks.forEach(function (t) { %>
+              <li>
+                <a href="<%= base %>/task/<%= t.id %>"><%= t.id %>. <%= t.title %></a>
+                <% if (t.kind === 'bug') { %><span class="exam-kind">программа с ошибкой · <%= maxRuns %> запуска</span><% } else if (t.kind === 'algorithm') { %><span class="exam-kind">алгоритм</span><% } %>
+                <span class="exam-state exam-state-<%= t.state %>"><%= t.label %></span>
+              </li>
+            <% }) %>
+          </ul>
+        </section>
+        <% if (tables) { %>
+          <%- include('tables', { tables: tables }) %>
+        <% } %>
+      <% } else if (stage.kind === 'report') { %>
+        <form class="task-panel exam-report" data-exam-report="<%= base %>/report">
+          <h2 class="task-panel-title">Отчёт</h2>
+          <% report.fields.forEach(function (f) { %>
+            <label class="exam-report-field">
+              <span class="exam-report-label"><%= f.label %></span>
+              <span class="exam-report-hint"><%= f.hint %></span>
+              <textarea name="<%= f.key %>" rows="5" maxlength="4000" <%= phase !== 'open' ? 'disabled' : '' %>><%= f.value %></textarea>
+            </label>
+          <% }) %>
+          <div class="code-editor-actions">
+            <button type="submit" class="btn btn-primary" <%= phase !== 'open' ? 'disabled' : '' %>>📨 Отправить отчёт</button>
+            <span class="code-editor-status" data-report-status aria-live="polite"><%= report.submittedAt ? 'Отчёт отправлен. Его можно исправить и отправить заново до конца контрольной.' : '' %></span>
+          </div>
+        </form>
+      <% } %>
+    </main>
+  </div>
+  <%- include('../partials/scripts') %>
+  <script src="/js/exam.js" defer></script>
+</body>
+</html>

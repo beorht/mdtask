@@ -144,11 +144,29 @@ body{
   var stage = 'user';
   var typedUser = '';
 
-  typeLines(bootLines, function(){
-    loginForm.style.display = 'flex';
-    loginForm.style.flexDirection = 'column';
-    userInput.focus();
-  });
+  function boot(){
+    typeLines(bootLines, function(){
+      loginForm.style.display = 'flex';
+      loginForm.style.flexDirection = 'column';
+      userInput.focus();
+    });
+  }
+
+  // Страница, встроенная в другую (итоговая контрольная mdtask задаёт window.SECLAB_RESUME):
+  // если сессия терминала уже открыта, вход заново не спрашивается.
+  if(window.SECLAB_RESUME){
+    fetch(API + '/whoami', { method: 'POST', headers: {'Content-Type': 'application/json'}, credentials: 'include', body: '{}' })
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(data){
+        if(!data || !data.studentId){ boot(); return; }
+        typedUser = data.studentId;
+        startTerminal(null);
+        applyState(data);
+      })
+      .catch(boot);
+  } else {
+    boot();
+  }
 
   function showMsg(text, cls){
     loginMsg.textContent = text;

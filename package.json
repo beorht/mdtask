@@ -10,7 +10,7 @@
     "start": "node index.js",
     "dev": "node --watch-path=src --watch-path=public --watch-path=index.js index.js",
     "pretest": "rm -rf /tmp/mdtask-trainer-test /tmp/mdtask-uploads-test",
-    "test": "DB_PATH=:memory: TRAINER_DB_DIR=/tmp/mdtask-trainer-test UPLOAD_DIR=/tmp/mdtask-uploads-test node --test && npm run test:ib",
+    "test": "DB_PATH=:memory: TRAINER_DB_DIR=/tmp/mdtask-trainer-test UPLOAD_DIR=/tmp/mdtask-uploads-test EXAM_DIR=/tmp/mdtask-exam-test node --test && npm run test:ib",
     "test:ib": "python3 -m unittest discover -s ib/tests"
   },
   "keywords": [],

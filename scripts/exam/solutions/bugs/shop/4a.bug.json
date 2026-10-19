@@ -1,0 +1,8 @@
+{
+  "bug": [
+    [
+      "    for day, income in days:\n        total += income",
+      "    for day, income in days:\n        total = 0\n        total += income"
+    ]
+  ]
+}

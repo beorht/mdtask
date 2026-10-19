@@ -1,0 +1,8 @@
+{
+  "bug": [
+    [
+      "    for i in range(len(schedule)):",
+      "    for i in range(1, len(schedule)):"
+    ]
+  ]
+}

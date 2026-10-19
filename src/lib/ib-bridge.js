@@ -22,6 +22,8 @@ const CTF_CONFIGS_DIR = path.resolve(
 );
 // Tasks on ib/server/lab_task.py (№6, №7): data/ctf/<task dir>/<student>/.
 const CTF_LABS_DIR = path.resolve(process.env.CTF_LABS_DIR || path.join(__dirname, '..', '..', 'data', 'ctf'));
+// The IB final exam's sandboxes (src/lib/exam/sandbox.js): data/exam/<exam>/sandbox/<student>/.
+const EXAM_DIR = path.resolve(process.env.EXAM_DIR || path.join(__dirname, '..', '..', 'data', 'exam'));
 const CTF_TERMINAL_DIR = path.resolve(
   process.env.CTF_TERMINAL_DIR || path.join(__dirname, '..', '..', 'data', 'ctf', 'terminal')
 );
@@ -41,7 +43,7 @@ function failAll(message) {
 function ensureChild() {
   if (child) return child;
   child = spawn(PYTHON, [BRIDGE_SCRIPT], {
-    env: { ...process.env, MDTASK_DB: DB_PATH, CTF_CAESAR_DIR, CTF_CONFIGS_DIR, CTF_TERMINAL_DIR, CTF_LABS_DIR, PYTHONDONTWRITEBYTECODE: '1' },
+    env: { ...process.env, MDTASK_DB: DB_PATH, CTF_CAESAR_DIR, CTF_CONFIGS_DIR, CTF_TERMINAL_DIR, CTF_LABS_DIR, EXAM_DIR, PYTHONDONTWRITEBYTECODE: '1' },
     stdio: ['pipe', 'pipe', 'inherit'],
   });
   const proc = child;

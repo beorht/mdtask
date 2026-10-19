@@ -1,0 +1,8 @@
+{
+  "bug": [
+    [
+      "        total += visits\n        days += 1",
+      "        total = 0\n        total += visits\n        days += 1"
+    ]
+  ]
+}

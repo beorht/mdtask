@@ -1,0 +1,12 @@
+{
+  "bug": [
+    [
+      "        patients.append((card, int(age)))",
+      "        patients.append((card, age))"
+    ],
+    [
+      "    limit = int(input())",
+      "    limit = input()"
+    ]
+  ]
+}
