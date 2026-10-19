@@ -1,0 +1,8 @@
+{
+  "bug": [
+    [
+      "    items.sort(key=lambda item: (-item[1], item[0]))",
+      "    items.sort(key=lambda item: (item[1], item[0]))"
+    ]
+  ]
+}

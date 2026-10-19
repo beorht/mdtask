@@ -1,0 +1,19 @@
+<%# Tables of the student's database (stage 4): structure and all rows, each table folded. %>
+<section class="task-panel exam-tables">
+  <h2 class="task-panel-title">Таблицы базы данных</h2>
+  <% tables.forEach(function (t) { %>
+    <details class="exam-table-block">
+      <summary><code><%= t.name %></code> — <%= t.rows.length %> строк · <%= t.columns.map(function (c) { return c.name + (c.pk ? ' (PK)' : ''); }).join(', ') %></summary>
+      <div class="sql-table-wrap">
+        <table class="sql-result-table">
+          <thead><tr><% t.columns.forEach(function (c) { %><th><%= c.name %><span class="sql-col-meta"><%= c.type %><%= c.pk ? ' · PK' : '' %></span></th><% }) %></tr></thead>
+          <tbody>
+            <% t.rows.forEach(function (row) { %>
+              <tr><% t.columns.forEach(function (c) { %><td><%= row[c.name] === null ? 'NULL' : row[c.name] %></td><% }) %></tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </details>
+  <% }) %>
+</section>

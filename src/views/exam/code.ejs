@@ -1,0 +1,104 @@
+<!-- src/views/exam/code.ejs — exam tasks 3.1–3.7 (public/js/exam-code.js).
+     LEFT: statement and examples; RIGHT (sticky): editor, input for «Запустить», output, results.
+     Algorithms (3.1–3.2): runs and checks are unlimited, the check shows the test results.
+     Bug programs (3.3–3.7): the program with the bug in the editor, 4 runs and one submission;
+     after the submission or the 4th run the task is closed and its verdict is not shown. -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <%- include('../partials/head', { pageTitle: pageTitle }) %>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css">
+</head>
+<body>
+  <%- include('../partials/header') %>
+  <div class="app-layout">
+    <%- include('../partials/sidebar') %>
+    <main class="content pyb-page exam-page">
+      <%- include('bar', { logStage: task.stage, logTask: task.id }) %>
+      <nav class="breadcrumbs"><a href="<%= base %>"><%= exam.title %></a> / <a href="<%= base %>/stage/3">Этап 3</a> / Задание <%= task.id %></nav>
+
+      <header class="sql-task-head">
+        <h1 class="sql-task-title">Задание <%= task.id %>. <%= task.title %></h1>
+        <div class="sql-task-meta">
+          <span class="sql-chip exam-state-<%= state.state %>" data-exam-chip><%= state.label %></span>
+          <% if (task.kind === 'bug') { %>
+            <span class="sql-chip">Программа с ошибкой</span>
+            <span class="sql-chip" data-runs-chip>Запусков осталось: <strong data-runs-left><%= runsLeft %></strong> из <%= maxRuns %></span>
+          <% } else { %>
+            <span class="sql-chip">Алгоритм: пишете сами</span>
+          <% } %>
+        </div>
+      </header>
+
+      <div class="pyb-workspace">
+        <div class="pyb-left">
+          <section class="task-panel pyb-statement">
+            <h2 class="task-panel-title">📝 <%= task.kind === 'bug' ? 'Что должна делать программа' : 'Задание' %></h2>
+            <%- statementHtml %>
+            <% if (task.kind === 'bug') { %>
+              <p>В программе есть ошибка: на примере ниже она выдаёт неверный результат или завершается с ошибкой. Найдите и исправьте её.
+                У вас <strong><%= maxRuns %> запуска</strong> и <strong>одна отправка</strong> на проверку. После отправки или после 4-го запуска задание закрывается,
+                а код 4-го запуска отправляется на проверку автоматически.</p>
+            <% } %>
+            <h3><%= examples.length > 1 ? 'Примеры' : 'Пример' %></h3>
+            <div class="sql-table-wrap">
+              <table class="pyb-examples">
+                <thead><tr><th>Ввод</th><th>Правильный вывод</th></tr></thead>
+                <tbody>
+                  <% examples.forEach(function (ex) { %>
+                    <tr><td><pre><%= ex.input.join('\n') %></pre></td><td><pre><%= ex.output %></pre></td></tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+            <p class="pyb-note">Каждая строка ввода читается своим <code>input()</code>. При проверке программа запускается на <%= tests.length %> тестах: на примерах и на других данных.</p>
+          </section>
+        </div>
+
+        <section class="task-panel pyb-editor-panel" id="examEditor"
+                 data-kind="<%= task.kind %>" data-task="<%= task.id %>" data-stage="<%= task.stage %>"
+                 data-url="<%= base %>/task/<%= task.id %>"
+                 data-locked="<%= locked ? '1' : '' %>" data-submitted="<%= submitted ? '1' : '' %>"
+                 data-runs-left="<%= runsLeft === null ? '' : runsLeft %>" data-phase="<%= phase %>">
+          <div class="sql-panel-head">
+            <h2 class="task-panel-title">Код</h2>
+            <span class="sql-hint" data-lock-note><%= locked ? (submitted ? 'Задание отправлено — код только для чтения' : 'Задание закрыто — код только для чтения') : 'Ctrl+Enter — запустить' %></span>
+          </div>
+          <div class="code-file-pane">
+            <textarea class="sql-console code-file-source" data-code rows="16" spellcheck="false" autocomplete="off" aria-label="Код программы" <%= locked ? 'readonly' : '' %>><%= code %></textarea>
+          </div>
+
+          <label class="pyb-stdin-label" for="examStdin">Ввод для «Запустить» — каждое значение с новой строки</label>
+          <textarea id="examStdin" class="pyb-stdin" rows="3" spellcheck="false" data-stdin <%= locked ? 'readonly' : '' %>><%= examples.length ? examples[0].input.join('\n') : '' %></textarea>
+
+          <div class="code-editor-actions">
+            <% if (!locked) { %>
+              <button type="button" class="btn btn-secondary" data-action="run">▶ Запустить</button>
+              <% if (task.kind === 'bug') { %>
+                <button type="button" class="btn btn-primary" data-action="submit">📨 Отправить на проверку</button>
+                <button type="button" class="btn btn-secondary" data-action="reset">↺ Вернуть исходный код</button>
+              <% } else { %>
+                <button type="button" class="btn btn-primary" data-action="check">✓ Проверить</button>
+              <% } %>
+              <button type="button" class="btn btn-secondary" data-action="stop" hidden>■ Остановить</button>
+            <% } %>
+            <span class="code-editor-status" data-status aria-live="polite"></span>
+          </div>
+
+          <div class="code-output-head">Вывод</div>
+          <pre class="code-output pyb-output" data-output aria-live="polite"><%= locked ? (submitted ? 'Программа отправлена на проверку. Результат объявит преподаватель.' : 'Задание закрыто.') : 'Нажмите «Запустить» или ' + (task.kind === 'bug' ? '«Отправить на проверку»' : '«Проверить»') + '.' %></pre>
+          <div class="pyb-results" data-results hidden></div>
+        </section>
+      </div>
+      <script type="application/json" id="examTests"><%- JSON.stringify(tests).replace(/</g, '\\u003c') %></script>
+    </main>
+  </div>
+  <%- include('../partials/scripts') %>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js" defer></script>
+  <script src="/js/exam.js" defer></script>
+  <script src="/js/exam-code.js" defer></script>
+</body>
+</html>

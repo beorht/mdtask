@@ -1,0 +1,19 @@
+<!-- src/views/exam/blocked.ejs — the exam opened from a device that is not a classroom PC (src/lib/exam/devices.js). -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <%- include('../partials/head', { pageTitle: 'Контрольная недоступна с этого устройства' }) %>
+</head>
+<body>
+  <%- include('../partials/header') %>
+  <main class="content home">
+    <section class="task-panel exam-locked">
+      <h1>🖥️ Только с компьютеров аудитории</h1>
+      <p>«<%= exam.title %>» можно писать только с компьютеров аудитории. Это устройство (адрес <code><%= device.ip %></code>) к ним не относится<%= device.reason === 'mac_mismatch' ? ': адрес принадлежит компьютеру аудитории, но устройство другое' : '' %>.</p>
+      <p>Пересядьте за компьютер аудитории. Если компьютер не работает — скажите преподавателю. Попытка входа записана.</p>
+      <p><a class="btn btn-secondary" href="/">На главную</a></p>
+    </section>
+  </main>
+  <%- include('../partials/scripts') %>
+</body>
+</html>

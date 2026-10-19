@@ -1,0 +1,8 @@
+{
+  "bug": [
+    [
+      "    return debt == 0 and books < MAX_BOOKS",
+      "    return debt == 0 or books < MAX_BOOKS"
+    ]
+  ]
+}

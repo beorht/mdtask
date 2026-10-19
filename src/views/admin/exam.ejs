@@ -1,0 +1,111 @@
+<%- include('partials/start') %>
+<% const phaseLabel = { before: 'ещё не началась', open: 'идёт сейчас', closed: 'завершена' }[o.phase]; %>
+
+<div class="a-page-head">
+  <div>
+    <h1><%= def.title %>: <%= def.subtitle.toLowerCase() %></h1>
+    <p class="a-subtitle">Группа <strong><%= def.group %></strong> · контрольная <strong><%= phaseLabel %></strong> · <%= view.formatDateTime(o.win.startsAt) %> — <%= view.formatDateTime(o.win.endsAt) %>.
+      План: <code>docs/exam-ib-plan.md</code>.</p>
+  </div>
+  <div class="a-page-actions">
+    <a class="a-btn a-btn-secondary" href="/admin/exam/<%= def.id %>/export.csv"><%- icon('download') %><span>CSV</span></a>
+  </div>
+</div>
+
+<div class="a-stats">
+  <div class="a-stat"><span class="a-stat-value"><%= o.issued %>/<%= o.total %></span><span class="a-stat-label">Вариантов выдано</span></div>
+  <div class="a-stat"><span class="a-stat-value"><%= o.list.filter(function (r) { return r.events; }).length %></span><span class="a-stat-label">Открывали контрольную</span></div>
+  <div class="a-stat"><span class="a-stat-value"><%= o.list.filter(function (r) { return r.needsRecheck; }).length %></span><span class="a-stat-label">Нужна перепроверка</span></div>
+  <div class="a-stat <%= o.win.publishedAt ? 'a-stat-accent' : '' %>"><span class="a-stat-value"><%= o.win.publishedAt ? 'да' : 'нет' %></span><span class="a-stat-label">Результаты опубликованы</span></div>
+</div>
+
+<section class="a-card">
+  <div class="a-card-head"><h2>Проведение</h2></div>
+  <form class="a-exam-window" method="post" action="/admin/exam/<%= def.id %>/window">
+    <label>Начало (время UTC+5) <input type="datetime-local" name="startsAt" value="<%= startsLocal %>" required></label>
+    <label>Конец <input type="datetime-local" name="endsAt" value="<%= endsLocal %>" required></label>
+    <button type="submit" class="a-btn a-btn-secondary">Сохранить время</button>
+  </form>
+  <p class="a-muted">До начала студенты контрольную не видят. Пока она идёт, у группы <%= def.group %> закрыты задания ИБ и SQL-тренажёр. После конца неотправленные программы и отчёты отправляются в том виде, в каком были.
+    Группа TEST видит контрольную всегда — для пробного прогона.</p>
+  <div class="a-exam-actions">
+    <form method="post" action="/admin/exam/<%= def.id %>/issue">
+      <button type="submit" class="a-btn a-btn-primary">Выдать варианты группе <%= def.group %></button>
+    </form>
+    <form method="post" action="/admin/exam/<%= def.id %>/publish" <% if (!o.win.publishedAt) { %>data-confirm="Опубликовать результаты?|Студенты увидят свои баллы и оценку на странице контрольной.|Опубликовать"<% } %>>
+      <input type="hidden" name="published" value="<%= o.win.publishedAt ? '0' : '1' %>">
+      <button type="submit" class="a-btn a-btn-secondary"><%= o.win.publishedAt ? 'Снять публикацию' : 'Опубликовать результаты' %></button>
+    </form>
+  </div>
+  <p class="a-muted">Перепроверка отправленного кода на этом компьютере: <code>node scripts/exam/recheck.js</code> (с <code>--update-db</code> — записать результаты).
+    Анализ журналов: <code>python3 scripts/exam/analyze.py --exam <%= def.id %></code>.</p>
+</section>
+
+<section class="a-card">
+  <div class="a-card-head"><h2>Компьютеры аудитории</h2><a class="a-link-btn" href="/admin/exam/<%= def.id %>/pcs">Список (<%= o.pcs.length %>) →</a></div>
+  <form class="a-exam-window" method="post" action="/admin/exam/<%= def.id %>/devices">
+    <label>Проверка устройства
+      <select name="mode">
+        <% Object.entries(o.deviceModes).forEach(function ([key, label]) { %><option value="<%= key %>" <%= o.win.deviceMode === key ? 'selected' : '' %>><%= label %></option><% }) %>
+      </select>
+    </label>
+    <button type="submit" class="a-btn a-btn-secondary">Сохранить</button>
+  </form>
+  <p class="a-muted">Действует только на страницы контрольной. Компьютер узнаётся по IP из списка; если сервер в той же сети, сверяется и MAC.
+    Студенту, у которого сломался компьютер, можно разрешить любое устройство на его странице. Группа TEST не проверяется.
+    <% if (o.deviceWarnings) { %><strong><%= o.deviceWarnings %> <%= view.plural(o.deviceWarnings, 'студент', 'студента', 'студентов') %> с предупреждениями</strong> — столбец «ПК».<% } %></p>
+  <% if (!o.pcs.length && o.win.deviceMode === 'block') { %><p class="a-tag a-tag-warn">Список компьютеров пуст: в режиме «Запрещать» контрольную нельзя открыть ни с одного устройства.</p><% } %>
+</section>
+
+<section class="a-card a-card-flush">
+  <div class="a-card-head a-card-head-pad"><h2>Результаты</h2><p class="a-muted">✓ — решено, ✗ N — неверно (попыток), «нет прогона» — программа отправлена без результатов тестов (по окончании времени), нужна перепроверка.</p></div>
+  <% if (!o.list.length) { %>
+    <%- include('partials/empty', { emptyIcon: 'students', emptyTitle: 'В группе нет студентов', emptyText: '' }) %>
+  <% } else { %>
+    <div class="a-table-wrap">
+      <table class="a-table a-exam-table">
+        <thead>
+          <tr>
+            <th>Студент</th><th>Вариант</th><th>ПК</th>
+            <% o.taskHeads.forEach(function (t) { %><th title="<%= t.points %> б."><%= t.id %></th><% }) %>
+            <th class="a-num">Баллы</th><th class="a-num">Оценка</th><th class="a-num">Событий</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% o.list.forEach(function (r) { %>
+            <tr>
+              <td class="a-exam-name"><a href="/admin/exam/<%= def.id %>/students/<%= r.student.id %>"><%= view.shortName(r.student.name) %></a>
+                <div class="a-muted"><%= r.student.id %><%= r.student.group !== def.group ? ' · ' + r.student.group : '' %></div></td>
+              <% if (!r.variant) { %>
+                <td colspan="<%= o.taskHeads.length + 5 %>" class="a-muted">вариант не выдан</td>
+              <% } else { %>
+                <td class="a-nowrap a-muted">№<%= r.variant.index + 1 %> · <%= r.themeLabel %><% if (!r.sandbox) { %> <span class="a-tag a-tag-warn">нет песочницы</span><% } %></td>
+                <% const dv = r.device; %>
+                <td class="a-nowrap a-exam-device">
+                  <% if (!dv) { %><span class="a-muted">—</span><% } else { %>
+                    <%= dv.pcs.join(', ') || 'не ПК аудитории' %>
+                    <% if (dv.blocked) { %><span class="a-tag a-tag-warn" title="Попытки войти не с ПК аудитории">✕ <%= dv.blocked %></span><% } %>
+                    <% if (dv.pcs.length > 1) { %><span class="a-tag a-tag-warn">смена ПК</span><% } %>
+                    <% if (dv.shared.length) { %><span class="a-tag a-tag-warn" title="<%= dv.shared.map(function (s) { return s.pc + ': ' + s.with.join(', '); }).join('; ') %>">общий ПК</span><% } %>
+                    <% if (dv.macMismatch) { %><span class="a-tag a-tag-warn">MAC не совпал</span><% } %>
+                    <% if (dv.outside) { %><span class="a-tag a-tag-warn">вне аудитории</span><% } %>
+                    <% if (r.variant.anyDevice) { %><span class="a-tag">любое устройство</span><% } %>
+                  <% } %>
+                </td>
+                <% r.cells.forEach(function (c) { %>
+                  <td class="a-exam-cell a-exam-cell-<%= c.state %>" title="<%= c.task.id %>. <%= c.task.title %>"><%= c.text %></td>
+                <% }) %>
+                <td class="a-num"><strong><%= r.score.total %></strong><%= r.score.pending ? '*' : '' %></td>
+                <td class="a-num"><%= r.grade || '—' %></td>
+                <td class="a-num a-muted"><%= r.events %></td>
+              <% } %>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <p class="a-card-foot a-muted">* — отчёт ещё не оценён, баллы без него.</p>
+  <% } %>
+</section>
+
+<%- include('partials/end') %>

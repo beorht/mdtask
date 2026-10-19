@@ -16,6 +16,17 @@
       <p class="home-lead">Выберите предмет — у каждого своя страница с навигацией, теорией и заданиями.</p>
     </header>
 
+    <% (home.exams || []).forEach(function (e) { %>
+      <a class="exam-home-card exam-home-<%= e.phase %>" href="/exam/<%= e.id %>">
+        <span class="exam-home-icon" aria-hidden="true">🎓</span>
+        <span class="exam-home-text">
+          <strong><%= e.title %>: <%= e.subtitle.toLowerCase() %></strong>
+          <span><%= e.phase === 'open' ? 'Идёт сейчас — откройте, чтобы начать или продолжить.' : e.published ? 'Завершена — результаты объявлены.' : 'Завершена — результаты объявит преподаватель.' %></span>
+        </span>
+        <span class="subject-card-go">Открыть →</span>
+      </a>
+    <% }) %>
+
     <section class="home-section" aria-labelledby="subjectsTitle">
       <h2 id="subjectsTitle" class="home-section-title">Предметы</h2>
       <ul class="subject-grid">
@@ -25,12 +36,13 @@
           <% const total = isSql || isIb || isPyb ? s.total : s.counts.total; %>
           <% const pct = total ? Math.round((done / total) * 100) : 0; %>
           <li>
-            <a class="subject-card subject-card-<%= s.key %>" href="/subjects/<%= s.key %>">
+            <a class="subject-card subject-card-<%= s.key %><%= s.examLocked ? ' is-exam-locked' : '' %>" href="/subjects/<%= s.key %>">
               <span class="subject-card-head">
                 <span class="subject-card-icon" aria-hidden="true"><%= s.icon || ICONS[s.key] %></span>
                 <span class="subject-card-kind"><%= isPyb ? 'Dasturlash' : isSql ? 'Тренажёр' : isIb ? 'Практикум' : isCourse ? s.kindLabel : 'Программирование' %></span>
               </span>
               <span class="subject-card-title"><%= s.title %></span>
+              <% if (s.examLocked) { %><span class="subject-card-lock">🔒 Закрыто на время контрольной</span><% } %>
               <span class="subject-card-meta">
                 <% if (isPyb) { %>
                   <%= s.topic %> · <%= s.total %> ta topshiriq, avtomatik tekshiruv<% if (s.next) { %><br>Hozir: <%= s.next.number %>. <%= s.next.title %><% } %>

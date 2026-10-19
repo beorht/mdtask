@@ -6,6 +6,7 @@ const { seedSqlExercises } = require('./seed-sql-exercises');
 const { seedLanguageExercises } = require('./seed-language-exercises');
 const { DEFAULT_PASSWORD, hashPassword, verifyPassword } = require('../lib/password');
 const { TEST_GROUP } = require('../lib/test-access');
+const { makeExamDb } = require('./exam');
 
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, '..', '..', 'data', 'mdtask.db');
 
@@ -62,6 +63,9 @@ addColumnIfMissing('submissions', 'resubmit_allowed', 'INTEGER NOT NULL DEFAULT 
 addColumnIfMissing('ctf_caesar_secrets', 'variant', "TEXT NOT NULL DEFAULT 'password'");
 addColumnIfMissing('ctf_caesar_secrets', 'password_file_path', 'TEXT');
 db.exec('CREATE INDEX IF NOT EXISTS idx_assignments_target_group ON assignments(target_group)');
+// Итоговая контрольная: проверка устройства (off | warn | block) и студенты, которым разрешено любое устройство.
+addColumnIfMissing('exams', 'device_mode', "TEXT NOT NULL DEFAULT 'block'");
+addColumnIfMissing('exam_variants', 'any_device', 'INTEGER NOT NULL DEFAULT 0');
 
 // Any account created before password auth existed (real, already-enrolled students/
 // teachers) is migrated onto the shared default password and must change it on next login.
@@ -94,6 +98,9 @@ function prepared(sql) {
   }
   return stmt;
 }
+
+// Итоговая контрольная (src/db/exam.js).
+const examDb = makeExamDb(db, prepared);
 
 function rowToUser(row) {
   return {
@@ -646,7 +653,7 @@ function seedCaesarSecretForTests(studentId, { solved = false } = {}) {
 }
 
 function __resetForTests() {
-  db.exec('DELETE FROM python_basics_attempts; DELETE FROM python_basics_progress; DELETE FROM code_drafts; DELETE FROM ib_lab_log; DELETE FROM ib_lab_tasks; DELETE FROM ib_terminal_log; DELETE FROM ib_terminal_tasks; DELETE FROM ib_config_tasks; DELETE FROM ctf_caesar_secrets; DELETE FROM sql_attempts; DELETE FROM submissions; DELETE FROM assignments; DELETE FROM courses; DELETE FROM users;');
+  db.exec('DELETE FROM exam_pcs; DELETE FROM exam_events; DELETE FROM exam_tasks; DELETE FROM exam_variants; DELETE FROM exams; DELETE FROM python_basics_attempts; DELETE FROM python_basics_progress; DELETE FROM code_drafts; DELETE FROM ib_lab_log; DELETE FROM ib_lab_tasks; DELETE FROM ib_terminal_log; DELETE FROM ib_terminal_tasks; DELETE FROM ib_config_tasks; DELETE FROM ctf_caesar_secrets; DELETE FROM sql_attempts; DELETE FROM submissions; DELETE FROM assignments; DELETE FROM courses; DELETE FROM users;');
   seed(db);
 }
 
@@ -702,5 +709,6 @@ module.exports = {
   getSqlAttempts,
   getSolvedSqlExerciseIds,
   getAllSqlAttempts,
+  ...examDb,
   __resetForTests,
 };

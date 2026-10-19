@@ -1,0 +1,8 @@
+{
+  "bug": [
+    [
+      "            return qty\n    return 0",
+      "            return qty\n        return 0"
+    ]
+  ]
+}

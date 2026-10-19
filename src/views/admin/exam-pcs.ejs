@@ -1,0 +1,58 @@
+<%- include('partials/start') %>
+
+<nav class="a-breadcrumbs" aria-label="Навигация">
+  <a href="/admin/exam/<%= def.id %>"><%= def.title %></a><span>/</span><span>Компьютеры аудитории</span>
+</nav>
+
+<div class="a-page-head">
+  <div>
+    <h1>Компьютеры аудитории</h1>
+    <p class="a-subtitle">С этих компьютеров можно писать контрольную. Компьютер узнаётся по IP-адресу; MAC проверяется, если сервер стоит в той же сети, что и компьютеры.</p>
+  </div>
+  <% if (pcFile) { %>
+    <form method="post" action="/admin/exam/<%= def.id %>/pcs/import" data-confirm="Импортировать список?|Компьютеры из <%= pcFile %> (таблица ib_pc) будут добавлены, у уже известных по имени обновятся IP и MAC.|Импортировать">
+      <button type="submit" class="a-btn a-btn-secondary">Импорт из <%= pcFile %></button>
+    </form>
+  <% } %>
+</div>
+
+<section class="a-card a-card-flush">
+  <% if (!pcs.length) { %>
+    <%- include('partials/empty', { emptyIcon: 'shield', emptyTitle: 'Список пуст', emptyText: 'Импортируйте список из файла или добавьте компьютеры ниже. Пока список пуст, в режиме «Запрещать» контрольную нельзя открыть ни с одного устройства.' }) %>
+  <% } else { %>
+    <div class="a-table-wrap">
+      <table class="a-table">
+        <thead><tr><th>Имя</th><th>IP</th><th>MAC</th><th>Аудитория</th><th>Изменён</th><th></th></tr></thead>
+        <tbody>
+          <% pcs.forEach(function (pc) { %>
+            <tr>
+              <td><strong><%= pc.name %></strong></td>
+              <td><code><%= pc.ip %></code></td>
+              <td><code><%= pc.mac || '—' %></code></td>
+              <td><%= pc.room || '—' %></td>
+              <td class="a-muted a-nowrap"><%= view.formatDateTime(pc.updatedAt) %></td>
+              <td>
+                <form method="post" action="/admin/exam/<%= def.id %>/pcs/<%= pc.id %>/delete" data-confirm="Удалить <%= pc.name %>?|С этого компьютера нельзя будет писать контрольную.|Удалить">
+                  <button type="submit" class="a-btn a-btn-ghost a-btn-sm">Удалить</button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</section>
+
+<section class="a-card">
+  <div class="a-card-head"><h2>Добавить или изменить</h2><p class="a-muted">Компьютер с таким же именем будет обновлён.</p></div>
+  <form class="a-exam-window" method="post" action="/admin/exam/<%= def.id %>/pcs">
+    <label>Имя <input type="text" name="name" placeholder="pc-414-17" required></label>
+    <label>IP <input type="text" name="ip" placeholder="192.168.100.20" required></label>
+    <label>MAC <input type="text" name="mac" placeholder="f4:b5:20:66:00:00"></label>
+    <label>Аудитория <input type="text" name="room" placeholder="414" size="6"></label>
+    <button type="submit" class="a-btn a-btn-primary">Сохранить</button>
+  </form>
+</section>
+
+<%- include('partials/end') %>

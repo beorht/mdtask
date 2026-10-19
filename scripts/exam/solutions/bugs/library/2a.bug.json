@@ -1,0 +1,8 @@
+{
+  "bug": [
+    [
+      "        if days >= DEBT_DAYS:",
+      "        if days > DEBT_DAYS:"
+    ]
+  ]
+}

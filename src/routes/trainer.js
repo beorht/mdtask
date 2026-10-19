@@ -10,8 +10,12 @@ const { withProgress } = require('../lib/sql-progress');
 const { describeExpected } = require('../lib/sql-expected');
 const { hasFullAccess } = require('../lib/test-access');
 const { buildReport } = require('../lib/sql-mistakes');
+const { blockDuringExam } = require('../middleware/exam-lock');
 
 const router = express.Router();
+
+// Closed for the group while its final exam runs (src/middleware/exam-lock.js).
+router.use('/trainer', (req, res, next) => (req.session.user ? blockDuringExam(req, res, next) : next()));
 
 function exercisesForUser(user) {
   const allowed = getAllowedTopicKeys(user);

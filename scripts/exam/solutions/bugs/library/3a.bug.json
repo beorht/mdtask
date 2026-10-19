@@ -1,0 +1,8 @@
+{
+  "bug": [
+    [
+      "        books.append([code, int(times)])",
+      "        books.append([code, times])"
+    ]
+  ]
+}

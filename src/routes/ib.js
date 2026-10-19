@@ -9,6 +9,8 @@ const { buildSidebarTree } = require('../lib/sidebar');
 const { callTerminal } = require('../lib/ib-bridge');
 const { renderMarkdown, extractHeadings } = require('../lib/markdown');
 const { IB_SUBJECT_KEY, IB_SUBJECT_TITLE, findIbTask, ibSummary } = require('../lib/ib-tasks');
+const { blockDuringExam } = require('../middleware/exam-lock');
+const { examLockFor } = require('../lib/exam');
 
 const TERMINAL_HTML = path.join(__dirname, '..', '..', 'ib', 'prototype', 'terminal-lab.html');
 const API_PATHS = ['login', 'run', 'logout', 'whoami', 'complete'];
@@ -22,6 +24,7 @@ function subjectSidebar(user) {
 // The task from :task, with the student's status — or a 404 if it doesn't exist / isn't assigned.
 function loadTask(req, res, next) {
   const task = findIbTask(req.params.task);
+  if (task && examLockFor(req.session.user)) return blockDuringExam(req, res, next);
   if (!task) return res.status(404).render('404');
   const status = task.status(req.session.user.id);
   if (!status.assigned) return res.status(404).render('404');
@@ -38,6 +41,7 @@ router.get(`/subjects/${IB_SUBJECT_KEY}`, requireRole('student'), (req, res) => 
     activePath: `/subjects/${IB_SUBJECT_KEY}`,
     title: IB_SUBJECT_TITLE,
     ib: ibSummary(user),
+    examLock: examLockFor(user),
   });
 });
 

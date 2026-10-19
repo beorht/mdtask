@@ -1,0 +1,10 @@
+<%# Exam status bar: the time left (public/js/exam.js counts it down) or that the exam is over. %>
+<div class="exam-bar exam-bar-<%= phase %>" data-exam-bar data-ends="<%= win.endsAt %>" data-base="<%= base %>"
+     data-stage="<%= typeof logStage !== 'undefined' && logStage ? logStage : '' %>" data-task="<%= typeof logTask !== 'undefined' && logTask ? logTask : '' %>">
+  <span class="exam-bar-title">🎓 <%= exam.title %></span>
+  <% if (phase === 'open') { %>
+    <span class="exam-bar-timer">До конца: <strong data-exam-timer>—</strong></span>
+  <% } else { %>
+    <span class="exam-bar-timer">Контрольная завершена<%= win.publishedAt ? ' · результаты объявлены' : ' · результаты объявит преподаватель' %></span>
+  <% } %>
+</div>

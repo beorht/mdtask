@@ -1,0 +1,8 @@
+{
+  "bug": [
+    [
+      "        if author in counts:\n            counts[author] += 1\n        else:\n            counts[author] = 1\n",
+      "        counts[author] += 1\n"
+    ]
+  ]
+}

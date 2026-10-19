@@ -10,6 +10,8 @@ const { hasFullAccess } = require('./test-access');
 const { LANGUAGE_SUBJECTS, COURSE_SUBJECTS } = require('./subjects');
 const { IB_SUBJECT_KEY, IB_SUBJECT_TITLE, ibSummary } = require('./ib-tasks');
 const pybasics = require('./python-basics');
+const exam = require('./exam');
+const { getExamVariant } = require('../db');
 const {
   getAssignmentsForStudent,
   getLanguageExercises,
@@ -183,7 +185,22 @@ function buildStudentHome(user, now = Date.now()) {
     });
   }
 
+  // The final exam: a card while it runs and after it; the IB tasks and the trainer are closed while it runs.
+  const exams = Object.values(exam.EXAMS)
+    .map((def) => {
+      if (!getExamVariant(def.id, user.id)) return null;
+      const win = exam.examWindow(def);
+      const phase = exam.phaseFor(def, user, win);
+      return phase === 'before' ? null : { id: def.id, title: def.title, subtitle: def.subtitle, phase, endsAt: win.endsAt, published: !!win.publishedAt };
+    })
+    .filter(Boolean);
+  if (exam.examLockFor(user)) {
+    sqlSubject.examLocked = true;
+    ibSubjects.forEach((s) => (s.examLocked = true));
+  }
+
   return {
+    exams,
     subjects: [sqlSubject, ...pybasicsSubjects, ...languageSubjects, ...ibSubjects, ...courseSubjects],
     counts,
     // Anything the student still has to act on (or is waiting on), nearest deadline first.

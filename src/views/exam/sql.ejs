@@ -1,0 +1,56 @@
+<!-- src/views/exam/sql.ejs — exam tasks 4.1–4.4 (public/js/exam-sql.js): statement, the database
+     tables, the SQL editor with «Выполнить» (preview) and «Проверить» (graded), the result. -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <%- include('../partials/head', { pageTitle: pageTitle }) %>
+</head>
+<body>
+  <%- include('../partials/header') %>
+  <div class="app-layout">
+    <%- include('../partials/sidebar') %>
+    <main class="content task-page sql-task exam-page">
+      <%- include('bar', { logStage: task.stage, logTask: task.id }) %>
+      <nav class="breadcrumbs"><a href="<%= base %>"><%= exam.title %></a> / <a href="<%= base %>/stage/4">Этап 4</a> / Задание <%= task.id %></nav>
+      <header class="sql-task-head">
+        <h1 class="sql-task-title">Задание <%= task.id %>. <%= task.title %></h1>
+        <div class="sql-task-meta">
+          <span class="sql-chip exam-state-<%= state.state %>" data-exam-chip><%= state.label %></span>
+          <% if (task.allowedStatements) { %>
+            <span class="sql-chip">Операторы: <% task.allowedStatements.forEach(function (t, i) { %><code><%= t %></code><%= i < task.allowedStatements.length - 1 ? ', ' : '' %><% }) %></span>
+          <% } else { %>
+            <span class="sql-chip">Оператор: <code><%= task.allowedStatement %></code></span>
+          <% } %>
+        </div>
+      </header>
+
+      <section class="task-panel sql-task-desc">
+        <h2 class="task-panel-title">Задание</h2>
+        <%- statementHtml %>
+      </section>
+
+      <section class="task-panel exam-sql-editor" id="examSql" data-url="<%= base %>/sql/<%= task.id %>" data-draft-url="<%= base %>/task/<%= task.id %>/draft"
+               data-task="<%= task.id %>" data-stage="<%= task.stage %>" data-phase="<%= phase %>">
+        <div class="sql-panel-head">
+          <h2 class="task-panel-title">SQL-редактор</h2>
+          <span class="sql-hint"><%= task.allowedStatements ? 'Можно несколько операторов через ;' : 'Один запрос ' + task.allowedStatement %></span>
+        </div>
+        <textarea class="sql-console" rows="9" spellcheck="false" autocomplete="off" aria-label="SQL-запрос" placeholder="Введите SQL-запрос…" data-sql <%= phase !== 'open' ? 'readonly' : '' %>><%= sqlText %></textarea>
+        <div class="sql-console-actions">
+          <% if (phase === 'open') { %>
+            <button type="button" class="btn btn-secondary" data-action="run" title="Ctrl + Enter">▶ Выполнить</button>
+            <button type="button" class="btn btn-primary" data-action="check" title="Ctrl + Shift + Enter">✓ Проверить</button>
+          <% } %>
+          <span class="code-editor-status" data-status aria-live="polite"></span>
+        </div>
+        <div class="exam-sql-result" data-result aria-live="polite"></div>
+      </section>
+
+      <%- include('tables', { tables: tables }) %>
+    </main>
+  </div>
+  <%- include('../partials/scripts') %>
+  <script src="/js/exam.js" defer></script>
+  <script src="/js/exam-sql.js" defer></script>
+</body>
+</html>

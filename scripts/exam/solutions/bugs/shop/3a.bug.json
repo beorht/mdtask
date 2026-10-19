@@ -1,0 +1,8 @@
+{
+  "bug": [
+    [
+      "        price = int(parts[1])",
+      "        price = parts[1]"
+    ]
+  ]
+}

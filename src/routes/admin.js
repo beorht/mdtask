@@ -516,6 +516,10 @@ router.get('/admin/python-basics/:student/:task', (req, res) => {
   });
 });
 
+// --- Итоговая контрольная (src/routes/admin-exam.js) ---
+
+require('./admin-exam').register(router, { render, notFound, flash });
+
 // --- Settings ---
 
 router.get('/admin/settings', (req, res) => {

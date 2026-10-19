@@ -1,0 +1,8 @@
+{
+  "bug": [
+    [
+      "    return OPEN <= minutes <= CLOSE",
+      "    return OPEN <= minutes < CLOSE"
+    ]
+  ]
+}

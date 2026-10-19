@@ -34,6 +34,7 @@ import hashlib
 import http.server
 import json
 import os
+import re
 import secrets
 import socketserver
 import sqlite3
@@ -58,6 +59,12 @@ CTF_TERMINAL_DIR = Path(os.environ.get("CTF_TERMINAL_DIR", str(REPO_ROOT / "data
 # Пошаговые задания на общем движке lab_task.py (№6 incident, №7 ssh): data/ctf/<каталог>/<id>/
 CTF_LABS_DIR = Path(os.environ.get("CTF_LABS_DIR", str(REPO_ROOT / "data" / "ctf")))
 TASKS = ("caesar", config_task.TASK_KEY, terminal_task.TASK_KEY) + lab_task.keys()
+# Итоговая контрольная mdtask (src/lib/exam): задание «exam-<id контрольной>», песочница
+# data/exam/<id>/sandbox/<студент>/ — учебный сервер без этапов, ответы сдаются на сайте.
+EXAM_DIR = Path(os.environ.get("EXAM_DIR", str(REPO_ROOT / "data" / "exam")))
+EXAM_TASK = re.compile(r"exam-([a-z0-9][a-z0-9-]*)")
+EXAM_WELCOME = ("Учебный сервер итоговой контрольной. Задания и поля для ответов — на странице контрольной.\n"
+                "Список команд — help, справка — man КОМАНДА, Tab дополняет имена файлов.")
 STATIC_DIR = Path(__file__).resolve().parent.parent / "prototype"
 PORT = int(os.environ.get("PORT", 8088))
 
@@ -123,8 +130,16 @@ def get_solved(student_id):
 
 # --------------------------------------------------------- файловая система ---
 
+def is_exam_task(task):
+    return bool(EXAM_TASK.fullmatch(task or ""))
+
+
 def make_sandbox(task, student_id):
     """Песочница задания: №3 — домашний каталог только для чтения, №4 — целый «сервер»."""
+    if is_exam_task(task):
+        root = EXAM_DIR / EXAM_TASK.fullmatch(task).group(1) / "sandbox" / student_id
+        (root / "home" / student_id).mkdir(parents=True, exist_ok=True)
+        return Sandbox(root, student_id, f"home/{student_id}", mapped_home=False, writable=True)
     lab = lab_task.get(task)
     if task in (config_task.TASK_KEY, terminal_task.TASK_KEY) or lab:
         base = CTF_CONFIGS_DIR if task == config_task.TASK_KEY else CTF_TERMINAL_DIR
@@ -513,13 +528,13 @@ def handle_api(path, data, sid):
         student_id = (data.get("studentId") or "").strip()
         password = data.get("password") or ""
         task = data.get("task") or "caesar"
-        if task not in TASKS:
+        if task not in TASKS and not is_exam_task(task):
             return 200, {"ok": False, "error": f"Неизвестное задание: {task}"}, None
         if not verify_login(student_id, password):
             return 200, {"ok": False, "error": "Неверный логин или пароль"}, None
         sid = new_session(student_id, task)
         body = {"ok": True, "studentId": student_id}
-        welcome = lab_welcome(SESSIONS[sid])
+        welcome = EXAM_WELCOME if is_exam_task(task) else lab_welcome(SESSIONS[sid])
         if welcome:
             body["welcome"] = welcome
         return 200, body, sid
