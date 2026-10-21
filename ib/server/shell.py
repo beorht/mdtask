@@ -50,12 +50,15 @@ HELP_TEXT = """Доступные команды:
   grep [опции] шаблон [файл...] - поиск строк по шаблону (-r, -n, -i, -v, -l, -E ...)
   sed [опции] скрипт [файл...]  - потоковый редактор (s/было/стало/, -i — правка файла)
   wc, sort, uniq, cut - подсчёт, сортировка, уникальные строки, вырезание полей
+  tr НАБОР1 НАБОР2   - замена символов (-d — удалить, -s — сжать повторы): tr -s ' '
+  zcat, zgrep        - cat и grep для сжатых журналов (.gz)
   xargs команда      - передать строки ввода как аргументы команде
   tee [-a] файл      - записать ввод в файл и вывести на экран
   cp, touch, diff, stat - копирование, создание, сравнение файлов, сведения о файле
   sudo команда       - выполнить команду с правами root
   man <команда>      - краткая справка по команде (find, grep, sed, xargs, sudo ...)
-  whoami, id, date, echo, which, hostname, uname, printenv
+  whoami, id, echo, which, hostname, uname, printenv
+  date [-u] [-d СТРОКА] [+ФОРМАТ] - дата и время; TZ=Asia/Tashkent date -d '2026-11-19 02:14:07 UTC'
   sha256sum <файл>   - контрольная сумма файла (-c — проверить по списку сумм)
   id / groups [имя], getent passwd|group [имя] - учётные записи и группы
   sudo passwd -l|-u|-S имя - заблокировать / разблокировать / состояние учётной записи
@@ -64,6 +67,8 @@ HELP_TEXT = """Доступные команды:
   ssh [-i ключ] [-p порт] пользователь@localhost - подключиться по SSH (к этому же серверу)
   sudo sshd -t / -T  - проверить конфигурацию SSH / показать действующие значения
   systemctl status|reload|restart ssh, journalctl -u ssh - управление службой SSH и её журнал
+  journalctl --verify --file ЖУРНАЛ - проверить цепочку контрольных сумм журнала
+  sudo iptables -A INPUT -s АДРЕС -j DROP, sudo iptables -L -n - заблокировать адрес, список правил
   ssh-keygen -l -f ключ.pub - отпечаток ключа
   history            - история команд (!! — повторить последнюю, !N — команду N)
   ./script.sh, bash script.sh - запустить скрипт
@@ -74,6 +79,8 @@ HELP_TEXT = """Доступные команды:
 
 Конвейеры и перенаправления: cmd1 | cmd2, cmd > файл, cmd >> файл, 2>/dev/null, cmd1 && cmd2
 Клавиши: Tab — дополнить имя команды или файла, ↑/↓ — история, Ctrl+C — отменить ввод, Ctrl+L — очистить экран"""
+
+ASSIGN_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*=.*", re.S)
 
 EDITORS = {"nano", "vi", "vim", "nvim", "mcedit", "emacs", "gedit", "ed", "joe", "micro", "view"}
 
@@ -96,6 +103,7 @@ BIN_DIR = {
     "last": "/usr/bin/last", "lastb": "/usr/bin/lastb", "sha256sum": "/usr/bin/sha256sum",
     "md5sum": "/usr/bin/md5sum", "systemctl": "/usr/bin/systemctl", "journalctl": "/usr/bin/journalctl",
     "sshd": "/usr/sbin/sshd", "ssh": "/usr/bin/ssh", "ssh-keygen": "/usr/bin/ssh-keygen",
+    "zcat": "/usr/bin/zcat", "zgrep": "/usr/bin/zgrep", "tr": "/usr/bin/tr", "iptables": "/usr/sbin/iptables",
 }
 
 MONTHS = ["янв", "фев", "мар", "апр", "мая", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"]
@@ -393,6 +401,7 @@ class Ctx:
         self.trace = []          # выполненные команды: для проверки заданий по журналу
         self.depth = 0
         self.script_depth = 0
+        self.cmd_env = {}        # VAR=значение перед командой (например TZ=Asia/Tashkent date ...)
 
     @property
     def cwd(self):
@@ -412,6 +421,7 @@ class Ctx:
             "SHELL": "/bin/bash",
             "HOSTNAME": "seclab",
             "?": str(self.status),
+            **self.cmd_env,
         }
 
     def read_input(self, cmd, name, io):
@@ -715,8 +725,17 @@ def run_pipeline(ctx, pipeline, term_out, term_err):
             continue
 
         io = IO(stage_stdin, fds[1], fds[2])
+        assigns = {}
+        while argv and ASSIGN_RE.fullmatch(argv[0]):
+            name, _, value = argv.pop(0).partition("=")
+            assigns[name] = value
         if argv:
-            status = ctx.run_argv(argv, io)
+            saved_env = ctx.cmd_env
+            ctx.cmd_env = {**saved_env, **assigns}
+            try:
+                status = ctx.run_argv(argv, io)
+            finally:
+                ctx.cmd_env = saved_env
         else:
             status = 0
         for vrel, sink in file_sinks:
@@ -1827,6 +1846,19 @@ def cmd_task(ctx, argv, io):
     return 0
 
 
+def _hook_command(name, usage):
+    """Команда, которую даёт задание (duty, timeline …): без задания — понятное сообщение."""
+    def call(ctx, argv, io):
+        hook = ctx.hooks.get(name)
+        if not hook:
+            io.err(f"{name}: {usage}")
+            return 1
+        text, ok = hook(argv[1:])
+        (io.out if ok else io.err)(text + ("\n" if text and not text.endswith("\n") else ""))
+        return 0 if ok else 1
+    return call
+
+
 def _lazy(module, func):
     def call(ctx, argv, io):
         mod = __import__(module)
@@ -1838,7 +1870,14 @@ COMMANDS = {
     "help": cmd_help,
     "whoami": cmd_whoami,
     "id": _lazy("cmd_admin", "cmd_id"),
-    "date": cmd_date,
+    "date": _lazy("cmd_logs", "cmd_date"),
+    "zcat": _lazy("cmd_logs", "cmd_zcat"),
+    "zgrep": _lazy("cmd_logs", "cmd_zgrep"),
+    "tr": _lazy("cmd_logs", "cmd_tr"),
+    "iptables": _lazy("cmd_logs", "cmd_iptables"),
+    "duty": _hook_command("duty", "команда доступна только в задании №8 (дежурство SOC)"),
+    "timeline": _hook_command("timeline", "команда доступна только в задании №8"),
+    "hint": _hook_command("hint", "подсказки есть только в задании №9 (тренажёр grep)"),
     "echo": cmd_echo,
     "pwd": cmd_pwd,
     "clear": cmd_clear,

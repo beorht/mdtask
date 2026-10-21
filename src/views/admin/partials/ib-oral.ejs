@@ -1,0 +1,14 @@
+<%# Устная проверка по заданию ИБ: кнопка «Выбрать 4 студентов» и список выбранных.
+    Параметры: oralKey — ключ задания, oralPicked — выбранные строки (или null), oralHref(r) — ссылка на работу. %>
+<section class="a-card">
+  <div class="a-card-head"><h2>Устная проверка</h2>
+    <a class="a-btn a-btn-secondary" href="/admin/ib?pick=<%= oralKey %><%= filters.group ? '&group=' + encodeURIComponent(filters.group) : '' %>#oral-<%= oralKey %>">Выбрать 4 студентов</a></div>
+  <p class="a-muted">Случайный выбор среди начавших; чем больше сигналов (ловушки, ответы без доказательства, неверные контрольные вопросы, вставки, набор без клавиш), тем выше шанс. Спросите по их работе: какой командой получен ответ, что значит строка вывода.</p>
+  <% if (oralPicked) { %>
+    <ol id="oral-<%= oralKey %>">
+      <% oralPicked.forEach(function (r) { %>
+        <li><a href="<%= oralHref(r) %>"><%= r.student.name %></a><% if (r.signals && r.signals.flags.length) { %> — <span class="a-muted"><%= r.signals.flags.join('; ') %></span><% } %></li>
+      <% }) %>
+    </ol>
+  <% } %>
+</section>

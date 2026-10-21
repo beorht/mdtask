@@ -1,0 +1,15 @@
+# Конфигурация службы medreg — служба записи к врачу
+# Пример конфигурации
+
+[server]
+listen = 0.0.0.0
+port = 8080
+workers = 4
+
+[database]
+path = /srv/medreg/data/example.db
+backup_dir = /var/backups/medreg
+
+[log]
+access_log = /var/log/medreg/access.log
+level = info

@@ -1,0 +1,15 @@
+# Конфигурация службы medreg — служба записи к врачу
+# УСТАРЕВШАЯ конфигурация (до переезда на новый сервер), служба её не читает
+
+[server]
+listen = 0.0.0.0
+port = 8905
+workers = 4
+
+[database]
+path = /srv/medreg/old/medreg-2024.db
+backup_dir = /var/backups/medreg
+
+[log]
+access_log = /var/log/medreg/access.log
+level = info

@@ -32,6 +32,170 @@
   <p class="a-muted">Подробно по пунктам текущего этапа: <code><%= d.meta.checkCommand %></code></p>
 </section>
 
+<% if (d.grep) { %>
+<section class="a-card">
+  <div class="a-card-head"><h2>Баллы<% if (d.score) { %>: <%= d.score.total %> из <%= d.score.max %><% } %></h2></div>
+  <p class="a-muted">Задача засчитывается, когда команда даёт эталонный вывод на данных студента и на двух скрытых наборах. Половина баллов задачи — если на контрольные вопросы ответ неверный или просрочен.</p>
+  <div class="a-table-wrap"><table class="a-table">
+    <thead><tr><th>Задача</th><th>Принятая команда</th><th class="a-num">Попыток</th><th class="a-num">Время</th><th>Отказы</th><th class="a-num">Подсказок</th><th class="a-num">Баллы</th><th>Контр. вопросы</th></tr></thead>
+    <tbody><% d.grep.forEach(function (g) { const sc = d.score ? d.score.stages[g.k - 1] : null; const quick = g.k >= 4 && g.cmd && g.tries === 1 && g.seconds !== null && g.seconds < 45; %>
+      <tr>
+        <td><%= g.k %>. <%= g.title %></td>
+        <td><% if (g.cmd) { %><code><%= g.cmd %></code><% if (g.mutation) { %><br><span class="a-muted">вопрос: если <%= g.mutation.label %> → <%= g.mutation.answer %></span><% } %><% } else { %><span class="a-muted">—</span><% } %></td>
+        <td class="a-num<%= quick ? ' a-text-danger' : '' %>"><%= g.tries %></td>
+        <td class="a-num<%= quick ? ' a-text-danger' : '' %>"><%= g.seconds === null ? '—' : (g.seconds < 60 ? Math.round(g.seconds) + ' с' : Math.round(g.seconds / 60) + ' мин') %></td>
+        <td class="a-muted"><%= [g.refused ? 'не grep ×' + g.refused : '', g.typed ? 'набран результат ×' + g.typed : '', g.hiddenFail ? 'не прошла проверочный набор ×' + g.hiddenFail : ''].filter(Boolean).join(', ') || '—' %></td>
+        <td class="a-num"><%= g.hints %></td>
+        <td class="a-num"><%= sc ? sc.points + '/' + sc.max : '—' %></td>
+        <td><%= sc ? sc.defense : '—' %></td>
+      </tr>
+    <% }) %></tbody>
+  </table></div>
+  <p class="a-muted">Красным — сложная задача (с 4-й), решённая с первой попытки быстрее 45 секунд после предыдущей.</p>
+</section>
+<% } %>
+
+<% if (d.integrity && !d.logs) { const I = d.integrity; %>
+<section class="a-card">
+  <div class="a-card-head"><h2>Сигналы самостоятельности</h2></div>
+  <% if (I.signals.flags.length) { %><p><span class="a-status a-status-failed"><span class="a-status-icon" aria-hidden="true">!</span><%= I.signals.flags.join('; ') %></span></p><% } %>
+  <div class="a-stats">
+    <div class="a-stat"><span class="a-stat-value"><%= I.traps.length + (I.guard.trap || 0) %></span><span class="a-stat-label">Ловушек</span></div>
+    <div class="a-stat"><span class="a-stat-value"><%= I.noProof.length %></span><span class="a-stat-label">Ответов без доказательства</span></div>
+    <div class="a-stat"><span class="a-stat-value"><%= (I.guard.paste_blocked || 0) + (I.guard.drop_blocked || 0) %></span><span class="a-stat-label">Попыток вставки</span></div>
+    <div class="a-stat"><span class="a-stat-value"><%= I.guard.autotype || 0 %></span><span class="a-stat-label">Набор без клавиш</span></div>
+    <div class="a-stat"><span class="a-stat-value"><%= I.guard.copy || 0 %></span><span class="a-stat-label">Копирований</span></div>
+    <div class="a-stat"><span class="a-stat-value"><%= I.guard.hidden || 0 %></span><span class="a-stat-label">Уходов со страницы</span></div>
+  </div>
+  <% if (I.noProof.length) { %>
+    <h3>Верный ответ, которого не было в выводе команд студента</h3>
+    <ul><% I.noProof.forEach(function (x) { %><li><code><%= x.qid %></code> «<%= x.value %>» <span class="a-muted"><%= view.formatDateTime(x.at) %></span></li><% }) %></ul>
+  <% } %>
+  <h3>Контрольные вопросы</h3>
+  <% if (!I.defense.length) { %><p class="a-muted">Вопросов ещё не было.</p><% } else { %>
+    <% I.defense.forEach(function (d2) { %>
+      <p><strong>Этап <%= d2.stage %></strong></p>
+      <ul><% d2.results.forEach(function (r, i) { const q = d2.questions[i] || { options: [] }; %>
+        <li><%= r.q %><br>
+          <span class="a-status a-status-<%= r.ok ? 'done' : 'failed' %>"><%= r.ok ? 'верно' : (r.late ? 'время вышло' : 'неверно') %></span>
+          выбран: «<%= q.options[r.choice] || '—' %>», верный: «<%= q.options[r.correct] %>», <%= r.seconds %> с</li>
+      <% }) %></ul>
+    <% }) %>
+  <% } %>
+  <% if (I.events.length) { %>
+    <details><summary>События защиты (последние <%= I.events.length %>)</summary>
+      <ul class="a-muted"><% I.events.forEach(function (g) { %>
+        <li><%= view.formatDateTime(g.created_at) %> — <%= g.label %><%= g.data.chars ? ', ' + g.data.chars + ' симв.' : '' %><%= g.data.ms !== undefined ? ' за ' + g.data.ms + ' мс' : '' %><%= g.data.cmd ? ': ' + g.data.cmd : '' %><%= g.data.where ? ' (' + g.data.where + ')' : '' %></li>
+      <% }) %></ul>
+    </details>
+  <% } %>
+</section>
+<% } %>
+
+<% if (d.logs) { const L = d.logs; %>
+<section class="a-card">
+  <div class="a-card-head"><h2>Баллы<% if (L.score) { %>: <%= L.score.total %> из <%= L.score.max %><% } %></h2></div>
+  <% if (L.score) { %>
+    <div class="a-table-wrap"><table class="a-table">
+      <thead><tr><th>Этап</th><th class="a-num">Баллы</th><th class="a-num">Макс.</th><th>Контрольные вопросы</th></tr></thead>
+      <tbody><% L.score.stages.forEach(function (s) { %>
+        <tr><td><%= s.k %>. <%= s.title %></td><td class="a-num"><%= s.points %></td><td class="a-num"><%= s.max %></td><td><%= s.defense %></td></tr>
+      <% }) %></tbody>
+    </table></div>
+  <% } else { %><p class="a-muted">Студент ещё не работал в задании.</p><% } %>
+  <p class="a-muted">Половина баллов этапа — если на контрольные вопросы ответ неверный или просрочен. Дежурство: 20 при реакции до 5 минут, 15 — до 10, иначе 10; −5 за каждую несданную смену.</p>
+</section>
+
+<section class="a-card">
+  <div class="a-card-head"><h2>Сигналы самостоятельности</h2></div>
+  <div class="a-stats">
+    <div class="a-stat"><span class="a-stat-value"><%= L.traps.length %></span><span class="a-stat-label">Ловушечных ответов</span></div>
+    <div class="a-stat"><span class="a-stat-value"><%= L.noProof.length %></span><span class="a-stat-label">Ответов без доказательства</span></div>
+    <div class="a-stat"><span class="a-stat-value"><%= (L.guard.paste_blocked || 0) + (L.guard.drop_blocked || 0) %></span><span class="a-stat-label">Попыток вставки</span></div>
+    <div class="a-stat"><span class="a-stat-value"><%= L.guard.copy || 0 %></span><span class="a-stat-label">Копирований</span></div>
+    <div class="a-stat"><span class="a-stat-value"><%= L.guard.hidden || 0 %></span><span class="a-stat-label">Уходов со страницы</span></div>
+  </div>
+  <% if (L.traps.length) { %>
+    <h3>Ловушки</h3>
+    <ul><% L.traps.forEach(function (x) { %><li><code><%= x.qid %></code> «<%= x.value %>» — <%= x.label %> <span class="a-muted"><%= view.formatDateTime(x.at) %></span></li><% }) %></ul>
+  <% } %>
+  <% if (L.noProof.length) { %>
+    <h3>Верный ответ, которого не было в выводе команд студента</h3>
+    <ul><% L.noProof.forEach(function (x) { %><li><code><%= x.qid %></code> «<%= x.value %>» <span class="a-muted"><%= view.formatDateTime(x.at) %></span></li><% }) %></ul>
+  <% } %>
+  <details><summary>Ответы задания (для преподавателя)</summary>
+    <ul><% Object.keys(L.answersKey).forEach(function (k) { %><li><%= k %>: <code><%= L.answersKey[k] %></code></li><% }) %></ul>
+  </details>
+</section>
+
+<section class="a-card">
+  <div class="a-card-head"><h2>Все попытки ответов</h2></div>
+  <% if (!L.answers.length) { %><p class="a-muted">Попыток нет.</p><% } else { %>
+  <div class="a-table-wrap"><table class="a-table">
+    <thead><tr><th>Вопрос</th><th>Ответ</th><th>Результат</th><th class="a-num">С открытия этапа</th><th class="a-num">Команд до ответа</th><th>Когда</th></tr></thead>
+    <tbody><% L.answers.forEach(function (a) { %>
+      <tr>
+        <td><code><%= a.qid %></code></td>
+        <td><%= a.value %></td>
+        <td><% if (a.trap) { %><span class="a-status a-status-failed">ловушка: <%= a.trapLabel %></span><% } else if (a.proof === false) { %><span class="a-status a-status-warning">нет в выводе команд</span><% } else if (a.ok) { %><span class="a-status a-status-done">верно<%= a.proof ? ', доказано' : '' %></span><% } else { %><span class="a-status a-status-neutral">неверно</span><% } %></td>
+        <td class="a-num"><%= a.seconds === null ? '—' : (a.seconds < 60 ? a.seconds + ' с' : Math.round(a.seconds / 60) + ' мин') %></td>
+        <td class="a-num<%= a.ok && a.commands === 0 ? ' a-text-danger' : '' %>"><%= a.commands === null ? '—' : a.commands %></td>
+        <td class="a-muted a-nowrap"><%= view.formatDateTime(a.at) %></td>
+      </tr>
+    <% }) %></tbody>
+  </table></div>
+  <% } %>
+</section>
+
+<section class="a-card">
+  <div class="a-card-head"><h2>Контрольные вопросы</h2></div>
+  <% if (!L.defense.length) { %><p class="a-muted">Вопросов ещё не было.</p><% } else { %>
+    <% L.defense.forEach(function (d2) { %>
+      <h3>Этап <%= d2.stage %></h3>
+      <ul><% d2.results.forEach(function (r, i) { const q = d2.questions[i] || { options: [] }; %>
+        <li><%= r.q %><br>
+          <span class="a-status a-status-<%= r.ok ? 'done' : 'failed' %>"><%= r.ok ? 'верно' : (r.late ? 'время вышло' : 'неверно') %></span>
+          выбран: «<%= q.options[r.choice] || '—' %>», верный: «<%= q.options[r.correct] %>», <%= r.seconds %> с</li>
+      <% }) %></ul>
+    <% }) %>
+  <% } %>
+</section>
+
+<section class="a-card">
+  <div class="a-card-head"><h2>Дежурство SOC</h2></div>
+  <% if (!L.duty.length) { %><p class="a-muted">Смен ещё не было.</p><% } else { %>
+  <div class="a-table-wrap"><table class="a-table">
+    <thead><tr><th>Смена</th><th>Атака</th><th>Адреса</th><th>Итог</th><th>Реакция</th><th>Заблокированы свои</th><th>Конец</th></tr></thead>
+    <tbody><% L.duty.forEach(function (s) { %>
+      <tr><td>№<%= s.shift %></td><td><%= s.type %></td><td><code><%= s.ips.join(', ') %></code></td>
+        <td><span class="a-status a-status-<%= s.passed ? 'done' : 'failed' %>"><%= s.passed ? 'сдана' : 'не сдана' %></span> <span class="a-muted"><%= s.why %></span></td>
+        <td><%= s.reaction === null ? '—' : Math.floor(s.reaction / 60) + ' мин ' + (s.reaction % 60) + ' с' %></td>
+        <td><%= s.innocent.length ? s.innocent.join(', ') : '—' %></td><td class="a-muted a-nowrap"><%= view.formatDateTime(s.ended_at) %></td></tr>
+    <% }) %></tbody>
+  </table></div>
+  <% } %>
+</section>
+
+<section class="a-card">
+  <div class="a-card-head"><h2>Детектор атак (этап 7)</h2></div>
+  <% if (!L.detector) { %><p class="a-muted">Студент ещё не открывал редактор.</p><% } else { %>
+    <p>Тестов пройдено: <strong><%= L.detector.passed %> из <%= L.detector.total %></strong>, проверок: <%= L.detector.checks %><%= L.detector.solved ? ', сдан ' + view.formatDateTime(L.detector.solved_at) : '' %>.
+      Контрольный вопрос: <%= L.detector.defense_ok === null ? 'не отвечал' : (L.detector.defense_ok ? 'верно' : 'неверно') %>.</p>
+    <% if (L.detector.defense_answer) { %><p class="a-muted">Ответ студента:</p><pre class="a-code"><%= L.detector.defense_answer %></pre><% } %>
+    <details><summary>Код</summary><pre class="a-code"><%= L.detector.code || '(пусто)' %></pre></details>
+  <% } %>
+</section>
+
+<% if (L.guardEvents.length) { %>
+<section class="a-card">
+  <div class="a-card-head"><h2>Вставки и копирование (последние <%= L.guardEvents.length %>)</h2></div>
+  <ul class="a-muted"><% L.guardEvents.forEach(function (g) { const data = JSON.parse(g.data || '{}'); %>
+    <li><%= view.formatDateTime(g.created_at) %> — <%= { paste_blocked: 'вставка заблокирована', drop_blocked: 'перетаскивание заблокировано', copy: 'копирование', hidden: 'ушёл со страницы', autotype: 'набор без нажатий клавиш', trap: 'команда с каталогом из текста-ловушки' }[g.type] || g.type %><%= data.chars ? ', ' + data.chars + ' симв.' : '' %><%= data.where ? ' (' + data.where + ')' : '' %></li>
+  <% }) %></ul>
+</section>
+<% } %>
+<% } %>
+
 <section class="a-card">
   <div class="a-card-head"><h2>Ответы на вопросы</h2></div>
   <% if (!d.answers.length) { %>

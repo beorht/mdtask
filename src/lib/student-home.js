@@ -194,18 +194,18 @@ function buildStudentHome(user, now = Date.now()) {
       return phase === 'before' ? null : { id: def.id, title: def.title, subtitle: def.subtitle, phase, endsAt: win.endsAt, published: !!win.publishedAt };
     })
     .filter(Boolean);
-  if (exam.examLockFor(user)) {
-    sqlSubject.examLocked = true;
-    ibSubjects.forEach((s) => (s.examLocked = true));
-  }
+  const lock = exam.examLockFor(user);
+  const subjects = [sqlSubject, ...pybasicsSubjects, ...languageSubjects, ...ibSubjects, ...courseSubjects];
+  if (lock) subjects.forEach((s) => (s.examLocked = true));
 
   return {
     exams,
-    subjects: [sqlSubject, ...pybasicsSubjects, ...languageSubjects, ...ibSubjects, ...courseSubjects],
+    subjects,
     counts,
-    // Anything the student still has to act on (or is waiting on), nearest deadline first.
-    upcoming: open.slice(0, UPCOMING_LIMIT),
-    upcomingMore: Math.max(0, open.length - UPCOMING_LIMIT),
+    lockLabel: lock && (lock.during ? 'Закрыто на время контрольной' : 'Закрыто преподавателем'),
+    // Anything the student still has to act on (or is waiting on), nearest deadline first; nothing while closed.
+    upcoming: lock ? [] : open.slice(0, UPCOMING_LIMIT),
+    upcomingMore: lock ? 0 : Math.max(0, open.length - UPCOMING_LIMIT),
   };
 }
 

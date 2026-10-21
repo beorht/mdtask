@@ -84,6 +84,39 @@ test('while it runs: the group sees it, the IB tasks and the SQL trainer are clo
   assert.strictEqual((await tester.get('/trainer')).status, 200);
 });
 
+test('the group\'s practical work: closed while the exam runs and while the teacher keeps it closed', async () => {
+  db.createUser({ id: 'web-1', role: 'student', name: 'Другая Группа', group: 'WEB', mustChangePassword: false });
+  db.createUser({ id: 'teacher', role: 'teacher', name: 'Преподаватель', mustChangePassword: false });
+  setWindow(-HOUR, HOUR);
+  const app = createApp();
+  const ib = await loginAs(app, 'ib-1');
+  for (const url of ['/subjects/python', '/subjects/javascript', '/subjects/pis', '/assignment/any', '/trainer']) {
+    const res = await ib.get(url);
+    assert.strictEqual(res.status, 423, url);
+    assert.match(res.text, /Закрыто на время контрольной/);
+  }
+  assert.strictEqual((await ib.post('/assignment/any/code/draft').send({})).status, 423);
+  assert.strictEqual((await ib.get(BASE)).status, 200);
+  assert.match((await ib.get('/')).text, /🔒 Закрыто на время контрольной/);
+  // Other groups and TEST are not touched.
+  const web = await loginAs(app, 'web-1');
+  assert.strictEqual((await web.get('/subjects/python')).status, 200);
+  assert.strictEqual((await (await loginAs(app, 'tester')).get('/subjects/python')).status, 200);
+
+  // After the exam the teacher's switch keeps it closed, and opens it again.
+  setWindow(-2 * HOUR, -HOUR);
+  const teacher = await loginAs(app, 'teacher');
+  await teacher.post(`/admin/exam/${DEF.id}/lock-practice`).type('form').send({ locked: '1' });
+  let res = await ib.get('/subjects/python');
+  assert.strictEqual(res.status, 423);
+  assert.match(res.text, /Закрыто преподавателем/);
+  assert.match((await ib.get('/')).text, /🔒 Закрыто преподавателем/);
+  assert.strictEqual((await web.get('/subjects/python')).status, 200);
+  await teacher.post(`/admin/exam/${DEF.id}/lock-practice`).type('form').send({ locked: '0' });
+  assert.strictEqual((await ib.get('/subjects/python')).status, 200);
+  assert.strictEqual((await ib.get('/trainer')).status, 200);
+});
+
 test('flag answers: wrong ones count attempts, a right one is accepted and stays', async () => {
   setWindow(-HOUR, HOUR);
   const agent = await loginAs(createApp(), 'ib-1');

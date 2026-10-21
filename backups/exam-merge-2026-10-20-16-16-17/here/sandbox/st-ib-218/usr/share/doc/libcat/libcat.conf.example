@@ -1,0 +1,15 @@
+# Конфигурация службы libcat — электронный каталог и абонемент библиотеки
+# Пример конфигурации
+
+[server]
+listen = 0.0.0.0
+port = 8080
+workers = 4
+
+[database]
+path = /srv/libcat/data/example.db
+backup_dir = /var/backups/libcat
+
+[log]
+access_log = /var/log/libcat/access.log
+level = info

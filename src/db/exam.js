@@ -12,6 +12,7 @@ function makeExamDb(db, prepared) {
       publishedAt: row.published_at,
       finalizedAt: row.finalized_at,
       deviceMode: row.device_mode || 'block',
+      lockPractice: !!row.lock_practice,
       updatedAt: row.updated_at,
     };
   }
@@ -29,6 +30,11 @@ function makeExamDb(db, prepared) {
 
   function setExamPublished(id, published) {
     prepared('UPDATE exams SET published_at = ?, updated_at = ? WHERE id = ?').run(published ? now() : null, now(), id);
+  }
+
+  // The group's other practical work closed until the teacher opens it (src/lib/exam examLockFor).
+  function setExamLockPractice(id, locked) {
+    prepared('UPDATE exams SET lock_practice = ?, updated_at = ? WHERE id = ?').run(locked ? 1 : 0, now(), id);
   }
 
   function setExamFinalized(id) {
@@ -246,6 +252,7 @@ function makeExamDb(db, prepared) {
     ensureExam,
     setExamWindow,
     setExamPublished,
+    setExamLockPractice,
     setExamFinalized,
     getExamVariant,
     getExamVariants,

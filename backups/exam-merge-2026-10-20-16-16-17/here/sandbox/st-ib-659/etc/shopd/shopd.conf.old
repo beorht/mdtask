@@ -1,0 +1,15 @@
+# Конфигурация службы shopd — служба заказов интернет-магазина
+# УСТАРЕВШАЯ конфигурация (до переезда на новый сервер), служба её не читает
+
+[server]
+listen = 0.0.0.0
+port = 8483
+workers = 4
+
+[database]
+path = /srv/shopd/old/shopd-2024.db
+backup_dir = /var/backups/shopd
+
+[log]
+access_log = /var/log/shopd/access.log
+level = info

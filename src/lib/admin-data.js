@@ -11,6 +11,12 @@ const {
   getTerminalLog,
   getLabTasks,
   getLabLog,
+  getLogsDetectors,
+  getLogsDetector,
+  getIbGuardCounts,
+  getIbGuardEvents,
+  getIbTaskDefenses,
+  getIbTaskDefense,
   getPythonBasicsProgress,
   getPythonBasicsAttempts,
 } = require('../db');
@@ -453,10 +459,12 @@ function ibResults(ctx, filters) {
         String(a.secret.solved_at || '').localeCompare(String(b.secret.solved_at || '')) ||
         a.student.name.localeCompare(b.student.name, 'ru')
     );
+  attachSignals('caesar', rows, () => ({}));
   return {
     rows,
     total: rows.length,
     solved: rows.filter((r) => r.secret.solved).length,
+    picked: filters.pick === 'caesar' ? pickForOral(rows, 4, Math.random, (r) => r.secret.solved) : null,
   };
 }
 
@@ -477,10 +485,12 @@ function ibConfigResults(ctx, filters) {
         String(a.task.solved_at || '').localeCompare(String(b.task.solved_at || '')) ||
         a.student.name.localeCompare(b.student.name, 'ru')
     );
+  attachSignals('configs', rows, () => ({}));
   return {
     rows,
     total: rows.length,
     solved: rows.filter((r) => r.task.solved).length,
+    picked: filters.pick === 'configs' ? pickForOral(rows, 4, Math.random, (r) => r.task.passed > 0) : null,
     started: rows.filter((r) => !r.task.solved && r.task.passed > 0).length,
   };
 }
@@ -551,7 +561,10 @@ function stageTaskDetail(student, task, stagesList, log, meta) {
 }
 
 function ibTerminalResults(ctx, filters) {
-  return stageTaskResults(ctx, filters, getTerminalTasks(), TERMINAL_STAGES);
+  const res = stageTaskResults(ctx, filters, getTerminalTasks(), TERMINAL_STAGES);
+  attachSignals('terminal', res.rows, (r) => r.task.progress || {});
+  if (filters.pick === 'terminal') res.picked = pickForOral(res.rows);
+  return res;
 }
 
 function ibTerminalDetail(ctx, studentId) {
@@ -564,23 +577,215 @@ function ibTerminalDetail(ctx, studentId) {
     total: 14,
     checkCommand: `python3 ib/checks/task5_check.py ${studentId} --text`,
   };
-  return stageTaskDetail(student, task, TERMINAL_STAGES, getTerminalLog(studentId), meta);
+  const detail = stageTaskDetail(student, task, TERMINAL_STAGES, getTerminalLog(studentId), meta);
+  detail.integrity = integrityDetail('terminal', studentId, task.progress || {});
+  return detail;
 }
 
 // Personal values shown next to each student on /admin/ib (what the teacher needs to grade the report).
 const LAB_INFO = {
   incident: (p) => `${p.target} · ${p.attacker_ip} · ${p.attack_failed} попыток · вход ${p.login_time}`,
   ssh: (p) => `порт ${p.port}`,
+  logs: (p) => `${p.service || ''} · ${p.target} · SSH ${p.ssh_ip} · веб ${p.web_ip}`,
+  grep: (p) => `${p.svc} · ${p.emp} · ${p.domain}`,
 };
+
+const GUARD_LABELS = {
+  paste_blocked: 'вставка заблокирована',
+  drop_blocked: 'перетаскивание заблокировано',
+  copy: 'копирование',
+  hidden: 'ушёл со страницы',
+  autotype: 'команда набрана без нажатий клавиш или слишком быстро',
+  trap: 'команда с каталогом из текста-ловушки',
+};
+
+// Signals block of a student's detail page (any IB task with the stage engine or the №5 trainer).
+function integrityDetail(key, studentId, progress) {
+  const guard = getIbGuardCounts(key).get(studentId) || {};
+  const events = getIbGuardEvents(key, studentId, 50).map((g) => {
+    const data = JSON.parse(g.data || '{}');
+    return { ...g, data, label: GUARD_LABELS[g.type] || g.type };
+  });
+  const defense = Object.entries(progress.defense || {})
+    .filter(([, d]) => (d.qs || []).length)
+    .map(([k, d]) => ({ stage: Number(k), results: d.results || [], questions: d.qs || [] }));
+  return {
+    signals: taskSignals(progress, guard, getIbTaskDefense(key, studentId)),
+    guard,
+    events,
+    defense,
+    noProof: progress.no_proof || [],
+    traps: (progress.traps || []).map((t) => ({ ...t, label: TRAP_LABELS[t.trap] || t.trap })),
+  };
+}
+
+// №9: per grep task — the accepted command, attempts, time from opening, refusals, the mutation question.
+function grepDetail(task) {
+  const progress = task.progress || {};
+  const info = progress.grep || {};
+  const hints = progress.hints || {};
+  const meta = findIbTask('grep');
+  return meta.stages.map((title, i) => {
+    const k = String(i + 1);
+    const g = info[k] || {};
+    return {
+      k: i + 1,
+      title,
+      cmd: g.cmd || null,
+      tries: g.tries || 0,
+      seconds: g.seconds === undefined ? null : g.seconds,
+      refused: g.refused || 0,
+      typed: g.typed || 0,
+      hiddenFail: g.hidden_fail || 0,
+      hints: hints[k] || 0,
+      mutation: g.mut || null,
+    };
+  });
+}
+
+// ---------------------------------------------------------- №8 «logs» ---
+// Признаки того, что задание решали не сами (план docs/ib-task8-logs-plan.md, раздел 4):
+// ловушечные ответы, ответы без доказательства в выводе команд, неверные контрольные вопросы,
+// попытки вставки. Вес — для выбора студентов на устную проверку.
+
+const TRAP_LABELS = {
+  clip_ip: 'адрес из текста-ловушки, добавленного к скопированному',
+  clip_utc3: 'пояс UTC+3 из текста-ловушки',
+  clip_utc3_time: 'время, пересчитанное из «UTC+3» (текст-ловушка)',
+  injected_note: 'адрес из «инструкции для ИИ-анализатора» в журнале',
+  xff_first: 'первый (подставленный) адрес X-Forwarded-For',
+};
+
+// Signals for any IB task (plan docs/ib-task9-grep-plan.md, part 2): trap answers and commands with the
+// trap marker, answers without proof in the command output, wrong control questions (in the terminal or on
+// the site), blocked pastes, autotyped command lines, hard grep tasks solved at once.
+function taskSignals(progress, guard, siteDefense) {
+  progress = progress || {};
+  guard = guard || {};
+  const traps = (progress.traps || []).length + (guard.trap || 0);
+  const noProof = (progress.no_proof || []).length;
+  const defense = progress.defense || {};
+  const weakDefense = Object.keys(defense).filter((k) => (defense[k].results || []).some((r) => !r.ok));
+  const siteWeak = !!(siteDefense && siteDefense.results.some((r) => !r.ok));
+  const pastes = (guard.paste_blocked || 0) + (guard.drop_blocked || 0);
+  const autotype = guard.autotype || 0;
+  const fast = Object.entries(progress.grep || {}).filter(
+    ([k, info]) => Number(k) >= 4 && info.solved_at && info.tries === 1 && info.seconds !== null && info.seconds < 45
+  ).length;
+  const flags = [];
+  if (traps) flags.push(`ловушка ×${traps}`);
+  if (noProof) flags.push(`ответ без доказательства ×${noProof}`);
+  if (weakDefense.length) flags.push(`контр. вопросы: этап ${weakDefense.join(', ')}`);
+  if (siteWeak) flags.push('контр. вопросы: неверно');
+  if (pastes) flags.push(`вставка ×${pastes}`);
+  if (autotype) flags.push(`набор без клавиш ×${autotype}`);
+  if (fast) flags.push(`сразу верно за < 45 с ×${fast}`);
+  const weight =
+    1 + 4 * traps + 2 * noProof + 2 * weakDefense.length + (siteWeak ? 2 : 0) + Math.min(pastes, 10) / 2 + 2 * Math.min(autotype, 5) + fast;
+  return { flags, weight, score: progress.score || null };
+}
+
+function attachSignals(key, rows, progressOf) {
+  const guard = getIbGuardCounts(key);
+  const site = getIbTaskDefenses(key);
+  rows.forEach((r) => {
+    r.signals = taskSignals(progressOf(r), guard.get(r.student.id), site.get(r.student.id));
+  });
+}
+
+function logsSignals(progress, guard, det) {
+  const res = taskSignals(progress, guard);
+  if (det && det.defense_ok === 0) {
+    res.flags.push('не объяснил вывод детектора');
+    res.weight += 2;
+  }
+  return res;
+}
+
+// Weighted random pick for the oral check (more signals — more likely), among students who started.
+function pickForOral(rows, n = 4, random = Math.random, started = (r) => r.task.passed > 0 || r.task.commands > 0) {
+  const pool = rows.filter(started).map((r) => ({ r, w: r.signals ? r.signals.weight : 1 }));
+  const picked = [];
+  while (picked.length < n && pool.length) {
+    let x = random() * pool.reduce((s, p) => s + p.w, 0);
+    let i = 0;
+    while (i < pool.length - 1 && x >= pool[i].w) {
+      x -= pool[i].w;
+      i += 1;
+    }
+    picked.push(pool.splice(i, 1)[0].r);
+  }
+  return picked;
+}
+
+// One student's №8: score, answers with proof and timing, traps, control questions, duty shifts,
+// blocked pastes and the detector.
+function logsDetail(task, studentId, log) {
+  const progress = task.progress || {};
+  const params = task.params || {};
+  const opened = {};
+  const completed = progress.completed_at || {};
+  const firstCmd = log.length ? log[log.length - 1].created_at : null;
+  for (let k = 1; k <= 8; k += 1) opened[k] = k === 1 ? firstCmd : completed[String(k - 1)] || null;
+  const commandsBetween = (from, to) =>
+    log.filter((l) => (!from || l.created_at >= from) && l.created_at <= to && !/^\s*(answer|task|check)\b/.test(l.line)).length;
+  const answers = (progress.events || []).map((e) => {
+    const stage = Number(String(e.qid).split('.')[0]) || null;
+    const from = stage ? opened[stage] : null;
+    const seconds = from ? Math.round((Date.parse(e.at) - Date.parse(from)) / 1000) : null;
+    return {
+      ...e,
+      stage,
+      seconds,
+      commands: e.ok ? commandsBetween(from, e.at) : null,
+      trapLabel: e.trap ? TRAP_LABELS[e.trap] || e.trap : null,
+    };
+  });
+  const defense = Object.entries(progress.defense || {}).map(([k, d]) => ({ stage: Number(k), results: d.results || [], questions: d.qs || [] }));
+  const duty = (progress.duty && progress.duty.shifts) || [];
+  return {
+    score: progress.score || null,
+    answers,
+    defense,
+    duty,
+    traps: (progress.traps || []).map((t) => ({ ...t, label: TRAP_LABELS[t.trap] || t.trap })),
+    noProof: progress.no_proof || [],
+    guard: getIbGuardCounts('logs').get(studentId) || {},
+    guardEvents: getIbGuardEvents('logs', studentId, 50),
+    detector: getLogsDetector(studentId),
+    answersKey: {
+      'SSH-атака': params.ssh_ip,
+      'Учётная запись': params.target,
+      'Веб-адрес (настоящий)': params.web_ip,
+      'Подставленный в XFF': params.spoof_ip,
+      'Подставленный в поддельные строки': params.framed_ip,
+      'Адрес-ловушка (буфер)': params.clip_ip,
+      'Вход по SSH': `${params.ssh_login_utc} UTC = ${params.ssh_login_local} +05`,
+      'Выгружено': params.export_rows,
+      'Удалено строк': params.deleted_lines,
+      'Подправлена строка seq': params.tampered_seq,
+    },
+  };
+}
 
 const LAB_TASKS = IB_TASKS.filter((t) => t.lab);
 
 // Tasks on the shared ib/server/lab_task.py engine (№6, №7), in course order.
 function ibLabResults(ctx, filters) {
-  return LAB_TASKS.map((meta) => ({
-    meta,
-    ...stageTaskResults(ctx, filters, getLabTasks(meta.key), meta.stages, LAB_INFO[meta.key]),
-  }));
+  return LAB_TASKS.map((meta) => {
+    const res = stageTaskResults(ctx, filters, getLabTasks(meta.key), meta.stages, LAB_INFO[meta.key]);
+    attachSignals(meta.key, res.rows, (r) => r.task.progress || {});
+    if (meta.key === 'logs') {
+      const guard = getIbGuardCounts('logs');
+      const detectors = getLogsDetectors();
+      res.rows.forEach((r) => {
+        r.signals = logsSignals(r.task.progress || {}, guard.get(r.student.id), detectors.get(r.student.id));
+      });
+    }
+    res.scored = res.rows.some((r) => r.signals.score);
+    if (filters.pick === meta.key) res.picked = pickForOral(res.rows);
+    return { meta, ...res };
+  });
 }
 
 function ibLabDetail(ctx, key, studentId) {
@@ -595,7 +800,13 @@ function ibLabDetail(ctx, key, studentId) {
     info: LAB_INFO[key] ? LAB_INFO[key](task.params) : null,
     checkCommand: `python3 ib/checks/lab_check.py --task ${key} ${studentId} --text`,
   };
-  return stageTaskDetail(student, task, lab.stages, getLabLog(key, studentId), meta);
+  const log = getLabLog(key, studentId);
+  const detail = stageTaskDetail(student, task, lab.stages, log, meta);
+  if (key === 'logs') detail.logs = logsDetail(task, studentId, getLabLog(key, studentId, 5000));
+  if (key === 'grep') detail.grep = grepDetail(task);
+  detail.integrity = integrityDetail(key, studentId, task.progress || {});
+  detail.score = (task.progress || {}).score || null;
+  return detail;
 }
 
 // «Простое программирование на Python»: students who can see the subject (its groups + TEST)
@@ -671,6 +882,7 @@ module.exports = {
   ibTerminalDetail,
   ibLabResults,
   ibLabDetail,
+  pickForOral,
   search,
   nextInQueue,
 };

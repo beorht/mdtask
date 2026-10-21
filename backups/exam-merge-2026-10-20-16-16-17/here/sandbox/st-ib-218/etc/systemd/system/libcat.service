@@ -1,0 +1,11 @@
+[Unit]
+Description=электронный каталог и абонемент библиотеки
+After=network.target
+
+[Service]
+ExecStart=/opt/libcat/bin/libcat --config /etc/opt/libcat/server.conf
+User=libcat
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

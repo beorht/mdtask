@@ -1,0 +1,11 @@
+[Unit]
+Description=служба заказов интернет-магазина
+After=network.target
+
+[Service]
+ExecStart=/opt/shopd/bin/shopd --config /etc/opt/shopd/server.conf
+User=shopd
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

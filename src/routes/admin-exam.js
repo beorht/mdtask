@@ -131,6 +131,15 @@ function register(router, { render, notFound, flash }) {
     res.redirect(back(def, req.params.studentId));
   });
 
+  router.post('/admin/exam/:examId/lock-practice', (req, res) => {
+    const def = loadDef(req, res);
+    if (!def) return;
+    const locked = req.body.locked === '1';
+    db.setExamLockPractice(def.id, locked);
+    flash(req, 'success', locked ? `Практические группы ${def.group} закрыты.` : `Практические группы ${def.group} открыты (пока идёт контрольная, задания ИБ и SQL-тренажёр всё равно закрыты).`);
+    res.redirect(back(def));
+  });
+
   router.post('/admin/exam/:examId/devices', (req, res) => {
     const def = loadDef(req, res);
     if (!def) return;

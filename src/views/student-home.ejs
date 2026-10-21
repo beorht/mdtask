@@ -42,7 +42,7 @@
                 <span class="subject-card-kind"><%= isPyb ? 'Dasturlash' : isSql ? 'Тренажёр' : isIb ? 'Практикум' : isCourse ? s.kindLabel : 'Программирование' %></span>
               </span>
               <span class="subject-card-title"><%= s.title %></span>
-              <% if (s.examLocked) { %><span class="subject-card-lock">🔒 Закрыто на время контрольной</span><% } %>
+              <% if (s.examLocked) { %><span class="subject-card-lock">🔒 <%= home.lockLabel %></span><% } %>
               <span class="subject-card-meta">
                 <% if (isPyb) { %>
                   <%= s.topic %> · <%= s.total %> ta topshiriq, avtomatik tekshiruv<% if (s.next) { %><br>Hozir: <%= s.next.number %>. <%= s.next.title %><% } %>
@@ -78,7 +78,9 @@
 
     <section class="home-section" aria-labelledby="upcomingTitle">
       <h2 id="upcomingTitle" class="home-section-title">Ближайшие задания со сдачей</h2>
-      <% if (home.upcoming.length === 0) { %>
+      <% if (home.lockLabel) { %>
+        <p class="empty-state">🔒 <%= home.lockLabel %>.</p>
+      <% } else if (home.upcoming.length === 0) { %>
         <p class="empty-state">Открытых заданий нет — всё сдано. 🎉</p>
       <% } else { %>
         <ul class="assignment-list">

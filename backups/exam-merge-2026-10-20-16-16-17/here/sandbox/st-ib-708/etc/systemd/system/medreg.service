@@ -1,0 +1,11 @@
+[Unit]
+Description=служба записи к врачу
+After=network.target
+
+[Service]
+ExecStart=/opt/medreg/bin/medreg --config /opt/medreg/etc/medreg.conf
+User=medreg
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

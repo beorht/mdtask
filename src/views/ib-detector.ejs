@@ -1,0 +1,120 @@
+<!-- src/views/ib-detector.ejs — задание ИБ №8, этап 7: детектор атак на Python (src/lib/ib-detector.js).
+     СЛЕВА: условие и примеры; СПРАВА: редактор, ввод для «Запустить», вывод, результаты проверки и
+     контрольный вопрос (public/js/ib-detector.js). Вставка в редактор отключена (public/js/ib-guard.js). -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <%- include('partials/head', { pageTitle: 'Детектор атак · Задание №' + task.number }) %>
+  <link rel="stylesheet" href="/vendor/codemirror/5.65.16/codemirror.min.css">
+  <link rel="stylesheet" href="/vendor/codemirror/5.65.16/theme/material-darker.min.css">
+</head>
+<body>
+  <%- include('partials/header') %>
+  <div class="app-layout">
+    <%- include('partials/sidebar') %>
+    <main class="content pyb-page">
+      <nav class="breadcrumbs"><a href="/">Главная</a> / <a href="/subjects/ib"><%= subjectTitle %></a> / <a href="/subjects/ib/<%= task.key %>">Задание №<%= task.number %></a> / Детектор атак</nav>
+
+      <header class="sql-task-head">
+        <h1 class="sql-task-title">Этап 7. Детектор атак</h1>
+        <div class="sql-task-meta">
+          <span class="sql-chip sql-chip-<%= row && row.solved ? 'done' : 'open' %>" data-det-chip><%= row && row.solved ? '✓ Тесты пройдены' : '○ Не сдан' %></span>
+          <% if (row && row.defense_ok !== null) { %><span class="sql-chip"><%= row.defense_ok ? '✓ Контрольный вопрос' : '✕ Контрольный вопрос' %></span><% } %>
+          <a class="sql-chip sql-chip-link" href="/subjects/ib/<%= task.key %>">← К терминалу</a>
+        </div>
+      </header>
+
+      <div class="pyb-workspace">
+        <div class="pyb-left">
+          <section class="task-panel pyb-statement">
+            <h2 class="task-panel-title">📝 Условие</h2>
+            <p>Напишите программу, которая читает журнал доступа веб-сервера и находит в нём атаки двух видов.</p>
+            <p><strong>Ввод.</strong> Первая строка — число N (может быть 0), затем N строк журнала в том же формате,
+              что <code>/var/log/nginx/access.log</code> в терминале: адрес, пользователь, время в квадратных скобках,
+              запрос в кавычках, код ответа, размер, Referer, User-Agent и X-Forwarded-For в кавычках, затем поля
+              <code>rt=</code> и <code>cid=</code>. Каждую строку читайте отдельным <code>input()</code>.</p>
+            <ul>
+              <li><strong>Адрес клиента.</strong> Если поле X-Forwarded-For — не «-», адрес клиента — <em>последний</em>
+                адрес в нём (его дописал наш прокси). Иначе — первое поле строки.</li>
+              <li><strong>Поддельные строки.</strong> Строка без поля <code>rt=</code> записана не nginx — её не учитывайте.</li>
+              <li><strong>Перебор паролей.</strong> Учитываются запросы <code>POST /login</code> с кодом 401. Адрес атакует,
+                если среди его таких запросов найдутся <%= rules.BRUTE_MIN %> штук, между первым и последним из которых
+                прошло не больше <%= rules.BRUTE_WINDOW %> секунд. Вывод: <code>BRUTEFORCE адрес число</code>, где число —
+                все такие запросы этого адреса в журнале.</li>
+              <li><strong>Сканирование.</strong> Адрес сканирует, если получил код 404 не меньше чем на <%= rules.SCAN_MIN %>
+                <em>разных</em> путях. Путь — часть запроса до знака <code>?</code>. Вывод: <code>SCAN адрес число_путей</code>.</li>
+              <li><strong>Порядок.</strong> Строки по возрастанию адреса как чисел (сначала первое число адреса, затем второе …);
+                у одного адреса сначала BRUTEFORCE, потом SCAN. Если атак нет — одна строка «<%= rules.NONE %>».</li>
+              <li>Время в журнале содержит дату: события могут переходить через полночь.</li>
+            </ul>
+            <h3>Примеры</h3>
+            <% examples.forEach(function (ex, i) { %>
+              <details class="det-example" <%= i === 0 ? 'open' : '' %>>
+                <summary>Пример <%= i + 1 %> (<%= ex.input.length - 1 %> строк журнала)</summary>
+                <div class="pyb-test-grid">
+                  <div class="pyb-test-block"><div class="pyb-test-label">Ввод</div><pre><%= ex.input.join('\n') %></pre></div>
+                  <div class="pyb-test-block"><div class="pyb-test-label">Вывод</div><pre><%= ex.output %></pre></div>
+                </div>
+              </details>
+            <% }) %>
+            <p class="pyb-note">Проверка запускает программу на <%= tests.length %> журналах: на примерах и на других, с крайними случаями.
+              Вставка в редактор отключена — программу нужно набрать самим. После того как все тесты пройдены,
+              будет контрольный вопрос: что выведет ваша программа на коротком журнале (<%= rules.DEFENSE_SECONDS %> секунд, один раз).</p>
+            <% if (guard && guard.clip) { %><span class="ib-clip-trap" aria-hidden="true"><%= guard.clip %></span><% } %>
+          </section>
+        </div>
+
+        <section class="task-panel pyb-editor-panel" id="detEditor"
+                 data-draft-url="<%= base %>/draft" data-check-url="<%= base %>/check"
+                 data-challenge-url="<%= base %>/challenge" data-defense-url="<%= base %>/defense"
+                 data-solved="<%= row && row.solved ? '1' : '' %>"
+                 data-defense="<%= row && row.defense_ok !== null ? (row.defense_ok ? 'ok' : 'bad') : '' %>">
+          <div class="sql-panel-head">
+            <h2 class="task-panel-title">Ваша программа</h2>
+            <span class="sql-hint">Ctrl+Enter — запустить</span>
+          </div>
+          <div class="code-file-pane">
+            <textarea class="sql-console code-file-source" data-det-code rows="16" spellcheck="false" autocomplete="off" aria-label="Код программы на Python"><%= row ? row.code : '' %></textarea>
+          </div>
+
+          <label class="pyb-stdin-label" for="detStdin">Ввод для «Запустить»</label>
+          <textarea id="detStdin" class="pyb-stdin" rows="4" spellcheck="false" data-det-stdin><%= examples.length ? examples[0].input.join('\n') : '' %></textarea>
+
+          <div class="code-editor-actions">
+            <button type="button" class="btn btn-secondary" data-det-action="run">▶ Запустить</button>
+            <button type="button" class="btn btn-primary" data-det-action="check">✓ Проверить</button>
+            <button type="button" class="btn btn-secondary" data-det-action="stop" hidden>■ Остановить</button>
+            <span class="code-editor-status" data-det-status aria-live="polite"></span>
+          </div>
+
+          <div class="code-output-head">Вывод</div>
+          <pre class="code-output pyb-output" data-det-output aria-live="polite">Напишите программу и нажмите «Запустить» или «Проверить».</pre>
+          <div class="pyb-results" data-det-results hidden></div>
+
+          <div class="det-defense" data-det-defense hidden>
+            <h3>Контрольный вопрос</h3>
+            <p>Что выведет <strong>ваша</strong> программа на этом журнале? Напишите вывод полностью, построчно.
+              Осталось: <strong data-det-left></strong> с. Ответить можно один раз.</p>
+            <pre class="code-output" data-det-input></pre>
+            <textarea class="pyb-stdin" rows="3" spellcheck="false" data-det-answer aria-label="Ожидаемый вывод"></textarea>
+            <div class="code-editor-actions">
+              <button type="button" class="btn btn-primary" data-det-action="defend">Ответить</button>
+            </div>
+          </div>
+          <p class="det-defense-result" data-det-defense-result aria-live="polite"></p>
+        </section>
+      </div>
+      <script type="application/json" id="detTests"><%- JSON.stringify(tests).replace(/</g, '\\u003c') %></script>
+    </main>
+  </div>
+  <%- include('partials/scripts') %>
+  <% if (guard) { %>
+    <script>window.IB_GUARD = <%- JSON.stringify(guard).replace(/</g, '\\u003c') %>;</script>
+    <script src="/js/ib-guard.js" defer></script>
+  <% } %>
+  <script src="/vendor/codemirror/5.65.16/codemirror.min.js" defer></script>
+  <script src="/vendor/codemirror/5.65.16/mode/python/python.min.js" defer></script>
+  <script src="/vendor/codemirror/5.65.16/addon/edit/matchbrackets.min.js" defer></script>
+  <script src="/js/ib-detector.js" defer></script>
+</body>
+</html>

@@ -66,6 +66,7 @@ db.exec('CREATE INDEX IF NOT EXISTS idx_assignments_target_group ON assignments(
 // Итоговая контрольная: проверка устройства (off | warn | block) и студенты, которым разрешено любое устройство.
 addColumnIfMissing('exams', 'device_mode', "TEXT NOT NULL DEFAULT 'block'");
 addColumnIfMissing('exam_variants', 'any_device', 'INTEGER NOT NULL DEFAULT 0');
+addColumnIfMissing('exams', 'lock_practice', 'INTEGER NOT NULL DEFAULT 0');
 
 // Any account created before password auth existed (real, already-enrolled students/
 // teachers) is migrated onto the shared default password and must change it on next login.
@@ -235,6 +236,92 @@ function getLabLog(task, studentId, limit = 300) {
   return prepared('SELECT * FROM ib_lab_log WHERE task = ? AND student_id = ? ORDER BY id DESC LIMIT ?')
     .all(task, studentId, limit)
     .map((row) => ({ ...row, cmds: JSON.parse(row.cmds || '[]') }));
+}
+
+// Задание ИБ №8, этап 7 — детектор атак (src/lib/ib-detector.js).
+function getLogsDetector(studentId) {
+  return prepared('SELECT * FROM ib_logs_detector WHERE student_id = ?').get(studentId) || null;
+}
+
+function getLogsDetectors() {
+  return new Map(prepared('SELECT * FROM ib_logs_detector').all().map((r) => [r.student_id, r]));
+}
+
+function ensureLogsDetector(studentId) {
+  prepared('INSERT OR IGNORE INTO ib_logs_detector (student_id, updated_at) VALUES (?, ?)').run(studentId, new Date().toISOString());
+}
+
+function saveLogsDetectorDraft(studentId, code) {
+  ensureLogsDetector(studentId);
+  prepared('UPDATE ib_logs_detector SET code = ?, updated_at = ? WHERE student_id = ?').run(code, new Date().toISOString(), studentId);
+}
+
+// solved is sticky: a later failed check doesn't take the stage back.
+function saveLogsDetectorCheck(studentId, { code, passed, total, solved }) {
+  ensureLogsDetector(studentId);
+  const now = new Date().toISOString();
+  prepared(
+    `UPDATE ib_logs_detector SET code = ?, passed = ?, total = ?, checks = checks + 1, updated_at = ?,
+       solved = MAX(solved, ?), solved_at = CASE WHEN solved = 0 AND ? = 1 THEN ? ELSE solved_at END
+     WHERE student_id = ?`
+  ).run(code, passed, total, now, solved ? 1 : 0, solved ? 1 : 0, now, studentId);
+}
+
+function saveLogsDetectorDefense(studentId, ok, answer) {
+  prepared('UPDATE ib_logs_detector SET defense_ok = ?, defense_answer = ?, defense_at = ? WHERE student_id = ? AND defense_ok IS NULL').run(
+    ok ? 1 : 0,
+    String(answer || '').slice(0, 2000),
+    new Date().toISOString(),
+    studentId
+  );
+}
+
+function addIbGuardEvents(task, studentId, events) {
+  const insert = prepared('INSERT INTO ib_guard_events (task, student_id, type, data, created_at) VALUES (?, ?, ?, ?, ?)');
+  const now = new Date().toISOString();
+  db.transaction(() => {
+    for (const e of events) insert.run(task, studentId, e.type, JSON.stringify(e.data || {}).slice(0, 500), now);
+  })();
+}
+
+// Counts per type for one task: Map student -> { type: count }.
+function getIbGuardCounts(task) {
+  const out = new Map();
+  for (const r of prepared('SELECT student_id, type, COUNT(*) AS n FROM ib_guard_events WHERE task = ? GROUP BY student_id, type').all(task)) {
+    const counts = out.get(r.student_id) || {};
+    counts[r.type] = r.n;
+    out.set(r.student_id, counts);
+  }
+  return out;
+}
+
+function getIbTaskDefense(task, studentId) {
+  const row = prepared('SELECT * FROM ib_task_defense WHERE task = ? AND student_id = ?').get(task, studentId);
+  return row ? { ...row, questions: JSON.parse(row.questions), results: JSON.parse(row.results) } : null;
+}
+
+function getIbTaskDefenses(task) {
+  return new Map(
+    prepared('SELECT * FROM ib_task_defense WHERE task = ?')
+      .all(task)
+      .map((r) => [r.student_id, { ...r, questions: JSON.parse(r.questions), results: JSON.parse(r.results) }])
+  );
+}
+
+function saveIbTaskDefense(task, studentId, { questions, results, askedAt, finishedAt }) {
+  prepared(
+    `INSERT INTO ib_task_defense (task, student_id, questions, results, asked_at, finished_at) VALUES (?, ?, ?, ?, ?, ?)
+     ON CONFLICT(task, student_id) DO UPDATE SET questions = excluded.questions, results = excluded.results,
+       asked_at = excluded.asked_at, finished_at = excluded.finished_at`
+  ).run(task, studentId, JSON.stringify(questions), JSON.stringify(results || []), askedAt || null, finishedAt || null);
+}
+
+function getCaesarHiddenDirs() {
+  return prepared('SELECT hidden_file_path FROM ctf_caesar_secrets').all().map((r) => r.hidden_file_path);
+}
+
+function getIbGuardEvents(task, studentId, limit = 200) {
+  return prepared('SELECT * FROM ib_guard_events WHERE task = ? AND student_id = ? ORDER BY id DESC LIMIT ?').all(task, studentId, limit);
 }
 
 function setUserPassword(id, newPassword) {
@@ -551,8 +638,8 @@ function seedTerminalTaskForTests(studentId, { passed = 0, solved = false, answe
 }
 
 // Tests only: a row of an ib/ lab task (lab_task.py), plus optional log lines.
-function seedLabTaskForTests(task, studentId, { passed = 0, total = 8, solved = false, params = {}, log = [] } = {}) {
-  const progress = { done: passed, opened: { 1: 0 }, completed_at: {}, answers: {}, attempts: {} };
+function seedLabTaskForTests(task, studentId, { passed = 0, total = 8, solved = false, params = {}, log = [], progress: extra = {} } = {}) {
+  const progress = { done: passed, opened: { 1: 0 }, completed_at: {}, answers: {}, attempts: {}, ...extra };
   prepared(
     `INSERT INTO ib_lab_tasks (id, task, student_id, params, progress, passed, total, solved, solved_at, created_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
@@ -653,7 +740,7 @@ function seedCaesarSecretForTests(studentId, { solved = false } = {}) {
 }
 
 function __resetForTests() {
-  db.exec('DELETE FROM exam_pcs; DELETE FROM exam_events; DELETE FROM exam_tasks; DELETE FROM exam_variants; DELETE FROM exams; DELETE FROM python_basics_attempts; DELETE FROM python_basics_progress; DELETE FROM code_drafts; DELETE FROM ib_lab_log; DELETE FROM ib_lab_tasks; DELETE FROM ib_terminal_log; DELETE FROM ib_terminal_tasks; DELETE FROM ib_config_tasks; DELETE FROM ctf_caesar_secrets; DELETE FROM sql_attempts; DELETE FROM submissions; DELETE FROM assignments; DELETE FROM courses; DELETE FROM users;');
+  db.exec('DELETE FROM exam_pcs; DELETE FROM exam_events; DELETE FROM exam_tasks; DELETE FROM exam_variants; DELETE FROM exams; DELETE FROM python_basics_attempts; DELETE FROM python_basics_progress; DELETE FROM code_drafts; DELETE FROM ib_guard_events; DELETE FROM ib_task_defense; DELETE FROM ib_logs_detector; DELETE FROM ib_lab_log; DELETE FROM ib_lab_tasks; DELETE FROM ib_terminal_log; DELETE FROM ib_terminal_tasks; DELETE FROM ib_config_tasks; DELETE FROM ctf_caesar_secrets; DELETE FROM sql_attempts; DELETE FROM submissions; DELETE FROM assignments; DELETE FROM courses; DELETE FROM users;');
   seed(db);
 }
 
@@ -674,6 +761,18 @@ module.exports = {
   getLabTaskForStudent,
   getLabTasks,
   getLabLog,
+  getLogsDetector,
+  getLogsDetectors,
+  saveLogsDetectorDraft,
+  saveLogsDetectorCheck,
+  saveLogsDetectorDefense,
+  addIbGuardEvents,
+  getIbGuardCounts,
+  getIbGuardEvents,
+  getIbTaskDefense,
+  getIbTaskDefenses,
+  saveIbTaskDefense,
+  getCaesarHiddenDirs,
   seedLabTaskForTests,
   setUserPassword,
   createUser,

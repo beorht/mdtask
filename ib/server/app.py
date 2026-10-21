@@ -44,6 +44,8 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 import config_task
+import defense
+import defense_banks
 import lab_task
 import shell
 import terminal_task
@@ -240,11 +242,13 @@ class TerminalState:
         self.student_id = session["student_id"]
         self.conn = db_connect()
         terminal_task.ensure_tables(self.conn)
+        lab_task.ensure_tables(self.conn)          # ib_lab_seen — «следы» вывода для доказательства ответов
         self.row = terminal_task.load_row(self.conn, self.student_id)
         self.params = json.loads(self.row["params"]) if self.row else None
         self.progress = terminal_task.load_progress(self.row)
         self.root = session["sandbox"].root
         self.fetch = terminal_task.entries_fetcher(self.conn, self.student_id)
+        self.seen = lab_task.seen_lookup_for(self.conn, terminal_task.TASK_KEY, self.student_id, "ib_terminal_log")
 
     def close(self):
         self.conn.close()
@@ -268,7 +272,9 @@ def terminal_hooks(session):
 
     def check(state):
         _, results = state.results()
-        return terminal_task.check_text(state.progress, results if state.progress["done"] < terminal_task.TOTAL else [])
+        text = terminal_task.check_text(state.progress, results if state.progress["done"] < terminal_task.TOTAL else [])
+        pending = defense.text(state.progress)
+        return text + ("\n\n" + pending if pending else "")
 
     def task(state, args):
         done = state.progress["done"]
@@ -283,15 +289,23 @@ def terminal_hooks(session):
         if k > terminal_task.TOTAL:
             return "Все этапы пройдены! Задание засчитано. Прогресс: check"
         results = state.results(k)[1] if k == done + 1 else None
-        return terminal_task.stage_text(k, state.params, state.student_id, results, done)
+        text = terminal_task.stage_text(k, state.params, state.student_id, results, done)
+        pending = defense.text(state.progress) if k == done + 1 else None
+        return text + ("\n\n" + pending if pending else "")
 
     def answer(args):
         state = TerminalState(session)
         try:
             if state.row is None:
                 return "Задание №5 вам ещё не выдано.", False
-            text, ok = terminal_task.submit_answer(state.progress, state.params, state.student_id, state.root, args)
+            text, ok = terminal_task.submit_answer(state.progress, state.params, state.student_id, state.root, args,
+                                                   seen=state.seen)
             terminal_task.save_progress(state.conn, state.student_id, state.progress)
+            if defense.is_defense_answer(args) and defense.pending(state.progress)[1] is None:
+                # ответ на последний контрольный вопрос — этап засчитывается сразу
+                message = terminal_advance(state)
+                if message:
+                    text += "\n" + message
             return text, ok
         finally:
             state.close()
@@ -299,26 +313,49 @@ def terminal_hooks(session):
     return {"check": with_state(check), "task": with_state(task), "answer": answer}
 
 
-def terminal_record(session, raw, line, ctx):
+def terminal_defense(k, env, params, progress):
+    return defense.from_bank(defense_banks.TERMINAL, k, params, 2)
+
+
+def terminal_advance(state, log_id=None):
+    """Засчитывание этапов №5 (после команды или ответа на контрольный вопрос). -> сообщение или None."""
+    if log_id is None:
+        row = state.conn.execute("SELECT MAX(id) FROM ib_terminal_log WHERE student_id=?", (state.student_id,)).fetchone()
+        log_id = row[0] or 0
+    newly = terminal_task.advance(state.root, state.student_id, state.params, state.progress, state.fetch, log_id,
+                                  defense_fn=terminal_defense, seen=state.seen)
+    msgs = []
+    ask = state.progress.pop("_ask", None)
+    if ask:
+        terminal_task.save_progress(state.conn, state.student_id, state.progress)
+        msgs.append(f"Все пункты этапа {ask} выполнены. Осталось ответить на контрольные вопросы.")
+        msgs.append(defense.text(state.progress))
+    if not newly:
+        return "\n".join(msgs) or None
+    solved = terminal_task.save_progress(state.conn, state.student_id, state.progress)
+    msgs += [f"[Этап {k} пройден ✔] {terminal_task.STAGES[k - 1]['title']}" for k in newly]
+    if solved or state.progress["done"] >= terminal_task.TOTAL:
+        msgs.append("[Проверка] Все этапы тренажёра пройдены — задание №5 засчитано! Подробности: check")
+    else:
+        k = state.progress["done"] + 1
+        msgs.append(f"Открыт этап {k} из {terminal_task.TOTAL}: «{terminal_task.STAGES[k - 1]['title']}». "
+                    "Что сделать: task")
+    return "\n".join(msgs)
+
+
+def terminal_record(session, raw, line, ctx, output=None):
     """Записывает строку в журнал и засчитывает этапы. Возвращает сообщение о пройденных этапах."""
     state = TerminalState(session)
     try:
         if state.row is None:
             return None
         log_id = terminal_task.log_line(state.conn, state.student_id, raw, line, ctx.trace, ctx.status)
+        if output and output != "__CLEAR__":
+            lab_task.record_tokens(state.conn, terminal_task.TASK_KEY, state.student_id, log_id, output, line)
         state.conn.commit()
-        newly = terminal_task.advance(state.root, state.student_id, state.params, state.progress, state.fetch, log_id)
-        if not newly:
+        if defense.pending(state.progress)[1] is not None:
             return None
-        solved = terminal_task.save_progress(state.conn, state.student_id, state.progress)
-        msgs = [f"[Этап {k} пройден ✔] {terminal_task.STAGES[k - 1]['title']}" for k in newly]
-        if solved or state.progress["done"] >= terminal_task.TOTAL:
-            msgs.append("[Проверка] Все этапы тренажёра пройдены — задание №5 засчитано! Подробности: check")
-        else:
-            k = state.progress["done"] + 1
-            msgs.append(f"Открыт этап {k} из {terminal_task.TOTAL}: «{terminal_task.STAGES[k - 1]['title']}». "
-                        "Что сделать: task")
-        return "\n".join(msgs)
+        return terminal_advance(state, log_id)
     finally:
         state.close()
 
@@ -338,12 +375,21 @@ class LabState:
         self.progress = lab_task.load_progress(self.row)
         self.root = session["sandbox"].root
         self.fetch = self.lab.entries_fetcher(self.conn, self.student_id)
+        self.seen = self.lab.seen_lookup(self.conn, self.student_id)
+        if self.params is not None and self.lab.load_ext is not None:
+            ext = self.lab.load_ext(self.conn, self.student_id)
+            self.params["_ext"] = ext
+            self.progress["ext"] = ext
 
     def close(self):
         self.conn.close()
 
+    def save(self):
+        return self.lab.save_progress(self.conn, self.student_id, self.progress)
+
     def results(self, k=None):
         k, env = self.lab.current_env(self.root, self.student_id, self.params, self.progress, self.fetch, k)
+        env.seen = self.seen
         return k, self.lab.results_with_text(self.lab.evaluate_stage(k, env), self.params, self.student_id)
 
     @property
@@ -365,7 +411,9 @@ def lab_hooks(session):
 
     def check(state):
         _, results = state.results()
-        return state.lab.check_text(state.progress, results if state.progress["done"] < state.lab.total else [])
+        text = state.lab.check_text(state.progress, results if state.progress["done"] < state.lab.total else [])
+        pending = state.lab.defense_text(state.progress)
+        return text + ("\n\n" + pending if pending else "")
 
     def task(state, args):
         lab = state.lab
@@ -381,20 +429,53 @@ def lab_hooks(session):
         if k > lab.total:
             return "Все этапы пройдены! Задание засчитано. Прогресс: check"
         results = state.results(k)[1] if k == done + 1 else None
-        return lab.stage_text(k, state.params, state.student_id, results, done)
+        text = lab.stage_text(k, state.params, state.student_id, results, done)
+        pending = lab.defense_text(state.progress) if k == done + 1 else None
+        return text + ("\n\n" + pending if pending else "")
 
     def answer(args):
         state = LabState(session)
         try:
             if state.row is None:
                 return state.not_assigned, False
-            text, ok = state.lab.submit_answer(state.progress, state.params, state.student_id, state.root, args)
-            state.lab.save_progress(state.conn, state.student_id, state.progress)
+            text, ok = state.lab.submit_answer(state.progress, state.params, state.student_id, state.root, args,
+                                               seen=state.seen)
+            state.save()
             return text, ok
         finally:
             state.close()
 
-    return {"check": with_state(check), "task": with_state(task), "answer": answer}
+    def own_command(fn):
+        def call(args):
+            state = LabState(session)
+            try:
+                if state.row is None:
+                    return state.not_assigned, False
+                text, ok = fn(state, args)
+                state.save()
+                return text, ok
+            finally:
+                state.close()
+        return call
+
+    hooks = {"check": with_state(check), "task": with_state(task), "answer": answer}
+    lab = lab_task.get(session["task"])
+    for name, fn in (lab.commands if lab else {}).items():
+        hooks[name] = own_command(fn)
+    return hooks
+
+
+def lab_before_run(session):
+    """Действие задания перед каждой командой (живой журнал дежурства в №8)."""
+    lab = lab_task.get(session["task"])
+    if lab is None or lab.before_run is None:
+        return
+    state = LabState(session)
+    try:
+        if state.row is not None and lab.before_run(state):
+            state.save()
+    finally:
+        state.close()
 
 
 def lab_welcome(session):
@@ -406,18 +487,18 @@ def lab_welcome(session):
         lab = state.lab
         if state.row is None:
             return state.not_assigned
-        head = [f"Задание №{lab.number}. {lab.title}",
-                "Команды задания: task — инструкция к текущему этапу, check — прогресс, "
-                "answer N.M ОТВЕТ — ответ на вопрос, cat TASK.md — все этапы.", ""]
+        head = [f"Задание №{lab.number}. {lab.title}", lab.help_line, ""]
         if state.progress["done"] >= lab.total:
             return "\n".join(head + ["Все этапы пройдены — задание засчитано. Прогресс: check"])
         k, results = state.results()
-        return "\n".join(head + [lab.stage_text(k, state.params, state.student_id, results, state.progress["done"])])
+        pending = lab.defense_text(state.progress)
+        return "\n".join(head + [lab.stage_text(k, state.params, state.student_id, results, state.progress["done"])]
+                         + (["", pending] if pending else []))
     finally:
         state.close()
 
 
-def lab_record(session, raw, line, ctx):
+def lab_record(session, raw, line, ctx, output=None):
     """Журнал + засчитывание этапов + предупреждение о нарушенных критических пунктах."""
     state = LabState(session)
     try:
@@ -425,12 +506,24 @@ def lab_record(session, raw, line, ctx):
             return None
         lab = state.lab
         log_id = lab.log_line(state.conn, state.student_id, raw, line, ctx.trace, ctx.status)
+        if lab.track_output and output and output != "__CLEAR__":
+            lab.record_output(state.conn, state.student_id, log_id, output, line)
         state.conn.commit()
-        newly = lab.advance(state.root, state.student_id, state.params, state.progress, state.fetch, log_id)
         msgs = []
+        if lab.on_command is not None:
+            msgs += lab.on_command(state, line, ctx, output) or []
+        newly = lab.advance(state.root, state.student_id, state.params, state.progress, state.fetch, log_id,
+                            seen=state.seen)
+        ask = state.progress.get("_ask")
         if ctx.wrote:
             for text in lab.broken_critical(state.root, state.student_id, state.params, state.progress):
                 msgs.append(f"[Внимание, критично] Нарушено: {text}")
+        if ask:
+            state.save()
+            msgs.append(f"Все пункты этапа {ask} выполнены. Осталось ответить на контрольные вопросы.")
+            msgs.append(lab.defense_text(state.progress))
+        if lab.on_command is not None and not ask and not newly:
+            state.save()
         if newly:
             solved = lab.save_progress(state.conn, state.student_id, state.progress)
             msgs += [f"[Этап {k} пройден ✔] {lab.stages[k - 1]['title']}" for k in newly]
@@ -482,6 +575,7 @@ def run_line(session, line):
     is_lab = lab_task.get(session["task"]) is not None
     if is_lab:
         hooks = lab_hooks(session)
+        lab_before_run(session)
     ctx = shell.Ctx(session, session["sandbox"], hooks)
     output = shell.run(ctx, line)
     session["last_status"] = ctx.status
@@ -494,8 +588,7 @@ def run_line(session, line):
         if message:
             output = (output + "\n" if output else "") + message
     if (session["task"] == terminal_task.TASK_KEY or is_lab) and line.strip():
-        record = lab_record if is_lab else terminal_record
-        message = record(session, raw, line, ctx)
+        message = lab_record(session, raw, line, ctx, output) if is_lab else terminal_record(session, raw, line, ctx, output)
         if message:
             output = (output + "\n" if output else "") + message
     return output

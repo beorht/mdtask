@@ -1,11 +1,13 @@
 // Runs a student's Python program in the browser (Pyodide = CPython in WebAssembly), off
-// the main thread so an endless loop can be stopped by terminating the worker.
+// the main thread so an endless loop can be stopped by terminating the worker. Pyodide is
+// served by the site itself (public/vendor, scripts/vendor/fetch.sh): classroom PCs have no internet.
 // Message in:  { files: { name: code }, main: 'main.py', stdin?: [lines], echo?: bool, eofMessage?: text }
+//   or { warmup: true } — only load Python, answered with { type: 'ready' } (or 'fail').
 //   stdin — input() returns these lines in order (EOFError when they run out); without it
 //   input() is disabled. echo — print the prompt and the entered line, like a terminal.
 //   eofMessage — the EOFError text (default: Uzbek, for the pybasics course).
-// Messages out: { type: 'status' | 'running' | 'out' | 'err' | 'done' | 'fail', text }
-var PYODIDE_URL = 'https://cdn.jsdelivr.net/pyodide/v0.26.4/full/';
+// Messages out: { type: 'status' | 'ready' | 'running' | 'out' | 'err' | 'done' | 'fail', text }
+var PYODIDE_URL = '/vendor/pyodide/0.26.4/';
 
 importScripts(PYODIDE_URL + 'pyodide.js');
 
@@ -71,6 +73,12 @@ var RUNNER = [
 
 self.onmessage = function (event) {
   var msg = event.data;
+  if (msg.warmup) {
+    boot()
+      .then(function () { self.postMessage({ type: 'ready' }); })
+      .catch(function (err) { self.postMessage({ type: 'fail', text: String(err && err.message ? err.message : err) }); });
+    return;
+  }
   boot()
     .then(function (py) {
       runCount += 1;

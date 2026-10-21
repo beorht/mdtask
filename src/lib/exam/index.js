@@ -6,8 +6,8 @@
 //     (bugs.js: 4 runs, one submission, then locked);
 //   4 SQL on the student's copy of the company database (sql.js);
 //   6 the incident report, graded by the teacher.
-// The exam is visible only inside its window (TEST: always) and while it runs the group's
-// ordinary IB tasks and SQL trainer are locked. Scores are shown after the teacher publishes them.
+// The exam is visible only inside its window (TEST: always) and while it runs (or while the
+// teacher keeps it closed) the group's other practical work is locked. Scores are shown after the teacher publishes them.
 const crypto = require('crypto');
 const { hasFullAccess } = require('../test-access');
 const db = require('../../db');
@@ -69,11 +69,16 @@ function phaseFor(exam, user, win = examWindow(exam)) {
   return hasFullAccess(user) ? 'open' : phaseOf(win);
 }
 
-// While an exam of the student's group runs, the group's IB tasks and SQL trainer are closed.
+// The group's practical work (IB tasks, SQL trainer, assignments, course subjects) is closed
+// while its exam runs, and also whenever the teacher closed it (exams.lock_practice) until
+// they open it again. `during` tells the two apart for the page text.
 function examLockFor(user) {
   if (!user || user.role !== 'student' || hasFullAccess(user)) return null;
   for (const exam of Object.values(EXAMS)) {
-    if (user.group === exam.group && phaseOf(examWindow(exam)) === 'open') return { ...exam, window: examWindow(exam) };
+    if (user.group !== exam.group) continue;
+    const win = examWindow(exam);
+    const during = phaseOf(win) === 'open';
+    if (during || win.lockPractice) return { ...exam, window: win, during };
   }
   return null;
 }

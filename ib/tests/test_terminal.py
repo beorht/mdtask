@@ -189,9 +189,10 @@ def reference(p, user):
         "chmod 600 documents/private.txt", f"answer 8.1 {p['mystery_mode']}",
         f"ln -s ~/logs/app.log {pr}/latest.log", "ln -s ~/documents docs", "readlink downloads/current",
         f"answer 9.1 {p['release']}",
-        "find ~/archive -name '*.pdf'", f"answer 10.1 ~/{p['pdf_path']}", f"answer 10.2 {p['error_count']}",
+        "find ~/archive -name '*.pdf'", f"answer 10.1 ~/{p['pdf_path']}", "grep -c ERROR logs/app.log",
+        f"answer 10.2 {p['error_count']}",
         f"answer 10.3 {p['keyword_file'].rsplit('/', 1)[1]}",
-        f"answer 11.1 {p['top_ip']}", f"cut -d' ' -f1 logs/access.log | sort -u > {pr}/ips.txt",
+        "cut -d' ' -f1 logs/access.log | sort | uniq -c | sort -n | tail -n 1", f"answer 11.1 {p['top_ip']}", f"cut -d' ' -f1 logs/access.log | sort -u > {pr}/ips.txt",
         f"grep ERROR logs/app.log > {pr}/errors.txt", "find / -name '*.log' 2>/dev/null",
         "cat /var/log/auth.log", "sudo !!", "sudo whoami", f"answer 12.1 {p['auth_user']}",
         f"sudo echo 'Сервер обслуживает: {user}' >> /etc/motd",
@@ -239,6 +240,17 @@ class TrainerTests(unittest.TestCase):
     def run_line(self, line):
         return app.run_line(self.session, line) or ""
 
+    def defend(self):
+        """Верно ответить на контрольные вопросы этапа, если они заданы. -> их вывод."""
+        out = ""
+        for _ in range(3):
+            progress = tt.load_progress(self.row())
+            state = (progress.get("defense") or {}).get(str(progress["done"] + 1))
+            if not state or state["i"] >= len(state["qs"]):
+                break
+            out += "\n" + self.run_line(f"answer q {state['qs'][state['i']]['correct'] + 1}")
+        return out
+
     def row(self):
         conn = sqlite3.connect(self.db)
         conn.row_factory = sqlite3.Row
@@ -258,7 +270,7 @@ class TrainerTests(unittest.TestCase):
     def test_reference_walkthrough_solves_every_stage(self):
         messages = []
         for line in reference(self.params, STUDENT):
-            out = self.run_line(line)
+            out = self.run_line(line) + self.defend()
             messages += [m for m in out.split("\n") if m.startswith("[Этап")]
         self.assertEqual(len(messages), tt.TOTAL, messages)
         row = self.row()
@@ -278,7 +290,8 @@ class TrainerTests(unittest.TestCase):
         self.run_line("ls -l /etc")
         for line in ("pwd", "whoami", "date"):
             self.run_line(line)
-        self.assertIn("[Этап 1 пройден", self.run_line("man ls"))
+        self.assertIn("контрольные вопросы", self.run_line("man ls"))
+        self.assertIn("[Этап 1 пройден", self.defend())
         out = self.run_line(f"answer 2.1 {self.params['hidden_count']}")
         self.assertIn("верно", out)
         self.assertNotIn("Этап 2 пройден", out)
@@ -287,7 +300,8 @@ class TrainerTests(unittest.TestCase):
         self.assertIn("✔ 4) [2.1]", task)
         self.assertIn("откроется после этапа 2", self.run_line("answer 4.1 10"))
         self.run_line("ls -la")
-        self.assertIn("[Этап 2 пройден", self.run_line("ls -l /etc"))
+        self.run_line("ls -l /etc")
+        self.assertIn("[Этап 2 пройден", self.defend())
         self.assertIn("▶ 3. Перемещение по каталогам", self.run_line("check"))
         self.assertIn("уже пройден", self.run_line("answer 2.1 5"))
 
@@ -303,10 +317,13 @@ class TrainerTests(unittest.TestCase):
         self.assertIn("Отказано в доступе", self.run_line(f"sudo echo 'Сервер обслуживает: {STUDENT}' >> /etc/motd"))
         self.assertIn("Отказано в доступе", self.run_line("cat /var/log/auth.log"))
         self.assertIn("неверно", self.run_line("answer 12.1 root"))
-        self.run_line(f"answer 12.1 {p['auth_user']}")
+        self.assertIn("не встречалось в выводе", self.run_line(f"answer 12.1 {p['auth_user']}"))
+        self.run_line("sudo cat /var/log/auth.log")
+        self.assertIn("верно", self.run_line(f"answer 12.1 {p['auth_user']}"))
         self.run_line("sudo whoami")
         self.assertEqual(self.row()["passed"], 11)
-        self.assertIn("[Этап 12 пройден", self.run_line(f"echo 'Сервер обслуживает: {STUDENT}' | sudo tee -a /etc/motd"))
+        self.run_line(f"echo 'Сервер обслуживает: {STUDENT}' | sudo tee -a /etc/motd")
+        self.assertIn("[Этап 12 пройден", self.defend())
 
     def test_file_items_check_real_state(self):
         env = tt.Env(self.out / STUDENT, STUDENT, self.params, [], {})

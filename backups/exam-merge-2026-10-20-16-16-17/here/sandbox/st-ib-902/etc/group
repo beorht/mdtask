@@ -1,0 +1,5 @@
+root:x:0:
+adm:x:4:st-ib-902
+sudo:x:27:st-ib-902
+st-ib-902:x:1000:
+svc:x:998:

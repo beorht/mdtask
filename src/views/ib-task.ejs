@@ -25,12 +25,53 @@
       </div>
       <p class="ib-task-hint">
         Войдите в терминал под своим логином (<code><%= user.id %></code>) и паролем от платформы. <%- task.hint %>
+        <% if (guard && guard.clip) { %><span class="ib-clip-trap" aria-hidden="true"><%= guard.clip %></span><% } %>
         <a href="/ib/<%= task.key %>/terminal" target="_blank" rel="noopener">Открыть терминал во весь экран ↗</a>
       </p>
+      <% if (task.detector) { %>
+        <p class="ib-task-hint">
+          <a class="btn btn-secondary" href="/subjects/ib/<%= task.key %>/detector">🐍 Детектор атак (этап 7)</a>
+          <% if (detectorState && detectorState.solved) { %>— сдан ✔<% } else if (detectorState && detectorState.checks) { %>— тестов пройдено <%= detectorState.passed %> из <%= detectorState.total %><% } %>
+        </p>
+      <% } %>
+      <% if (guard) { %>
+        <p class="ib-guard-rules">Нейросети и чужая помощь в этом задании запрещены. Вставка отключена, копирование и уход со страницы записываются. <%= task.guardNote || '' %></p>
+      <% } %>
+      <% if (defense) { %>
+        <section class="ib-defense" id="defense" aria-labelledby="defense-title">
+          <h2 id="defense-title">Контрольные вопросы</h2>
+          <% if (defense.status === 'ready') { %>
+            <p>Задание выполнено. Ответьте на <%= defense.total %> вопроса по своей работе: на каждый — <%= defenseSeconds %> секунд, ответ изменить нельзя.</p>
+            <form method="post" action="/subjects/ib/<%= task.key %>/defense"><input type="hidden" name="action" value="start"><button class="btn btn-primary" type="submit">Начать</button></form>
+          <% } else if (defense.status === 'asking') { %>
+            <p><strong>Вопрос <%= defense.number %> из <%= defense.total %>.</strong> <%= defense.text %></p>
+            <form method="post" action="/subjects/ib/<%= task.key %>/defense" class="ib-defense-form">
+              <% defense.options.forEach(function (opt, i) { %>
+                <label class="ib-defense-option"><input type="radio" name="choice" value="<%= i %>" required> <%= opt %></label>
+              <% }) %>
+              <button class="btn btn-primary" type="submit">Ответить</button>
+              <span class="ib-defense-left" data-left="<%= defense.left %>">Осталось <%= defense.left %> с</span>
+            </form>
+            <script>
+              (function () {
+                var el = document.querySelector('.ib-defense-left');
+                var left = Number(el.dataset.left);
+                setInterval(function () { left = Math.max(0, left - 1); el.textContent = left ? 'Осталось ' + left + ' с' : 'Время вышло — ответ не будет засчитан'; }, 1000);
+              })();
+            </script>
+          <% } else { %>
+            <p>Контрольные вопросы пройдены: верно <%= defense.good %> из <%= defense.total %>.<%= defense.good < defense.total ? ' Преподаватель проверит задание устно.' : '' %></p>
+          <% } %>
+        </section>
+      <% } %>
       <iframe class="ib-terminal" src="/ib/<%= task.key %>/terminal" title="Терминал SecLab"></iframe>
     </main>
   </div>
   <%- include('partials/scripts') %>
+  <% if (guard) { %>
+    <script>window.IB_GUARD = <%- JSON.stringify(guard).replace(/</g, '\\u003c') %>;</script>
+    <script src="/js/ib-guard.js" defer></script>
+  <% } %>
   <script>
     // Keyboard focus goes straight to the terminal.
     (function () {

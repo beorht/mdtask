@@ -1,16 +1,21 @@
-<!-- src/views/exam-locked.ejs — an IB task or the SQL trainer opened while the group's final exam runs. -->
+<!-- src/views/exam-locked.ejs — the group's practical work opened while the final exam runs or while the teacher keeps it closed. -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <%- include('partials/head', { pageTitle: 'Закрыто на время контрольной' }) %>
+  <%- include('partials/head', { pageTitle: exam.during ? 'Закрыто на время контрольной' : 'Закрыто' }) %>
 </head>
 <body>
   <%- include('partials/header') %>
   <main class="content home">
     <section class="task-panel exam-locked">
-      <h1>🔒 Закрыто на время контрольной</h1>
-      <p>Пока идёт «<%= exam.title %>», задания по информационной безопасности и SQL-тренажёр закрыты. Они откроются автоматически, когда контрольная закончится.</p>
-      <p><a class="btn btn-primary" href="/exam/<%= exam.id %>">Перейти к контрольной →</a> <a class="btn btn-secondary" href="/">На главную</a></p>
+      <% if (exam.during) { %>
+        <h1>🔒 Закрыто на время контрольной</h1>
+        <p>Пока идёт «<%= exam.title %>», практические задания, SQL-тренажёр и задания по информационной безопасности закрыты.</p>
+      <% } else { %>
+        <h1>🔒 Закрыто преподавателем</h1>
+        <p>Практические задания, SQL-тренажёр и задания по информационной безопасности сейчас закрыты. Их откроет преподаватель.</p>
+      <% } %>
+      <p><% if (exam.during) { %><a class="btn btn-primary" href="/exam/<%= exam.id %>">Перейти к контрольной →</a> <% } %><a class="btn btn-secondary" href="/">На главную</a></p>
     </section>
   </main>
   <%- include('partials/scripts') %>

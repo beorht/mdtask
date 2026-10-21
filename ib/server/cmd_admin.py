@@ -513,6 +513,9 @@ def _status(state, io):
 
 
 def cmd_journalctl(ctx, argv, io):
+    if "--verify" in argv:
+        import cmd_logs
+        return cmd_logs.journal_verify(ctx, argv, io)
     parsed = parse_short_flags("journalctl", argv, "xe", io, with_value="un")
     if parsed is None:
         return 1
