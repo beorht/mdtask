@@ -4,7 +4,12 @@
   var root = document.documentElement;
 
   // ---------- theme (same localStorage key as the rest of the platform) ----------
+  var themeTimer = null;
   function setTheme(theme) {
+    // Плавная перекраска всей страницы (admin.css: .theme-switching) на время перехода.
+    root.classList.add('theme-switching');
+    clearTimeout(themeTimer);
+    themeTimer = setTimeout(function () { root.classList.remove('theme-switching'); }, 1000);
     root.setAttribute('data-theme', theme);
     try { localStorage.setItem('theme', theme); } catch (e) {}
     document.querySelectorAll('[data-theme-choice] input').forEach(function (input) {

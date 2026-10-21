@@ -63,6 +63,18 @@ test('before the start the exam does not exist for the group; TEST sees it at an
   assert.ok((await tester.get('/')).text.includes(DEF.title));
 });
 
+test('TEST outside the exam window: no countdown (it would reload the page at zero), during it — the timer', async () => {
+  setWindow(-2 * HOUR, -HOUR);
+  const app = createApp();
+  const tester = await loginAs(app, 'tester');
+  const page = await tester.get(`${BASE}/task/3.3`);
+  assert.strictEqual(page.status, 200);
+  assert.match(page.text, /Пробный режим: время не ограничено/);
+  assert.doesNotMatch(page.text, /data-exam-timer/);
+  setWindow(-HOUR, HOUR);
+  assert.match((await tester.get(`${BASE}/task/3.3`)).text, /data-exam-timer/);
+});
+
 test('while it runs: the group sees it, the IB tasks and the SQL trainer are closed; after the end they open again', async () => {
   setWindow(-HOUR, HOUR);
   const app = createApp();
