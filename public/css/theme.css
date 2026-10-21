@@ -1,36 +1,47 @@
+/* Палитра Marple (docs/color-marple.md): малиновый #CA2851, коралловый #FF6766, абрикосовый #FFB173,
+   кремовый #FFE3B3. Основная тема — тёмная (почти чёрный фон со свечением); светлая — своя палитра
+   (блок :root[data-theme="light"] ниже). Карточки — заливка цветом палитры с тёмным текстом (components.css, «Marple»). */
 :root {
-  /* brand — warm / editorial / minimal (docs/color-white.md) */
-  --color-purple: #665477;
-  --color-purple-dark: #55445F;
-  --color-purple-darker: #443752;
-  --color-olive: #85866A;
-  --color-terracotta: #A94F36;
-  --color-navy: #263B4A;
-  --color-beige: #D8D0C3;
+  --marple-crimson: #CA2851;
+  --marple-coral: #FF6766;
+  --marple-apricot: #FFB173;
+  --marple-cream: #FFE3B3;
+  --marple-ink: #1C1A1B;          /* текст на цветных карточках */
+  --marple-ink-soft: rgba(28, 26, 27, 0.72);
+  --marple-gradient: linear-gradient(90deg, #CA2851, #FF6766, #FFB173, #FFE3B3);
 
-  --color-peach: #C9A98F;
-  --color-peach-light: #EDE7F0;
+  /* светлая тема: кремовый фон, акцент — малиновый (контраст текста ≥ 4.5:1) */
+  --color-purple: #CA2851;
+  --color-purple-dark: #B0213F;
+  --color-purple-darker: #8E1A33;
+  --color-olive: #B5865C;
+  --color-terracotta: #E0574F;
+  --color-navy: #2A2024;
+  --color-beige: #F3DEC4;
+
+  --color-peach: #FFB173;
+  --color-peach-light: rgba(202, 40, 81, 0.08);
   --color-coral: var(--color-purple);
   --color-coral-dark: var(--color-purple-dark);
   --color-coral-darker: var(--color-purple-darker);
-  --color-gradient-brand: linear-gradient(90deg, var(--color-purple), var(--color-terracotta));
+  --color-gradient-brand: var(--marple-gradient);
 
   /* status */
-  --color-status-done: #667A55;
-  --color-status-failed: #A94F36;
-  --color-status-pending: #B38A45;
-  --color-status-info: #526878;
-  --color-status-current: #665477;
-  --color-status-not-started: #A9A39A;
+  --color-status-done: #3F8A4E;
+  --color-status-failed: #C0283F;
+  --color-status-pending: #B86B1F;
+  --color-status-info: #4F6E8C;
+  --color-status-current: #CA2851;
+  --color-status-not-started: #A99A8E;
   --color-status-pending-icon-size: 0.55rem;
 
   /* neutral - light theme */
-  --color-ink: #202124;
-  --color-ink-soft: #6F6B64;
-  --color-paper: #F3EDE3;
-  --color-paper-muted: #F3EDE3;
-  --color-surface: #FBF8F2;
-  --color-border: #DDD5C9;
+  --color-ink: #2A2024;
+  --color-ink-soft: #6E5E58;
+  --color-paper: #FFF7EA;
+  --color-paper-muted: #FDEFD9;
+  --color-surface: #FFFFFF;
+  --color-border: #F0DBC0;
 
   /* semantic aliases used across components.css */
   --bg: var(--color-paper);
@@ -46,78 +57,83 @@
   --on-accent-text: #ffffff;
 
   /* header */
-  --header-bg: var(--color-paper);
+  --header-bg: rgba(255, 247, 234, 0.8);
   --header-border: var(--color-border);
-  --header-blur: none;
+  --header-blur: blur(16px);
 
   /* sidebar active item */
-  --sidebar-active-bg: var(--color-peach-light);
-  --sidebar-active-border: var(--color-purple);
+  --sidebar-active-bg: linear-gradient(90deg, rgba(255, 103, 102, 0.18), rgba(255, 177, 115, 0.1));
+  --sidebar-active-border: var(--marple-coral);
 
   /* cards */
-  --card-shadow: 0 1px 2px rgba(32, 33, 36, 0.06);
-  --card-shadow-hover: 0 6px 16px rgba(32, 33, 36, 0.1);
-  --login-card-shadow: 0 16px 40px rgba(32, 33, 36, 0.1);
+  --card-radius: 24px;
+  --card-shadow: 0 1px 2px rgba(42, 32, 36, 0.06);
+  --card-shadow-hover: 0 10px 24px rgba(202, 40, 81, 0.16);
+  --login-card-shadow: 0 16px 40px rgba(42, 32, 36, 0.12);
 
   /* CTA buttons */
-  --btn-primary-bg: var(--color-purple);
-  --btn-primary-bg-hover: var(--color-purple-darker);
-  --btn-primary-shadow-hover: 0 6px 14px rgba(102, 84, 119, 0.28);
-  --btn-accent-bg: var(--color-terracotta);
-  --btn-accent-bg-hover: #8F4229;
-  --btn-accent-shadow-hover: 0 6px 14px rgba(169, 79, 54, 0.3);
+  --btn-primary-bg: var(--marple-crimson);
+  --btn-primary-bg-hover: #B0213F;
+  --btn-primary-shadow-hover: 0 6px 14px rgba(202, 40, 81, 0.28);
+  --btn-accent-bg: var(--marple-gradient);
+  --btn-accent-bg-hover: var(--marple-gradient);
+  --btn-accent-shadow-hover: 0 6px 14px rgba(255, 103, 102, 0.3);
 
-  /* Unified flat button style (all buttons) — light theme accent. */
-  --btn-flat-bg: #E83D2F;
-  --btn-flat-bg-hover: #F0554A;
-  --btn-flat-edge: #C13324;
+  /* Unified pill button style (all buttons) — light theme. */
+  --btn-flat-bg: #CA2851;
+  --btn-flat-bg-hover: #B0213F;
+  --btn-flat-text: #ffffff;
+  --btn-flat-edge: transparent;
 
-  /* always-dark code/markdown editor surface */
-  --editor-bg: #191A1C;
-  --editor-text: #F5F5F7;
+  /* always-dark code/markdown editor surface; --grid-line — «тетрадные» клетки под кодом */
+  --editor-bg: #1A1819;
+  --editor-text: #F5F1EC;
   --editor-border: rgba(255, 255, 255, 0.08);
-  --editor-focus: #7B5CFF;
-  --editor-selection: rgba(123, 92, 255, 0.35);
+  --editor-focus: #FF6766;
+  --editor-selection: rgba(255, 103, 102, 0.3);
+  --grid-size: 24px;
+  --grid-line: rgba(255, 255, 255, 0.09);
 
-  --selection-bg: rgba(102, 84, 119, 0.25);
+  --selection-bg: rgba(202, 40, 81, 0.2);
+
+  /* фон: мягкие пятна свечения */
+  --glow-1: rgba(255, 103, 102, 0.16);
+  --glow-2: rgba(255, 177, 115, 0.14);
+  --glow-3: rgba(202, 40, 81, 0.08);
 
   /* motion */
   --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
   --duration-fast: 150ms;
   --duration-base: 220ms;
   --duration-slow: 400ms;
+  --duration-color: 450ms;   /* смена цвета при наведении — плавная и медленная */
+  --duration-theme: 900ms;   /* перекраска страницы при переключении темы */
 
   /* layout */
   --header-height: 3.5rem;
 }
 
 :root[data-theme="dark"] {
-  /* brand — tech / futuristic gradient (docs/color-dark.md) */
-  --color-blue: #315BFF;
-  --color-purple2: #6D2BFF;
-  --color-pink: #D20A8A;
-  --color-orange: #FF7800;
+  --color-coral: var(--marple-coral);
+  --color-coral-dark: #FF8A82;
+  --color-coral-darker: #FFB173;
+  --color-peach: #FFB173;
+  --color-peach-light: rgba(255, 103, 102, 0.13);
+  --color-gradient-brand: var(--marple-gradient);
 
-  --color-coral: var(--color-purple2);
-  --color-coral-dark: #9C8CFF;
-  --color-coral-darker: #B7ACFF;
-  --color-peach: #7B5CFF;
-  --color-peach-light: rgba(109, 43, 255, 0.14);
-  --color-gradient-brand: linear-gradient(90deg, var(--color-blue), var(--color-purple2), var(--color-pink), var(--color-orange));
+  --color-status-done: #6FD08C;
+  --color-status-failed: #FF6B7F;
+  --color-status-pending: #FFB173;
+  --color-status-info: #7FB2E5;
+  --color-status-current: #FFE3B3;
+  --color-status-not-started: #6F6862;
 
-  --color-status-done: #35D399;
-  --color-status-failed: #FF5C7A;
-  --color-status-pending: #F5B942;
-  --color-status-info: #5EA7FF;
-  --color-status-current: #A7A8B5;
-  --color-status-not-started: #6C6D7C;
-
-  --color-ink: #F5F5F7;
-  --color-ink-soft: #A7A8B5;
-  --color-paper: #212121;
-  --color-paper-muted: #0C0C0C;
-  --color-surface: rgba(255, 255, 255, 0.04);
-  --color-border: rgba(255, 255, 255, 0.1);
+  --color-ink: #F5F1EC;
+  --color-ink-soft: #ABA29B;
+  --color-paper: #161515;
+  --color-paper-muted: #101010;
+  --color-surface: rgba(255, 255, 255, 0.045);
+  --color-border: rgba(255, 255, 255, 0.09);
 
   --bg: var(--color-paper);
   --sidebar-bg: var(--color-paper-muted);
@@ -129,38 +145,111 @@
   --accent-text-hover: var(--color-coral-darker);
   --accent-soft-bg: var(--color-peach-light);
   --border: var(--color-border);
-  --on-accent-text: #ffffff;
+  --on-accent-text: #1C1A1B;
 
-  --header-bg: rgba(12, 12, 12, 0.65);
-  --header-border: rgba(255, 255, 255, 0.08);
+  --header-bg: rgba(16, 16, 16, 0.7);
+  --header-border: rgba(255, 255, 255, 0.07);
   --header-blur: blur(20px);
 
-  --sidebar-active-bg: linear-gradient(90deg, rgba(49, 91, 255, 0.2), rgba(210, 10, 138, 0.12));
-  --sidebar-active-border: #7B5CFF;
+  --sidebar-active-bg: linear-gradient(90deg, rgba(255, 103, 102, 0.22), rgba(202, 40, 81, 0.08));
+  --sidebar-active-border: var(--marple-coral);
 
   --card-shadow: none;
-  --card-shadow-hover: 0 0 20px rgba(109, 43, 255, 0.25);
+  --card-shadow-hover: 0 12px 30px rgba(255, 103, 102, 0.18);
   --login-card-shadow: 0 16px 50px rgba(0, 0, 0, 0.6);
 
-  --btn-primary-bg: linear-gradient(90deg, var(--color-blue), #8B3DFF);
-  --btn-primary-bg-hover: linear-gradient(90deg, var(--color-blue), #8B3DFF);
-  --btn-primary-shadow-hover: 0 0 25px rgba(80, 70, 255, 0.35);
-  --btn-accent-bg: linear-gradient(90deg, var(--color-pink), var(--color-orange));
-  --btn-accent-bg-hover: linear-gradient(90deg, var(--color-pink), var(--color-orange));
-  --btn-accent-shadow-hover: 0 0 25px rgba(210, 10, 138, 0.35);
+  --btn-primary-bg: var(--marple-coral);
+  --btn-primary-bg-hover: var(--marple-apricot);
+  --btn-primary-shadow-hover: 0 0 24px rgba(255, 103, 102, 0.35);
+  --btn-accent-bg: var(--marple-gradient);
+  --btn-accent-bg-hover: var(--marple-gradient);
+  --btn-accent-shadow-hover: 0 0 24px rgba(255, 177, 115, 0.35);
 
-  --editor-bg: #0C0C0C;
-  --editor-text: #F5F5F7;
+  --editor-bg: #121111;
+  --editor-text: #F5F1EC;
   --editor-border: rgba(255, 255, 255, 0.08);
-  --editor-focus: #7B5CFF;
-  --editor-selection: rgba(123, 92, 255, 0.35);
+  --editor-focus: #FF6766;
+  --editor-selection: rgba(255, 103, 102, 0.3);
 
-  --selection-bg: rgba(123, 92, 255, 0.35);
+  --selection-bg: rgba(255, 103, 102, 0.3);
 
-  /* Unified flat button style (all buttons) — dark theme accent. */
-  --btn-flat-bg: #2093D6;
-  --btn-flat-bg-hover: #3AA6E0;
-  --btn-flat-edge: #1A78AF;
+  /* Unified pill button style (all buttons) — dark theme. */
+  --btn-flat-bg: var(--marple-coral);
+  --btn-flat-bg-hover: var(--marple-apricot);
+  --btn-flat-text: #1C1A1B;
+  --btn-flat-edge: transparent;
+
+  --glow-1: rgba(255, 103, 102, 0.2);
+  --glow-2: rgba(255, 177, 115, 0.13);
+  --glow-3: rgba(202, 40, 81, 0.16);
+}
+
+/* Светлая тема (с 21.10.2026, по образцам «подписки» и «E.reader»): кремово-жёлтый фон, карточки с тонкой
+   тёмной обводкой, цветные карточки голубая / жёлтая / мятная / оранжевая / графитовая, чёрные кнопки-«пилюли»,
+   акцент — красно-оранжевый. Только переопределения: тёмная тема не меняется. */
+:root[data-theme="light"] {
+  --light-blue: #9DB9E0;
+  --light-yellow: #F5D24A;
+  --light-mint: #8FCDB7;
+  --light-orange: #EC7B55;
+  --light-red: #E8574A;
+  --light-graphite: #3D3B3A;
+  --light-beige: #EFE6DC;
+
+  --color-coral: #E2603E;
+  --color-coral-dark: #B8442A;
+  --color-coral-darker: #8E3320;
+  --color-peach: #EC7B55;
+  --color-peach-light: rgba(226, 96, 62, 0.12);
+  --color-gradient-brand: linear-gradient(90deg, #E8574A, #EC7B55, #F5D24A, #8FCDB7);
+
+  --color-status-done: #2E7D4F;
+  --color-status-failed: #C23B2E;
+  --color-status-pending: #A86510;
+  --color-status-info: #3D6A9E;
+  --color-status-current: #E2603E;
+  --color-status-not-started: #A39A86;
+
+  --color-ink: #1C1A1B;
+  --color-ink-soft: #5F584B;
+  --color-paper: #FAF6F3;
+  --color-paper-muted: #F2ECE6;
+  --color-surface: #FFFFFF;
+  --color-border: rgba(28, 26, 27, 0.22);
+
+  --bg: var(--color-paper);
+  --sidebar-bg: var(--color-paper-muted);
+  --surface: var(--color-surface);
+  --text: var(--color-ink);
+  --text-soft: var(--color-ink-soft);
+  --accent: var(--color-coral);
+  --accent-text: var(--color-coral-dark);
+  --accent-text-hover: var(--color-coral-darker);
+  --accent-soft-bg: var(--color-peach-light);
+  --border: var(--color-border);
+  --on-accent-text: #1C1A1B;
+
+  --header-bg: rgba(250, 246, 243, 0.85);
+  --header-border: rgba(28, 26, 27, 0.14);
+  --header-blur: blur(16px);
+
+  --sidebar-active-bg: rgba(226, 96, 62, 0.16);
+  --sidebar-active-border: #E2603E;
+
+  --card-shadow: none;
+  --card-shadow-hover: 0 10px 24px rgba(28, 26, 27, 0.12);
+  --login-card-shadow: 0 16px 40px rgba(28, 26, 27, 0.12);
+
+  --btn-primary-shadow-hover: 0 6px 16px rgba(28, 26, 27, 0.22);
+  --btn-flat-bg: #1C1A1B;
+  --btn-flat-bg-hover: #3A3634;
+  --btn-flat-text: #F5EBC9;
+
+  --selection-bg: rgba(226, 96, 62, 0.22);
+
+  --glow-1: rgba(236, 123, 85, 0.2);
+  --glow-2: rgba(157, 185, 224, 0.28);
+  --glow-3: rgba(143, 205, 183, 0.24);
 }
 
 *, *::before, *::after {
@@ -176,30 +265,42 @@ body {
   line-height: 1.7;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  transition: background-color var(--duration-slow) var(--ease-standard),
-    color var(--duration-slow) var(--ease-standard);
+  transition: background-color var(--duration-theme) var(--ease-standard),
+    color var(--duration-theme) var(--ease-standard);
 }
 
-/* subtle blue/purple/pink/orange glow atmosphere, dark theme only — same colors as
-   before, just spread over a larger radius so the gradient reads more clearly against
-   the flat #212121 background. */
-:root[data-theme="dark"] body {
+/* Фон: почти чёрный (светлая тема — кремовый) с мягкими пятнами свечения, как на образцах:
+   коралловое и абрикосовое пятно справа сверху, малиновое — слева снизу. Пятна — на отдельном
+   неподвижном слое (position: fixed): при прокрутке он не перерисовывается, в отличие от
+   background-attachment: fixed, из-за которого прокрутка и набор в редакторе подтормаживали. */
+/* Цвета свечения — анимируемые свойства: при смене темы пятна плавно перекрашиваются, а не «щёлкают». */
+@property --glow-1 { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --glow-2 { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --glow-3 { syntax: '<color>'; inherits: true; initial-value: transparent; }
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
   background-image:
-    radial-gradient(1100px circle at 8% -10%, rgba(49, 91, 255, 0.22), transparent 70%),
-    radial-gradient(1250px circle at 55% -12%, rgba(109, 43, 255, 0.18), transparent 70%),
-    radial-gradient(1100px circle at 105% -5%, rgba(255, 120, 0, 0.14), transparent 70%);
-  background-attachment: fixed;
+    radial-gradient(760px circle at 88% -8%, var(--glow-1), transparent 62%),
+    radial-gradient(520px circle at 70% 6%, var(--glow-2), transparent 60%),
+    radial-gradient(900px circle at -6% 105%, var(--glow-3), transparent 62%);
+  transition: --glow-1 var(--duration-theme) var(--ease-standard), --glow-2 var(--duration-theme) var(--ease-standard),
+    --glow-3 var(--duration-theme) var(--ease-standard);
 }
 
-/* Matching glow for the light theme, using the light palette's own brand colors
-   (purple / terracotta / olive) at a much lower opacity so it stays subtle on the
-   light paper background instead of muddying the page. */
-:root:not([data-theme="dark"]) body {
-  background-image:
-    radial-gradient(1100px circle at 8% -10%, rgba(102, 84, 119, 0.14), transparent 70%),
-    radial-gradient(1250px circle at 55% -12%, rgba(169, 79, 54, 0.12), transparent 70%),
-    radial-gradient(1100px circle at 105% -5%, rgba(133, 134, 106, 0.12), transparent 70%);
-  background-attachment: fixed;
+/* Переключение темы (theme-toggle.js ставит класс на время перехода): все цвета страницы меняются
+   плавно и медленно. Только на время перехода — в остальное время у элементов свои, быстрые переходы. */
+.theme-switching *,
+.theme-switching *::before,
+.theme-switching *::after {
+  transition-property: background-color, color, border-color, outline-color, box-shadow, fill, stroke,
+    --glow-1, --glow-2, --glow-3 !important;
+  transition-duration: var(--duration-theme) !important;
+  transition-timing-function: var(--ease-standard) !important;
 }
 
 h1, h2, h3 { line-height: 1.3; letter-spacing: -0.01em; }
@@ -226,7 +327,7 @@ code, pre {
 
 a {
   color: var(--accent-text);
-  transition: color var(--duration-fast) var(--ease-standard);
+  transition: color var(--duration-color) var(--ease-standard);
 }
 a:hover {
   color: var(--accent-text-hover);

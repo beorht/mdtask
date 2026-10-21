@@ -151,7 +151,7 @@ body.admin {
 .a-icon-btn {
   position: relative; width: 40px; height: 40px; display: inline-grid; place-items: center;
   border: 1px solid transparent; border-radius: var(--a-radius); background: transparent; color: var(--a-text-2);
-  cursor: pointer; transition: background 150ms var(--a-ease), color 150ms var(--a-ease);
+  cursor: pointer; transition: background 450ms var(--a-ease), color 450ms var(--a-ease);
 }
 .a-icon-btn:hover { background: var(--a-hover); color: var(--a-text); text-decoration: none !important; }
 .a-menu-btn { display: none; }
@@ -170,7 +170,7 @@ body.admin {
   width: 100%; height: 40px; padding: 0 12px 0 40px;
   border: 1px solid var(--a-border); border-radius: var(--a-radius);
   background: var(--a-surface-2); color: var(--a-text); font: inherit;
-  transition: border-color 150ms var(--a-ease), background 150ms var(--a-ease), box-shadow 150ms var(--a-ease);
+  transition: border-color 450ms var(--a-ease), background 450ms var(--a-ease), box-shadow 450ms var(--a-ease);
 }
 .a-search input::placeholder { color: var(--a-muted); }
 .a-search input:focus { outline: none; border-color: var(--a-accent); background: var(--a-surface); box-shadow: 0 0 0 3px var(--a-focus); }
@@ -245,9 +245,9 @@ body.admin {
 .a-nav-item {
   position: relative; display: flex; align-items: center; gap: 12px; height: 40px; padding: 0 12px;
   border-radius: var(--a-radius); color: var(--a-text-2) !important; font-weight: 500;
-  text-decoration: none !important; transition: background 150ms var(--a-ease), color 150ms var(--a-ease);
+  text-decoration: none !important; transition: background 450ms var(--a-ease), color 450ms var(--a-ease);
 }
-.a-nav-item .icon { color: var(--a-muted); transition: color 150ms var(--a-ease); }
+.a-nav-item .icon { color: var(--a-muted); transition: color 450ms var(--a-ease); }
 .a-nav-item:hover { background: var(--a-hover); color: var(--a-text) !important; }
 .a-nav-item.is-active { background: var(--a-accent-soft); color: var(--a-accent-text) !important; font-weight: 600; }
 .a-nav-item.is-active .icon { color: var(--a-accent); }
@@ -281,7 +281,7 @@ body.admin {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 16px;
   border: 1px solid transparent; border-radius: var(--a-radius); font: inherit; font-weight: 600; font-size: 14px;
   cursor: pointer; white-space: nowrap; text-decoration: none !important;
-  transition: background 150ms var(--a-ease), border-color 150ms var(--a-ease), color 150ms var(--a-ease), box-shadow 150ms var(--a-ease);
+  transition: background 450ms var(--a-ease), border-color 450ms var(--a-ease), color 450ms var(--a-ease), box-shadow 450ms var(--a-ease);
 }
 .a-btn:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--a-focus); }
 .a-btn-primary { background: var(--a-accent); color: var(--a-on-accent) !important; }
@@ -317,7 +317,7 @@ body.admin {
   display: flex; flex-direction: column; gap: 4px; padding: 16px 20px;
   background: var(--a-surface); border: 1px solid var(--a-border); border-radius: var(--a-radius-lg); box-shadow: var(--a-shadow-sm);
   color: var(--a-text) !important; text-decoration: none !important;
-  transition: border-color 150ms var(--a-ease), box-shadow 150ms var(--a-ease);
+  transition: border-color 450ms var(--a-ease), box-shadow 450ms var(--a-ease);
 }
 a.a-stat:hover { border-color: var(--a-border-strong); box-shadow: var(--a-shadow-md); }
 .a-stat-value { font-size: 24px; font-weight: 700; line-height: 1.2; font-variant-numeric: tabular-nums; }
@@ -360,7 +360,7 @@ a.a-stat:hover { border-color: var(--a-border-strong); box-shadow: var(--a-shado
 .a-table th:first-child, .a-table td:first-child { padding-left: 24px; }
 .a-table th:last-child, .a-table td:last-child { padding-right: 24px; }
 .a-table tbody tr:last-child td { border-bottom: 0; }
-.a-table tbody tr { transition: background 120ms var(--a-ease); }
+.a-table tbody tr { transition: background 450ms var(--a-ease); }
 .a-table tbody tr[data-href] { cursor: pointer; }
 .a-table tbody tr:hover { background: var(--a-surface-2); }
 .a-table .a-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -381,7 +381,7 @@ a.a-person:hover { text-decoration: none; color: var(--a-accent-text) !important
 .a-tab {
   display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px; margin-bottom: -1px;
   border-bottom: 2px solid transparent; color: var(--a-muted) !important; font-weight: 600; white-space: nowrap;
-  text-decoration: none !important; transition: color 150ms var(--a-ease), border-color 150ms var(--a-ease);
+  text-decoration: none !important; transition: color 450ms var(--a-ease), border-color 450ms var(--a-ease);
 }
 .a-tab:hover { color: var(--a-text) !important; }
 .a-tab.is-active { color: var(--a-accent-text) !important; border-bottom-color: var(--a-accent); }
@@ -392,7 +392,7 @@ a.a-person:hover { text-decoration: none; color: var(--a-accent-text) !important
 .a-filters select, .a-input-search input, .a-field input, .a-field select, .a-field textarea {
   height: 40px; padding: 0 12px; border: 1px solid var(--a-border-strong); border-radius: var(--a-radius);
   background: var(--a-surface); color: var(--a-text); font: inherit;
-  transition: border-color 150ms var(--a-ease), box-shadow 150ms var(--a-ease);
+  transition: border-color 450ms var(--a-ease), box-shadow 450ms var(--a-ease);
 }
 .a-filters select { padding-right: 32px; min-width: 150px; cursor: pointer; }
 .a-filters select:focus, .a-input-search input:focus, .a-field input:focus, .a-field select:focus, .a-field textarea:focus {
@@ -495,7 +495,7 @@ a.a-person:hover { text-decoration: none; color: var(--a-accent-text) !important
 .a-verdicts legend, .a-field-label { font-size: 13px; font-weight: 600; color: var(--a-text-2); margin-bottom: 8px; padding: 0; }
 .a-verdict {
   display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 14px; border: 1px solid var(--a-border-strong);
-  border-radius: var(--a-radius); cursor: pointer; font-weight: 600; transition: border-color 150ms var(--a-ease), background 150ms var(--a-ease);
+  border-radius: var(--a-radius); cursor: pointer; font-weight: 600; transition: border-color 450ms var(--a-ease), background 450ms var(--a-ease);
 }
 .a-verdict input { position: absolute; opacity: 0; pointer-events: none; }
 .a-verdict-icon { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; border: 1.5px solid var(--a-border-strong); color: var(--a-muted); }
@@ -552,7 +552,7 @@ a.a-person:hover { text-decoration: none; color: var(--a-accent-text) !important
 .a-form-actions { display: flex; justify-content: flex-end; gap: 8px; position: sticky; bottom: 0; padding: 16px 0; background: linear-gradient(transparent, var(--a-bg) 30%); }
 
 .a-segmented { display: inline-flex; padding: 4px; gap: 4px; border-radius: var(--a-radius); background: var(--a-neutral-bg); width: fit-content; flex-wrap: wrap; }
-.a-segmented label { position: relative; padding: 8px 16px; border-radius: var(--a-radius-sm); cursor: pointer; font-weight: 600; color: var(--a-text-2); transition: background 150ms var(--a-ease), color 150ms var(--a-ease); }
+.a-segmented label { position: relative; padding: 8px 16px; border-radius: var(--a-radius-sm); cursor: pointer; font-weight: 600; color: var(--a-text-2); transition: background 450ms var(--a-ease), color 450ms var(--a-ease); }
 .a-segmented input { position: absolute; opacity: 0; pointer-events: none; }
 .a-segmented label:has(input:checked) { background: var(--a-surface); color: var(--a-text); box-shadow: var(--a-shadow-sm); }
 .a-segmented label:has(input:focus-visible) { box-shadow: 0 0 0 3px var(--a-focus); }
@@ -579,7 +579,7 @@ a.a-person:hover { text-decoration: none; color: var(--a-accent-text) !important
 .a-profile-progress { flex: 0 1 320px; display: flex; flex-direction: column; gap: 6px; }
 
 .a-course-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
-.a-course-card { gap: 8px; color: var(--a-text) !important; text-decoration: none !important; transition: border-color 150ms var(--a-ease), box-shadow 150ms var(--a-ease); }
+.a-course-card { gap: 8px; color: var(--a-text) !important; text-decoration: none !important; transition: border-color 450ms var(--a-ease), box-shadow 450ms var(--a-ease); }
 .a-course-card:hover { border-color: var(--a-border-strong); box-shadow: var(--a-shadow-md); }
 .a-course-icon { width: 40px; height: 40px; display: grid; place-items: center; border-radius: var(--a-radius); background: var(--a-accent-soft); color: var(--a-accent); margin-bottom: 8px; }
 .a-course-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: auto; padding-top: 16px; border-top: 1px solid var(--a-border); }
@@ -802,3 +802,11 @@ a.a-mcell:hover { outline: 2px solid var(--a-accent); outline-offset: 1px; }
 .a-exam-name { font-size: 13px; min-width: 9rem; } .a-exam-name a { font-weight: 600; }
 .a-exam-device .a-tag { margin-left: 2px; } .a-exam-warn-row td { background: var(--a-warning-bg); } .a-exam-window select { height: 36px; padding: 0 8px; border: 1px solid var(--a-border-strong); border-radius: var(--a-radius-sm); background: var(--a-surface); color: var(--a-text); font: inherit; }
 .a-text-danger { color: var(--a-failed); font-weight: 700; }
+
+
+/* Переключение темы: вся админка перекрашивается плавно и медленно (admin.js ставит класс на время перехода). */
+.theme-switching *, .theme-switching *::before, .theme-switching *::after {
+  transition-property: background-color, color, border-color, outline-color, box-shadow, fill, stroke !important;
+  transition-duration: 900ms !important;
+  transition-timing-function: var(--a-ease) !important;
+}

@@ -28,7 +28,15 @@ body{
   min-height: 100dvh;
 }
 
+/* «Тетрадные» клетки, как в редакторах кода mdtask: клетка = высота строки (20px × 1.5), линии заметны, но не мешают читать. */
 #screen{
+  --cell: 30px;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px);
+  background-size: var(--cell) var(--cell);
+  background-position: 0 calc(18px + env(safe-area-inset-top,0px));
+  background-attachment: local;
   min-height: 100dvh;
   padding: 18px 20px calc(18px + env(safe-area-inset-bottom,0px));
   padding-top: calc(18px + env(safe-area-inset-top,0px));
@@ -74,7 +82,7 @@ body{
 
 @media (max-width:480px){
   body{font-size:18px;}
-  #screen{padding:14px 14px calc(14px + env(safe-area-inset-bottom,0px));}
+  #screen{padding:14px 14px calc(14px + env(safe-area-inset-bottom,0px)); --cell: 27px; background-position: 0 14px;}
 }
 </style>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap">

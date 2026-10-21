@@ -1,8 +1,13 @@
-<%# Exam status bar: the time left (public/js/exam.js counts it down) or that the exam is over. %>
+<%# Exam status bar: the time left (public/js/exam.js counts it down) or that the exam is over.
+    The page is open outside the real window only for the TEST group (phaseFor): no countdown there,
+    otherwise the timer would hit zero at once and reload the page over and over. %>
+<% const inWindow = Date.now() >= Date.parse(win.startsAt) && Date.now() < Date.parse(win.endsAt); %>
 <div class="exam-bar exam-bar-<%= phase %>" data-exam-bar data-ends="<%= win.endsAt %>" data-base="<%= base %>"
      data-stage="<%= typeof logStage !== 'undefined' && logStage ? logStage : '' %>" data-task="<%= typeof logTask !== 'undefined' && logTask ? logTask : '' %>">
   <span class="exam-bar-title">🎓 <%= exam.title %></span>
-  <% if (phase === 'open') { %>
+  <% if (phase === 'open' && !inWindow) { %>
+    <span class="exam-bar-timer">Пробный режим: время не ограничено</span>
+  <% } else if (phase === 'open') { %>
     <span class="exam-bar-timer">До конца: <strong data-exam-timer>—</strong></span>
   <% } else { %>
     <span class="exam-bar-timer">Контрольная завершена<%= win.publishedAt ? ' · результаты объявлены' : ' · результаты объявит преподаватель' %></span>
