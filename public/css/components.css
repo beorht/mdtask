@@ -677,6 +677,21 @@ a.ib-task-card:focus-visible { outline: 2px solid var(--color-coral); outline-of
 .ib-task-head .status-pill { margin-left: 0; }
 .ib-task-hint { color: var(--text-soft); font-size: 0.92rem; margin: 0.75rem 0 1rem; }
 .ib-task-hint a { margin-left: 0.4rem; white-space: nowrap; }
+.ib-task-hint .btn { margin-left: 0; }
+.ib-guard-rules { font-size: 0.88rem; color: var(--text-soft); border-left: 3px solid var(--color-peach); padding-left: 0.6rem; margin: 0 0 1rem; }
+/* Ловушка для нейросети: не видна на экране и диктору, но попадает в скопированный текст. */
+.ib-clip-trap { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.ib-defense { border: 1px solid var(--border, #d0d7de); border-radius: 8px; padding: 0.8rem 1rem; margin: 0 0 1rem; }
+.ib-defense h2 { font-size: 1.05rem; margin: 0 0 0.5rem; }
+.ib-defense-form { display: flex; flex-direction: column; gap: 0.4rem; align-items: flex-start; }
+.ib-defense-option { display: flex; gap: 0.5rem; align-items: baseline; cursor: pointer; }
+.ib-defense-left { font-size: 0.88rem; color: var(--text-soft); }
+.det-example { margin: 0 0 0.75rem; }
+.det-example summary { cursor: pointer; font-weight: 600; margin-bottom: 0.4rem; }
+.det-example pre { max-height: 14rem; overflow: auto; font-size: 0.78rem; }
+.det-defense { margin-top: 1rem; border-top: 1px solid var(--border, #ddd); padding-top: 0.75rem; }
+.det-defense pre { max-height: 12rem; overflow: auto; font-size: 0.78rem; }
+.det-defense-result { white-space: pre-line; margin-top: 0.75rem; }
 .ib-terminal {
   display: block;
   width: 100%;

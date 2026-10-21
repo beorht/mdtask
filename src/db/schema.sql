@@ -202,6 +202,48 @@ CREATE TABLE IF NOT EXISTS ib_lab_log (
 );
 CREATE INDEX IF NOT EXISTS idx_ib_lab_log_task_student ON ib_lab_log(task, student_id, id);
 
+-- Задание ИБ №8 «Расследование по журналам», этап 7: детектор атак на Python (src/lib/ib-detector.js).
+-- Код выполняется в браузере, сервер сверяет вывод; defense_ok — контрольный вопрос «что выведет
+-- ваша программа» (NULL — ещё не отвечал). Терминал (ib/server/logs_task.py) читает solved.
+CREATE TABLE IF NOT EXISTS ib_logs_detector (
+  student_id TEXT PRIMARY KEY REFERENCES users(id),
+  code TEXT NOT NULL DEFAULT '',
+  passed INTEGER NOT NULL DEFAULT 0,
+  total INTEGER NOT NULL DEFAULT 0,
+  solved INTEGER NOT NULL DEFAULT 0,
+  solved_at TEXT,
+  checks INTEGER NOT NULL DEFAULT 0,
+  defense_ok INTEGER,
+  defense_answer TEXT,
+  defense_at TEXT,
+  updated_at TEXT
+);
+
+-- Защита заданий ИБ от решения «через нейросеть» (src/routes/ib.js, public/js/ib-guard.js):
+-- заблокированные вставки, копирование, уход со страницы — в терминале и в редакторе детектора.
+CREATE TABLE IF NOT EXISTS ib_guard_events (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  task TEXT NOT NULL,
+  student_id TEXT NOT NULL,
+  type TEXT NOT NULL,
+  data TEXT NOT NULL DEFAULT '{}',
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_ib_guard_events ON ib_guard_events(task, student_id);
+
+-- Контрольные вопросы на сайте после решения заданий ИБ без движка этапов (№3, №4; src/lib/ib-defense.js):
+-- questions — [{text, options, correct}], results — [{choice, ok, late, seconds, at}], asked_at — когда
+-- показан текущий вопрос (60 секунд на ответ).
+CREATE TABLE IF NOT EXISTS ib_task_defense (
+  task TEXT NOT NULL,
+  student_id TEXT NOT NULL REFERENCES users(id),
+  questions TEXT NOT NULL,
+  results TEXT NOT NULL DEFAULT '[]',
+  asked_at TEXT,
+  finished_at TEXT,
+  PRIMARY KEY (task, student_id)
+);
+
 -- «Простое программирование на Python» (src/lib/python-basics.js): черновик кода и итог по
 -- заданию для студента. Код выполняется в браузере студента, сервер сверяет только вывод.
 CREATE TABLE IF NOT EXISTS python_basics_progress (

@@ -71,6 +71,23 @@ class LabCase(unittest.TestCase):
         out = ""
         for line in lines:
             out = self.run_line(line)
+            out += self.defend()
+        return out
+
+    def defend(self):
+        """Верно ответить на контрольные вопросы этапа, если они заданы. -> их вывод."""
+        out = ""
+        for _ in range(3):
+            conn = sqlite3.connect(self.db)
+            conn.row_factory = sqlite3.Row
+            try:
+                pr = lab_task.load_progress(self.lab.load_row(conn, STUDENT))
+            finally:
+                conn.close()
+            state = (pr.get("defense") or {}).get(str(pr["done"] + 1))
+            if not state or state["i"] >= len(state["qs"]):
+                return out
+            out += "\n" + self.run_line(f"answer q {state['qs'][state['i']]['correct'] + 1}")
         return out
 
     def done(self):
@@ -83,14 +100,17 @@ class LabCase(unittest.TestCase):
 
 
 INCIDENT = [
-    "ls -l /var/log", "sudo tail -n 2 /var/log/auth.log",
+    "ls -l /var/log", "sudo tail -n 2 /var/log/auth.log", "sudo wc -l /var/log/auth.log",
     "answer 1.1 {auth_lines}", "answer 1.2 {last_time}",
     "mkdir ~/evidence", "sudo cp /var/log/auth.log ~/evidence/auth.log",
     "sudo sha256sum /var/log/auth.log > ~/evidence/auth.log.sha256",
+    "sudo grep -c 'Failed password' /var/log/auth.log", "sudo grep Accepted /var/log/auth.log",
+    "sudo grep 'Failed password for {target}' /var/log/auth.log | grep -o 'from [0-9.]*' | uniq -c",
     "answer 3.1 {failed_total}", "answer 3.2 {attacker_ip}", "answer 3.3 {target}", "answer 3.4 {attack_failed}",
     "answer 4.1 {login_time}", "answer 4.2 {file}", "answer 4.3 {bad_mode}", "answer 4.4 sudo",
     "mkdir -p ~/incident", "sudo grep '{attacker_ip}' /var/log/auth.log > ~/incident/timeline.txt",
     "sudo grep 'sudo: *{target} :' /var/log/auth.log > ~/incident/sudo.txt",
+    "sudo grep -c 'Failed password for admin ' /var/log/auth.log",
     "answer 6.1 да", "answer 6.2 нет", "answer 6.3 {admin_failed}",
     "sudo usermod -L {target}", "sudo gpasswd -d {target} sudo", "sudo chmod 640 {file}",
     "cp ~/incident/report-template.txt ~/incident/report.txt",
@@ -120,24 +140,40 @@ class IncidentTests(LabCase):
 
     def test_log_needs_sudo_and_tampering_is_critical(self):
         self.assertIn("Отказано в доступе", self.run_line("cat /var/log/auth.log"))
-        self.run_all(INCIDENT[:7])
+        self.run_all(INCIDENT[:8])
         self.assertEqual(self.done(), 2)
         out = self.run_line("sudo sed -i '1d' /var/log/auth.log")
         self.assertIn("[Внимание, критично] Нарушено: Исходный журнал", out)
-        self.run_all(INCIDENT[7:15])
+        self.run_all(INCIDENT[8:19])
         self.assertEqual(self.done(), 4)
-        self.run_all(INCIDENT[15:18])
+        self.run_all(INCIDENT[19:22])
         self.assertEqual(self.done(), 4, "этап 5 с критическим пунктом не засчитан, пока журнал изменён")
 
     def test_wrong_answers_and_locking_admin(self):
-        self.run_all(INCIDENT[:7])
+        self.run_all(INCIDENT[:8])
         self.assertIn("неверно", self.run_line("answer 3.2 {scanner_ip}"))
-        self.run_all(INCIDENT[7:21])
+        self.run_all(INCIDENT[8:26])
         self.assertEqual(self.done(), 6)
         self.assertIn("[Внимание, критично]", self.run_line("sudo passwd -l admin"))
-        self.run_all(INCIDENT[21:24])
+        self.run_all(INCIDENT[26:29])
         self.assertEqual(self.done(), 6)
-        self.assertIn("[Этап 7 пройден", self.run_line("sudo passwd -u admin"))
+        self.run_line("sudo passwd -u admin")
+        self.assertIn("[Этап 7 пройден", self.defend())
+
+    def test_answer_needs_output_and_stage_asks_control_questions(self):
+        self.run_line("ls -l /var/log")
+        out = self.run_line("answer 1.1 {auth_lines}")
+        self.assertIn("не встречалось в выводе", out)
+        self.run_line("sudo wc -l /var/log/auth.log")
+        self.assertIn("верно", self.run_line("answer 1.1 {auth_lines}"))
+        self.run_line("sudo tail -n 2 /var/log/auth.log")
+        out = self.run_line("answer 1.2 {last_time}")
+        self.assertIn("верно", out)
+        self.assertIn("[Контрольный вопрос 1 из 2, этап 1]", out)
+        self.assertIn("Сначала ответьте на контрольный вопрос", self.run_line("answer 1.1 {auth_lines}") +
+                      self.run_line("task"))
+        self.assertEqual(self.done(), 0)
+        self.assertIn("[Этап 1 пройден", self.defend())
 
     def test_account_commands(self):
         self.assertIn("недостаточно прав", self.run_line("passwd -l {target}"))
@@ -156,7 +192,7 @@ class IncidentTests(LabCase):
 
 
 SSH = [
-    "systemctl status ssh", "sudo sshd -T", "answer 1.1 {port}", "answer 1.2 yes",
+    "systemctl status ssh", "sudo sshd -T", "sudo grep -r Port /etc/ssh", "cat /etc/passwd", "answer 1.1 {port}", "answer 1.2 yes",
     "answer 1.3 /etc/ssh/sshd_config.d/50-cloud-init.conf",
     "getent group sshadmins", "answer 2.1 2", "answer 2.2 intern",
     "sudo cp -r /etc/ssh /etc/ssh.bak",
@@ -190,19 +226,20 @@ class SshTests(LabCase):
         self.assertIn("no hostkeys", self.run_line("sshd -t"))
 
     def test_strict_modes_and_dropin_trap(self):
-        self.run_all(SSH[:10])
+        self.run_all(SSH[:12])
         out = self.run_line("ssh -p {port} -i ~/.ssh/id_ed25519 {user}@localhost")
         self.assertIn("способ входа: пароль", out, "~/.ssh с правами 775: ключ отвергнут")
         self.assertIn("bad ownership or modes", self.run_line("sudo tail -n 3 /var/log/auth.log"))
         self.assertEqual(self.done(), 3)
-        self.run_all(SSH[10:13])
+        self.run_all(SSH[12:15])
         self.assertEqual(self.done(), 4)
         # PasswordAuthentication no в основном файле не действует, пока в sshd_config.d стоит yes
-        self.run_all(SSH[13:16] + SSH[17:19])
+        self.run_all(SSH[15:18] + SSH[19:21])
         check = self.run_line("check")
         self.assertIn("50-cloud-init.conf", check)
         self.assertEqual(self.done(), 4)
-        self.run_line(SSH[16])
+        self.run_line(SSH[18])
+        self.defend()
         self.assertEqual(self.done(), 5)
 
     def test_edit_needs_reload_and_restart_with_error_stops_service(self):
@@ -222,14 +259,14 @@ class SshTests(LabCase):
         self.assertEqual(self.run_line("systemctl is-active ssh"), "active")
 
     def test_admin_lockout_is_critical(self):
-        self.run_all(SSH[:21])
+        self.run_all(SSH[:23])
         self.assertEqual(self.done(), 6)
         out = self.run_line("sudo systemctl stop ssh")
         self.assertIn("[Внимание, критично]", out)
-        self.run_all(SSH[21:])
+        self.run_all(SSH[23:])
         self.assertEqual(self.done(), 6)
         self.run_line("sudo systemctl start ssh")
-        self.run_all(SSH[21:])
+        self.run_all(SSH[23:])
         self.assertEqual(self.done(), 7)
 
     def test_sshd_model(self):

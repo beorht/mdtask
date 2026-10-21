@@ -14,6 +14,7 @@ PasswordAuthentication yes спрятан в /etc/ssh/sshd_config.d/ (он чи�
 
 import hashlib
 
+import defense_banks
 import lab_task
 import sshd_sim
 from lab_task import _norm, lines_of, ran_priv
@@ -141,7 +142,7 @@ STAGES = [
             {"text": "Выведите действующие значения: sudo sshd -T", "kind": "cmd",
              "check": lambda e: ran_priv(e, "sshd", lambda c: "-T" in c["argv"])},
             {"text": "На каком порту работает sshd? Ответ: answer 1.1 ПОРТ", "kind": "answer", "qid": "1.1",
-             "answer": lambda v, e: _norm(v) == str(e.p["port"])},
+             "answer": lambda v, e: _norm(v) == str(e.p["port"]), "proof": lambda v, e: [str(e.p["port"])]},
             {"text": "Разрешён ли сейчас вход root? Значение PermitRootLogin: answer 1.2 ЗНАЧЕНИЕ", "kind": "answer",
              "qid": "1.2", "answer": lambda v, e: _norm(v) == "yes"},
             {"text": "В каком файле задано действующее значение PasswordAuthentication? "
@@ -167,7 +168,7 @@ STAGES = [
              "qid": "2.1", "answer": lambda v, e: _norm(v) == "2"},
             {"text": "У какой учётной записи (кроме root) есть оболочка /bin/bash, но нет права на удалённый "
                      "вход по политике? Ответ: answer 2.2 ИМЯ", "kind": "answer", "qid": "2.2",
-             "answer": lambda v, e: _norm(v) == "intern"},
+             "answer": lambda v, e: _norm(v) == "intern", "proof": True},
         ],
     },
     {
@@ -295,3 +296,7 @@ INTRO = [
 
 LAB = lab_task.register(lab_task.Lab("ssh", 7, "Безопасный удалённый доступ по SSH", STAGES, INTRO, "ssh"))
 
+
+# Против решения «через нейросеть»: доказательство ответа выводом команд и контрольные вопросы после этапов.
+LAB.track_output = True
+LAB.defense = lab_task.bank_defense(STAGES, defense_banks.SSH, defense_banks.SSH_DECOYS)

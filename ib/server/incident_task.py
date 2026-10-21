@@ -15,6 +15,7 @@ import hashlib
 import re
 
 import accounts
+import defense_banks
 import lab_task
 from lab_task import _norm, ans_choice, ans_time, lines_of
 
@@ -117,9 +118,10 @@ STAGES = [
             {"text": "Прочитайте /var/log/auth.log с правами root (sudo head, sudo tail или sudo cat)", "kind": "cmd",
              "check": _ran_read_auth},
             {"text": "Сколько строк в /var/log/auth.log? Ответ: answer 1.1 ЧИСЛО", "kind": "answer", "qid": "1.1",
-             "answer": lambda v, e: _norm(v) == str(e.p["auth_lines"])},
+             "answer": lambda v, e: _norm(v) == str(e.p["auth_lines"]), "proof": lambda v, e: [str(e.p["auth_lines"])]},
             {"text": "Во сколько сделана последняя запись журнала? Ответ: answer 1.2 ЧЧ:ММ:СС", "kind": "answer",
-             "qid": "1.2", "answer": lambda v, e: ans_time(e.p["last_time"])(v, e)},
+             "qid": "1.2", "answer": lambda v, e: ans_time(e.p["last_time"])(v, e),
+             "proof": lambda v, e: [e.p["last_time"]]},
         ],
     },
     {
@@ -157,14 +159,16 @@ STAGES = [
         ],
         "items": [
             {"text": "Сколько всего строк «Failed password» в журнале? Ответ: answer 3.1 ЧИСЛО", "kind": "answer",
-             "qid": "3.1", "answer": lambda v, e: _norm(v) == str(e.p["failed_total"])},
+             "qid": "3.1", "answer": lambda v, e: _norm(v) == str(e.p["failed_total"]),
+             "proof": lambda v, e: [str(e.p["failed_total"])]},
             {"text": "С какого IP подбирали пароль к существующей учётной записи (не invalid user)? "
                      "Ответ: answer 3.2 IP", "kind": "answer", "qid": "3.2",
-             "answer": lambda v, e: _norm(v) == e.p["attacker_ip"]},
+             "answer": lambda v, e: _norm(v) == e.p["attacker_ip"], "proof": lambda v, e: [e.p["attacker_ip"]]},
             {"text": "К какой учётной записи подбирали пароль? Ответ: answer 3.3 ИМЯ", "kind": "answer",
-             "qid": "3.3", "answer": lambda v, e: _norm(v) == e.p["target"]},
+             "qid": "3.3", "answer": lambda v, e: _norm(v) == e.p["target"], "proof": lambda v, e: [e.p["target"]]},
             {"text": "Сколько неудачных попыток было с этого IP? Ответ: answer 3.4 ЧИСЛО", "kind": "answer",
-             "qid": "3.4", "answer": lambda v, e: _norm(v) == str(e.p["attack_failed"])},
+             "qid": "3.4", "answer": lambda v, e: _norm(v) == str(e.p["attack_failed"]),
+             "proof": lambda v, e: [str(e.p["attack_failed"])]},
         ],
     },
     {
@@ -178,7 +182,8 @@ STAGES = [
         ],
         "items": [
             {"text": "Во сколько атакующий вошёл в систему? Ответ: answer 4.1 ЧЧ:ММ:СС", "kind": "answer",
-             "qid": "4.1", "answer": lambda v, e: ans_time(e.p["login_time"])(v, e)},
+             "qid": "4.1", "answer": lambda v, e: ans_time(e.p["login_time"])(v, e),
+             "proof": lambda v, e: [e.p["login_time"]]},
             {"text": "Права какого файла изменили после входа? Ответ: answer 4.2 ПУТЬ", "kind": "answer",
              "qid": "4.2",
              "answer": lambda v, e: v.strip().strip("'\"") in (e.p["file"], e.p["file"].rsplit("/", 1)[-1])},
@@ -228,7 +233,8 @@ STAGES = [
              "answer": ans_choice("нет", "no")},
             {"text": "Сколько неудачных попыток входа у учётной записи admin (это обычная опечатка, а не атака)? "
                      "Ответ: answer 6.3 ЧИСЛО", "kind": "answer", "qid": "6.3",
-             "answer": lambda v, e: _norm(v) == str(e.p["admin_failed"])},
+             "answer": lambda v, e: _norm(v) == str(e.p["admin_failed"]),
+             "proof": lambda v, e: [str(e.p["admin_failed"])]},
         ],
     },
     {
@@ -296,3 +302,8 @@ INTRO = [
 
 LAB = lab_task.register(lab_task.Lab("incident", 6, "Расследование инцидента по журналам", STAGES, INTRO,
                                      "incident"))
+
+# Против решения «через нейросеть»: ответ засчитывается, если значение было в выводе команд студента,
+# после каждого этапа — 2 контрольных вопроса (server/defense_banks.py).
+LAB.track_output = True
+LAB.defense = lab_task.bank_defense(STAGES, defense_banks.INCIDENT, defense_banks.INCIDENT_DECOYS)

@@ -32,6 +32,12 @@ const {
 const CONTENT_DIR = path.join(__dirname, '..', '..', 'content', 'src');
 const router = express.Router();
 
+// The group's practical work closed for the final exam or by the teacher (src/lib/exam
+// examLockFor): subject pages, theory, assignments and uploads show why / answer 423.
+router.use(['/subjects', '/assignment'], (req, res, next) =>
+  req.session.user && require('../lib/exam').examLockFor(req.session.user) ? blockDuringExam(req, res, next) : next(),
+);
+
 const upload = multer({
   // Browsers send file names as UTF-8; busboy's default (latin1) turned «Задача 1.zip» into mojibake.
   defParamCharset: 'utf8',
@@ -107,7 +113,6 @@ router.get('/subjects/:key', requireRole('student'), (req, res) => {
   const common = { user, sidebarTree: subjectSidebar(user, key), activeAssignmentId: null, activePath: `/subjects/${key}` };
 
   if (key === SQL_SUBJECT_KEY) {
-    if (require('../lib/exam').examLockFor(user)) return blockDuringExam(req, res, () => {});
     return res.render('subject-sql', { ...common, title: SQL_SUBJECT_TITLE, sql: sqlSummary(user) });
   }
 

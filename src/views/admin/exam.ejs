@@ -26,7 +26,7 @@
     <label>Конец <input type="datetime-local" name="endsAt" value="<%= endsLocal %>" required></label>
     <button type="submit" class="a-btn a-btn-secondary">Сохранить время</button>
   </form>
-  <p class="a-muted">До начала студенты контрольную не видят. Пока она идёт, у группы <%= def.group %> закрыты задания ИБ и SQL-тренажёр. После конца неотправленные программы и отчёты отправляются в том виде, в каком были.
+  <p class="a-muted">До начала студенты контрольную не видят. Пока она идёт, у группы <%= def.group %> закрыты задания ИБ, SQL-тренажёр, задания и предметы. После конца неотправленные программы и отчёты отправляются в том виде, в каком были.
     Группа TEST видит контрольную всегда — для пробного прогона.</p>
   <div class="a-exam-actions">
     <form method="post" action="/admin/exam/<%= def.id %>/issue">
@@ -36,7 +36,12 @@
       <input type="hidden" name="published" value="<%= o.win.publishedAt ? '0' : '1' %>">
       <button type="submit" class="a-btn a-btn-secondary"><%= o.win.publishedAt ? 'Снять публикацию' : 'Опубликовать результаты' %></button>
     </form>
+    <form method="post" action="/admin/exam/<%= def.id %>/lock-practice">
+      <input type="hidden" name="locked" value="<%= o.win.lockPractice ? '0' : '1' %>">
+      <button type="submit" class="a-btn a-btn-secondary"><%= o.win.lockPractice ? 'Открыть практические группы ' + def.group : 'Закрыть практические группы ' + def.group %></button>
+    </form>
   </div>
+  <p class="a-muted">Практические группы <%= def.group %> (задания, предметы, SQL-тренажёр, задания ИБ): <strong><%= o.win.lockPractice ? 'закрыты преподавателем' : o.phase === 'open' ? 'закрыты на время контрольной' : 'открыты' %></strong>. Они видны в списках, но не открываются.</p>
   <p class="a-muted">Перепроверка отправленного кода на этом компьютере: <code>node scripts/exam/recheck.js</code> (с <code>--update-db</code> — записать результаты).
     Анализ журналов: <code>python3 scripts/exam/analyze.py --exam <%= def.id %></code>.</p>
 </section>

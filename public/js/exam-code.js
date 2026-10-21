@@ -101,9 +101,11 @@
   // --- the worker ---
   var worker = null;
   var current = null;
+  var pythonReady = false;
   function killWorker() {
     if (worker) worker.terminate();
     worker = null;
+    pythonReady = false;
   }
   function settle(result) {
     var job = current;
@@ -120,6 +122,7 @@
       var job = current;
       if (!job) return;
       if (m.type === 'status') setStatus('Загружаю Python (только при первом запуске, ~10 МБ)…');
+      else if (m.type === 'ready') settle({ ready: true });
       else if (m.type === 'running') {
         job.timer = setTimeout(function () {
           killWorker();
@@ -138,8 +141,21 @@
     };
     worker.onerror = function () {
       killWorker();
-      settle({ stdout: '', stderr: '', ok: false, timeout: false, fail: 'не удалось загрузить Python — проверьте подключение к интернету' });
+      settle({ stdout: '', stderr: '', ok: false, timeout: false, fail: 'не удалось загрузить Python — обновите страницу' });
     };
+  }
+  // Python is loaded before a bug program's run is asked for, so a failed download never
+  // costs one of its 4 runs.
+  function loadPython() {
+    if (pythonReady) return Promise.resolve();
+    return new Promise(function (resolve, reject) {
+      ensureWorker();
+      current = { resolve: function (r) {
+        if (r.ready) { pythonReady = true; resolve(); return; }
+        reject(new Error('Не удалось загрузить Python: ' + (r.fail || 'неизвестная ошибка') + '. Запуск не засчитан — обновите страницу и попробуйте снова.'));
+      }, timer: null, stdout: '', stderr: '', onOut: null, limit: 0 };
+      worker.postMessage({ warmup: true });
+    });
   }
   function runProgram(code, stdin, echo, limit, onOut) {
     return new Promise(function (resolve) {
@@ -203,6 +219,7 @@
     resultsEl.hidden = true;
     var input = stdinEl.value.replace(/\r\n?/g, '\n').replace(/\n$/, '');
     saveDraft()
+      .then(loadPython)
       .then(function () { return post(URL + '/run', { code: code, stdin: input }); })
       .then(function (grant) {
         if (grant.runsLeft !== null && grant.runsLeft !== undefined) setRunsLeft(grant.runsLeft);

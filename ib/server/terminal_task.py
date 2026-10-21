@@ -30,6 +30,8 @@ import time
 import uuid
 from pathlib import Path
 
+import defense as defense_mod
+
 TASK_KEY = "terminal"
 TASK_NUMBER = 5
 TITLE = "Основы работы в терминале Linux"
@@ -391,9 +393,11 @@ STAGES = [
             {"text": "Посчитайте строки ~/logs/app.log: wc -l", "kind": "cmd",
              "check": lambda e: e.ran("wc", lambda c: "l" in e.flags(c) and e.h("logs/app.log") in e.targets(c))},
             {"text": "Сколько строк в ~/logs/app.log? Ответ: answer 4.1 ЧИСЛО", "kind": "answer", "qid": "4.1",
-             "answer": lambda v, e: _norm(v) == str(e.p["app_log_lines"])},
+             "answer": lambda v, e: _norm(v) == str(e.p["app_log_lines"]),
+             "proof": lambda v, e: [str(e.p["app_log_lines"])]},
             {"text": "Какое кодовое слово записано в скрытом файле ~/.secret? Ответ: answer 4.2 СЛОВО",
-             "kind": "answer", "qid": "4.2", "answer": lambda v, e: _norm(v) == _norm(e.p["code_word"])},
+             "kind": "answer", "qid": "4.2", "answer": lambda v, e: _norm(v) == _norm(e.p["code_word"]),
+             "proof": lambda v, e: [e.p["code_word"]]},
         ],
     },
     {
@@ -525,7 +529,8 @@ STAGES = [
                      "Ответ: answer 10.1 ПУТЬ (например ~/archive/...)",
              "kind": "answer", "qid": "10.1", "answer": lambda v, e: _ans_path(e.p["pdf_path"])(v, e)},
             {"text": "Сколько строк с ERROR в ~/logs/app.log? Ответ: answer 10.2 ЧИСЛО", "kind": "answer",
-             "qid": "10.2", "answer": lambda v, e: _norm(v) == str(e.p["error_count"])},
+             "qid": "10.2", "answer": lambda v, e: _norm(v) == str(e.p["error_count"]),
+             "proof": lambda v, e: [str(e.p["error_count"])]},
             {"text": "В каком файле каталога ~/documents (с подкаталогами) встречается слово {keyword}? "
                      "Ответ: answer 10.3 ИМЯ_ФАЙЛА",
              "kind": "answer", "qid": "10.3", "answer": lambda v, e: _ans_basename(e.p["keyword_file"].rsplit("/", 1)[-1])(v, e)},
@@ -543,7 +548,7 @@ STAGES = [
         "items": [
             {"text": "С какого IP больше всего запросов в ~/logs/access.log? Ответ: answer 11.1 IP "
                      "(подсказка: cut -d' ' -f1 | sort | uniq -c | sort -rn | head -1)",
-             "kind": "answer", "qid": "11.1", "answer": lambda v, e: _norm(v) == e.p["top_ip"]},
+             "kind": "answer", "qid": "11.1", "answer": lambda v, e: _norm(v) == e.p["top_ip"], "proof": lambda v, e: [e.p["top_ip"]]},
             {"text": "Запишите в ~/{project}/ips.txt список всех IP из access.log без повторов, отсортированный: "
                      "cut ... | sort -u > ...",
              "kind": "fs",
@@ -570,7 +575,7 @@ STAGES = [
              "check": lambda e: e.ran("sudo", lambda c: e.operands(c)[:1] == ["whoami"])},
             {"text": "В /var/log/auth.log (читать можно только через sudo) записаны попытки подбора пароля. "
                      "Под каким именем пользователя пытались войти? Ответ: answer 12.1 ИМЯ",
-             "kind": "answer", "qid": "12.1", "answer": lambda v, e: _norm(v) == e.p["auth_user"]},
+             "kind": "answer", "qid": "12.1", "answer": lambda v, e: _norm(v) == e.p["auth_user"], "proof": lambda v, e: [e.p["auth_user"]]},
             {"text": "Допишите в /etc/motd строку «Сервер обслуживает: {user}»: echo '...' | sudo tee -a /etc/motd",
              "kind": "fs",
              "check": lambda e: f"Сервер обслуживает: {e.user}" in (_file_text_lines(e, "etc/motd") or [])},
@@ -677,14 +682,18 @@ def load_progress(row):
     return progress
 
 
-def advance(root, student_id, params, progress, fetch_entries, last_log_id):
-    """Засчитывает этапы по порядку, пока очередной выполнен. -> список только что пройденных."""
+def advance(root, student_id, params, progress, fetch_entries, last_log_id, defense_fn=None, seen=None):
+    """Засчитывает этапы по порядку, пока очередной выполнен. -> список только что пройденных.
+    defense_fn(k, env, params, progress) -> контрольные вопросы после выполнения пунктов этапа (defense.py)."""
     newly = []
     while progress["done"] < TOTAL:
         k = progress["done"] + 1
         opened = progress["opened"].get(str(k), 0)
         env = Env(root, student_id, params, fetch_entries(opened), progress["answers"])
+        env.seen = seen or (lambda token: None)
         if not all(ok for _, ok in evaluate_stage(k, env)):
+            break
+        if defense_fn is not None and not defense_mod.gate(progress, k, lambda: defense_fn(k, env, params, progress)):
             break
         progress["done"] = k
         progress["completed_at"][str(k)] = now_iso()
@@ -701,8 +710,10 @@ def current_env(root, student_id, params, progress, fetch_entries, k=None):
 
 # ============================================================== ответы ===
 
-def submit_answer(progress, params, student_id, root, args):
-    """answer <этап.номер> <ответ> -> (текст, верно ли)."""
+def submit_answer(progress, params, student_id, root, args, seen=None):
+    """answer <этап.номер> <ответ> -> (текст, верно ли). seen — «следы» вывода команд (доказательство ответа)."""
+    if defense_mod.is_defense_answer(args):
+        return defense_mod.answer(progress, args)
     if len(args) < 2:
         return ("Использование: answer <номер вопроса> <ответ>, например: answer 4.1 42\n"
                 "Номера вопросов — в описании этапа (команда task)."), False
@@ -715,12 +726,21 @@ def submit_answer(progress, params, student_id, root, args):
         return f"answer: вопрос {qid} относится к этапу {k} — он откроется после этапа {current}.", False
     if k < current:
         return f"answer: этап {k} уже пройден.", True
+    if defense_mod.pending(progress)[1] is not None:
+        return "Сначала ответьте на контрольный вопрос:\n" + defense_mod.text(progress), False
     progress["attempts"][qid] = progress["attempts"].get(qid, 0) + 1
     env = Env(root, student_id, params, [], progress["answers"])
     try:
         ok = bool(item["answer"](value, env))
     except Exception:  # noqa: BLE001
         ok = False
+    if ok and item.get("proof") and seen is not None:
+        need = [_norm(x) for x in item["proof"](value, env)]
+        if any(seen(x) is None for x in need):
+            progress.setdefault("no_proof", []).append({"qid": qid, "value": value[:200], "at": now_iso()})
+            return (f"✘ Вопрос {qid}: значение «{value[:60]}» не встречалось в выводе ваших команд. Получите его "
+                    "в своём терминале и ответьте снова (вывод команд учитывается с 21.10.2026 — если вы видели "
+                    "значение раньше, выполните команду ещё раз)."), False
     if ok:
         progress["answers"][qid] = {"value": value[:200], "ok": True, "at": now_iso()}
         return f"✔ Вопрос {qid}: верно!", True

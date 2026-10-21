@@ -4,8 +4,8 @@
 <head>
   <%- include('partials/head', { pageTitle: assignment.title }) %>
   <% if (code) { %>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css">
+    <link rel="stylesheet" href="/vendor/codemirror/5.65.16/codemirror.min.css">
+    <link rel="stylesheet" href="/vendor/codemirror/5.65.16/theme/material-darker.min.css">
   <% } %>
 </head>
 <body>
@@ -92,9 +92,9 @@
   </div>
   <%- include('partials/scripts') %>
   <% if (code) { %>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js" defer></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js" defer></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js" defer></script>
+    <script src="/vendor/codemirror/5.65.16/codemirror.min.js" defer></script>
+    <script src="/vendor/codemirror/5.65.16/mode/python/python.min.js" defer></script>
+    <script src="/vendor/codemirror/5.65.16/addon/edit/matchbrackets.min.js" defer></script>
     <script src="/js/code-editor.js" defer></script>
   <% } %>
 </body>

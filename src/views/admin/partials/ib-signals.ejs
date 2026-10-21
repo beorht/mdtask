@@ -1,0 +1,2 @@
+<%# Ячейка «Сигналы» строки задания ИБ: sig — { flags } из admin-data taskSignals. %>
+<td data-label="Сигналы"><% if (sig && sig.flags.length) { %><span class="a-status a-status-failed"><span class="a-status-icon" aria-hidden="true">!</span><%= sig.flags.join('; ') %></span><% } else { %><span class="a-muted">—</span><% } %></td>

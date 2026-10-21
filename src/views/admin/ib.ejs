@@ -27,6 +27,7 @@
   <div class="a-stat"><span class="a-stat-value"><%= results.solved %></span><span class="a-stat-label">Выполнили</span></div>
   <div class="a-stat"><span class="a-stat-value"><%= results.total - results.solved %></span><span class="a-stat-label">Ещё не выполнили</span></div>
 </div>
+<%- include('partials/ib-oral', { oralKey: 'caesar', oralPicked: results.picked, oralHref: function (r) { return '/admin/students/' + r.student.id; } }) %>
 
 
 <section class="a-card a-card-flush">
@@ -37,7 +38,7 @@
   <% } else { %>
     <div class="a-table-wrap">
       <table class="a-table a-table-cards">
-        <thead><tr><th>Студент</th><th>Группа</th><th>Статус</th><th>Выполнено</th><th>Вариант</th><th class="a-num">Сдвиг</th><th>Пароль</th><th>Скрытый файл</th></tr></thead>
+        <thead><tr><th>Студент</th><th>Группа</th><th>Статус</th><th>Выполнено</th><th>Вариант</th><th class="a-num">Сдвиг</th><th>Пароль</th><th>Скрытый файл</th><th>Сигналы</th></tr></thead>
         <tbody>
           <% results.rows.forEach(function (r) { const s = r.secret; %>
             <tr>
@@ -49,6 +50,7 @@
               <td data-label="Сдвиг" class="a-num"><%= s.caesar_shift %></td>
               <td data-label="Пароль"><code><%= s.plain_password %></code></td>
               <td data-label="Скрытый файл"><code><%= s.hidden_file_path %></code><% if (s.password_file_path) { %><br><span class="a-muted">пароль в </span><code><%= s.password_file_path %></code><% } %></td>
+              <%- include('partials/ib-signals', { sig: r.signals }) %>
             </tr>
           <% }) %>
         </tbody>
@@ -65,6 +67,7 @@
   <div class="a-stat"><span class="a-stat-value"><%= configs.solved %></span><span class="a-stat-label">Выполнили</span></div>
   <div class="a-stat"><span class="a-stat-value"><%= configs.started %></span><span class="a-stat-label">В процессе</span></div>
 </div>
+<%- include('partials/ib-oral', { oralKey: 'configs', oralPicked: configs.picked, oralHref: function (r) { return '/admin/students/' + r.student.id; } }) %>
 
 <section class="a-card a-card-flush">
   <% if (configs.rows.length === 0) { %>
@@ -74,7 +77,7 @@
   <% } else { %>
     <div class="a-table-wrap">
       <table class="a-table a-table-cards">
-        <thead><tr><th>Студент</th><th>Группа</th><th>Статус</th><th>Прогресс</th><th>Выполнено</th><th class="a-num">Порт SSH</th><th class="a-num">Порт Apache</th><th>upload_max_filesize</th></tr></thead>
+        <thead><tr><th>Студент</th><th>Группа</th><th>Статус</th><th>Прогресс</th><th>Выполнено</th><th class="a-num">Порт SSH</th><th class="a-num">Порт Apache</th><th>upload_max_filesize</th><th>Сигналы</th></tr></thead>
         <tbody>
           <% configs.rows.forEach(function (r) { const t = r.task; const total = t.total || 8; const pct = Math.round((t.passed / total) * 100); %>
             <tr>
@@ -86,6 +89,7 @@
               <td data-label="Порт SSH" class="a-num"><%= t.params.ssh_port %></td>
               <td data-label="Порт Apache" class="a-num"><%= t.params.apache_port %></td>
               <td data-label="upload_max_filesize"><code><%= t.params.upload_max %></code></td>
+              <%- include('partials/ib-signals', { sig: r.signals }) %>
             </tr>
           <% }) %>
         </tbody>
@@ -102,6 +106,7 @@
   <div class="a-stat"><span class="a-stat-value"><%= terminal.solved %></span><span class="a-stat-label">Выполнили</span></div>
   <div class="a-stat"><span class="a-stat-value"><%= terminal.started %></span><span class="a-stat-label">В процессе</span></div>
 </div>
+<%- include('partials/ib-oral', { oralKey: 'terminal', oralPicked: terminal.picked, oralHref: function (r) { return '/admin/ib/terminal/' + r.student.id; } }) %>
 
 <section class="a-card a-card-flush">
   <% if (terminal.rows.length === 0) { %>
@@ -111,7 +116,7 @@
   <% } else { %>
     <div class="a-table-wrap">
       <table class="a-table a-table-cards">
-        <thead><tr><th>Студент</th><th>Группа</th><th>Статус</th><th>Этапы</th><th>Текущий этап</th><th class="a-num">Команд</th><th class="a-num">Неверных ответов</th><th>Активность</th></tr></thead>
+        <thead><tr><th>Студент</th><th>Группа</th><th>Статус</th><th>Этапы</th><th>Текущий этап</th><th>Сигналы</th><th class="a-num">Команд</th><th class="a-num">Неверных ответов</th><th>Активность</th></tr></thead>
         <tbody>
           <% terminal.rows.forEach(function (r) { const t = r.task; const total = t.total || 14; const pct = Math.round((t.passed / total) * 100); %>
             <tr>
@@ -120,6 +125,7 @@
               <td data-label="Статус"><%- include('partials/status', { key: t.solved ? 'done' : (t.passed || t.commands ? 'in_progress' : 'not_submitted') }) %></td>
               <td data-label="Этапы"><div class="a-progress" title="<%= t.passed %> из <%= total %>"><span style="width: <%= pct %>%"></span></div><span class="a-muted"><%= t.passed %>/<%= total %></span></td>
               <td data-label="Текущий этап"><a href="/admin/ib/terminal/<%= r.student.id %>" title="Этапы, ответы и журнал команд"><%= t.solved ? 'все пройдены (' + view.formatDateTime(t.solved_at) + ')' : (t.passed + 1) + '. ' + r.currentStage %></a></td>
+              <%- include('partials/ib-signals', { sig: r.signals }) %>
               <td data-label="Команд" class="a-num"><%= t.commands %></td>
               <td data-label="Неверных ответов" class="a-num"><%= r.wrongAnswers %></td>
               <td data-label="Активность" class="a-muted a-nowrap"><%= t.last_activity_at ? view.formatDateTime(t.last_activity_at) : '—' %></td>
@@ -140,6 +146,7 @@
   <div class="a-stat"><span class="a-stat-value"><%= lab.solved %></span><span class="a-stat-label">Выполнили</span></div>
   <div class="a-stat"><span class="a-stat-value"><%= lab.started %></span><span class="a-stat-label">В процессе</span></div>
 </div>
+<%- include('partials/ib-oral', { oralKey: m.key, oralPicked: lab.picked, oralHref: function (r) { return '/admin/ib/lab/' + m.key + '/' + r.student.id; } }) %>
 
 <section class="a-card a-card-flush">
   <% if (lab.rows.length === 0) { %>
@@ -149,7 +156,7 @@
   <% } else { %>
     <div class="a-table-wrap">
       <table class="a-table a-table-cards">
-        <thead><tr><th>Студент</th><th>Группа</th><th>Статус</th><th>Этапы</th><th>Текущий этап</th><th class="a-num">Команд</th><th class="a-num">Неверных ответов</th><th>Значения</th><th>Активность</th></tr></thead>
+        <thead><tr><th>Студент</th><th>Группа</th><th>Статус</th><th>Этапы</th><th>Текущий этап</th><% if (lab.scored) { %><th class="a-num">Баллы</th><% } %><th>Сигналы</th><th class="a-num">Команд</th><th class="a-num">Неверных ответов</th><th>Значения</th><th>Активность</th></tr></thead>
         <tbody>
           <% lab.rows.forEach(function (r) { const t = r.task; const total = t.total || m.stages.length; const pct = Math.round((t.passed / total) * 100); %>
             <tr>
@@ -158,6 +165,8 @@
               <td data-label="Статус"><%- include('partials/status', { key: t.solved ? 'done' : (t.passed || t.commands ? 'in_progress' : 'not_submitted') }) %></td>
               <td data-label="Этапы"><div class="a-progress" title="<%= t.passed %> из <%= total %>"><span style="width: <%= pct %>%"></span></div><span class="a-muted"><%= t.passed %>/<%= total %></span></td>
               <td data-label="Текущий этап"><a href="/admin/ib/lab/<%= m.key %>/<%= r.student.id %>" title="Этапы, ответы и журнал команд"><%= t.solved ? 'все пройдены (' + view.formatDateTime(t.solved_at) + ')' : (t.passed + 1) + '. ' + r.currentStage %></a></td>
+              <% if (lab.scored) { %><td data-label="Баллы" class="a-num"><%= r.signals.score ? r.signals.score.total : 0 %></td><% } %>
+              <%- include('partials/ib-signals', { sig: r.signals }) %>
               <td data-label="Команд" class="a-num"><%= t.commands %></td>
               <td data-label="Неверных ответов" class="a-num"><%= r.wrongAnswers %></td>
               <td data-label="Значения" class="a-muted"><%= r.info || '—' %></td>
