@@ -1,6 +1,6 @@
 #!/bin/bash
-# Скачать в public/vendor/ то, что раньше браузер брал с CDN: Python в браузере (Pyodide) с
-# пакетом sqlite3 и редактор кода CodeMirror. Сайт отдаёт их сам, поэтому запуск кода работает
+# Скачать в public/vendor/ то, что раньше браузер брал из интернета: Python в браузере (Pyodide) с
+# пакетом sqlite3, редактор кода CodeMirror и шрифты Open Sans / JetBrains Mono (scripts/vendor/fonts.py). Сайт отдаёт их сам, поэтому запуск кода работает
 # и на ПК без интернета. Файлы лежат в git; скрипт нужен, только чтобы обновить их.
 #   bash scripts/vendor/fetch.sh
 set -euo pipefail
@@ -14,7 +14,7 @@ PYODIDE_FILES="pyodide.js pyodide.asm.js pyodide.asm.wasm python_stdlib.zip pyod
 CODEMIRROR_VERSION=5.65.16
 CODEMIRROR_URL="https://cdnjs.cloudflare.com/ajax/libs/codemirror/$CODEMIRROR_VERSION"
 CODEMIRROR_DIR="$ROOT/public/vendor/codemirror/$CODEMIRROR_VERSION"
-CODEMIRROR_FILES="codemirror.min.js codemirror.min.css theme/material-darker.min.css mode/python/python.min.js addon/edit/matchbrackets.min.js"
+CODEMIRROR_FILES="codemirror.min.js codemirror.min.css theme/material-darker.min.css mode/python/python.min.js addon/edit/matchbrackets.min.js mode/xml/xml.min.js mode/javascript/javascript.min.js mode/css/css.min.js mode/htmlmixed/htmlmixed.min.js addon/edit/closebrackets.min.js addon/edit/closetag.min.js"
 
 fetch() {
   mkdir -p "$(dirname "$2")"
@@ -26,3 +26,5 @@ echo "Pyodide $PYODIDE_VERSION:"
 for f in $PYODIDE_FILES; do fetch "$PYODIDE_URL/$f" "$PYODIDE_DIR/$f"; done
 echo "CodeMirror $CODEMIRROR_VERSION:"
 for f in $CODEMIRROR_FILES; do fetch "$CODEMIRROR_URL/$f" "$CODEMIRROR_DIR/$f"; done
+echo "Шрифты:"
+python3 "$ROOT/scripts/vendor/fonts.py"

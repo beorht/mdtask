@@ -1,0 +1,112 @@
+/* Практическая работа предмета «Web-разработка: CSS» (src/views/css-course/practice.ejs). Две колонки: слева вид
+   (ваш результат и образец), справа условие и редактор; на узком экране — одна колонка. Цвета — из theme.css. */
+.cssc { padding: 1rem 1.25rem 2rem; max-width: 1680px; margin: 0 auto; }
+.cssc-bar { display: flex; align-items: center; gap: 0.75rem 1.25rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.cssc-topic { font-weight: 700; font-size: 1.05rem; }
+.cssc-nav { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.cssc-num {
+  min-width: 2.1rem; height: 2.1rem; padding: 0 0.5rem; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-weight: 600;
+}
+.cssc-num.is-done { background: #2E7D4F; border-color: #2E7D4F; color: #FFFFFF; }
+.cssc-num.is-active { outline: 3px solid var(--marple-coral); outline-offset: 1px; }
+
+.cssc-work { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(360px, 1fr); gap: 1.25rem; align-items: start; }
+.cssc-views { display: grid; gap: 1rem; min-width: 0; }
+.cssc-view { margin: 0; padding: 0.75rem; border-radius: 18px; background: var(--surface); border: 1px solid var(--border); }
+.cssc-view figcaption { font-weight: 700; margin: 0 0 0.5rem 0.25rem; }
+.cssc-view-expected figcaption::after { content: " · образец"; font-weight: 400; opacity: 0.7; }
+.cssc-stage { position: relative; width: 100%; overflow: hidden; border-radius: 12px; background: #FFFFFF; min-height: 120px; }
+/* iframe нужной ширины уменьшается под колонку (transform), в раскладку не входит. */
+.cssc-stage iframe { position: absolute; left: 0; top: 0; display: block; border: 0; background: #FFFFFF; transform-origin: 0 0; }
+.cssc [hidden] { display: none !important; }
+.cssc-widths { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.cssc-width {
+  border-radius: 999px; padding: 0.35rem 0.9rem; cursor: pointer; font: inherit; font-weight: 600;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text);
+}
+.cssc-width.is-active { background: var(--marple-coral); border-color: var(--marple-coral); color: var(--marple-ink); }
+
+.cssc-side { position: sticky; top: 0.75rem; display: grid; gap: 0.75rem; min-width: 0; }
+.cssc-task h1 { font-size: 1.35rem; margin: 0 0 0.4rem; }
+.cssc-task p { margin: 0.3rem 0; line-height: 1.55; }
+.cssc-rules { margin: 0.4rem 0 0; padding-left: 1.2rem; }
+.cssc-hint { font-size: 0.92rem; opacity: 0.85; }
+.cssc-tabs { display: flex; gap: 0.35rem; }
+.cssc-tab {
+  border-radius: 999px; padding: 0.35rem 0.95rem; cursor: pointer; font: inherit; font-weight: 600;
+  border: 1px solid var(--border); background: transparent; color: var(--text);
+}
+.cssc-tab.is-active { background: var(--surface); border-color: var(--marple-coral); }
+/* Редактор CSS и разметка — выше, во всю доступную высоту окна, и «в клетку», как остальные редакторы сайта
+   (components.css, .code-file-pane): клетка = высота строки (--grid-size), сетка прокручивается вместе с текстом. */
+.cssc-editor .CodeMirror {
+  height: clamp(560px, calc(100vh - 200px), 1000px);
+  border: 1px solid var(--editor-border);
+  border-radius: 14px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 14px;
+  line-height: var(--grid-size);
+}
+.cssc-editor .CodeMirror.cm-s-material-darker,
+.cssc-editor .cm-s-material-darker .CodeMirror-gutters { background: var(--editor-bg); }
+.cssc-editor .CodeMirror-lines {
+  min-height: calc(clamp(560px, calc(100vh - 200px), 1000px) - 8px);
+  background-image:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: var(--grid-size) var(--grid-size);
+  background-position: 0 4px;
+}
+.cssc-actions { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+.cssc-saved { font-size: 0.9rem; opacity: 0.8; }
+.cssc-result { padding: 0.75rem 1rem; border-radius: 14px; border: 1px solid var(--border); background: var(--surface); }
+.cssc-result ul { margin: 0.4rem 0 0; padding-left: 1.2rem; }
+.cssc-result li { margin: 0.2rem 0; }
+.cssc-result-ok { border-color: #2E7D4F; }
+.cssc-result-ok strong { color: #3FA36A; }
+.cssc-result-bad { border-color: var(--marple-coral); }
+.cssc-result-warn { border-color: var(--marple-apricot); }
+.cssc-note { font-size: 0.85rem; opacity: 0.75; margin: 0; }
+
+@media (max-width: 960px) {
+  .cssc-work { grid-template-columns: 1fr; }
+  .cssc-side { position: static; }
+}
+
+/* Теория: пример — код CSS и HTML слева, вид справа. */
+/* Вид справа — той же высоты, что код слева (строка сетки растягивает обе колонки, окно заполняет карточку). */
+.css-example { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0.75rem; margin: 1.25rem 0; align-items: stretch; }
+.css-example-code pre { margin: 0 0 0.5rem; }
+.css-example-code pre:last-child { margin-bottom: 0; }
+/* В примере код в половину ширины — длинные строки переносятся, а не прокручиваются вбок. */
+.css-example-code pre code { white-space: pre-wrap; word-break: break-word; }
+.css-example-label { display: inline-block; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; opacity: 0.7; margin: 0.2rem 0 0.25rem; }
+.css-example-view { display: flex; flex-direction: column; border-radius: 14px; overflow: hidden; border: 1px solid var(--border); background: #FFFFFF; }
+.css-example-view .html-example-caption { display: block; padding: 0.35rem 0.75rem; font-size: 0.8rem; font-weight: 700; color: #555; background: #F4F1EC; }
+.css-example-frame { flex: 1; display: flex; }
+.css-example-frame iframe { display: block; flex: 1; width: 100%; border: 0; min-height: 90px; background: #FFFFFF; }
+@media (max-width: 900px) { .css-example { grid-template-columns: 1fr; } }
+
+/* Наведение на кнопки-«пилюли» практики (вкладки, ширины, номера заданий): приподнимаются, рамка и лёгкая тень цвета
+   акцента. Плавно, без движения при «уменьшить движение». */
+.cssc-tab, .cssc-width, .cssc-num {
+  transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+}
+.cssc-tab:hover, .cssc-width:hover, .cssc-num:hover {
+  transform: translateY(-2px);
+  border-color: var(--marple-coral);
+  box-shadow: 0 6px 16px rgba(255, 103, 102, 0.25);
+}
+.cssc-tab:hover, .cssc-width:not(.is-active):hover, .cssc-num:not(.is-done):not(.is-active):hover {
+  background-color: color-mix(in srgb, var(--marple-coral) 14%, var(--surface));
+  color: var(--text); /* общий button:hover сайта меняет цвет текста — здесь он остаётся читаемым */
+}
+.cssc-width.is-active:hover { color: var(--marple-ink); }
+.cssc-num.is-done:hover { color: #FFFFFF; }
+.cssc-tab:active, .cssc-width:active, .cssc-num:active { transform: translateY(0); box-shadow: none; }
+.cssc-tab:focus-visible, .cssc-width:focus-visible, .cssc-num:focus-visible { outline: 3px solid var(--marple-apricot); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  .cssc-tab, .cssc-width, .cssc-num { transition: none; }
+  .cssc-tab:hover, .cssc-width:hover, .cssc-num:hover { transform: none; }
+}

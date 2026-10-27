@@ -10,10 +10,12 @@ const {
   getLanguageExercises,
 } = require('../db');
 const { getTopicsForUser, groupBySection } = require('./sql-topics');
-const { hasFullAccess } = require('./test-access');
+const { hasFullAccess, seesSharedAssignments } = require('./test-access');
 const { LANGUAGE_SUBJECTS, COURSE_SUBJECTS } = require('./subjects');
 const { IB_SUBJECT_KEY, IB_SUBJECT_TITLE, ibTasksForUser } = require('./ib-tasks');
-const pybasics = require('./python-basics');
+const htmlCourse = require('./html-course');
+const cssCourse = require('./css-course');
+const pythonCourse = require('./python-course');
 
 const SUMMARY_PATH = path.join(__dirname, '..', '..', 'content', 'SUMMARY.md');
 
@@ -47,8 +49,7 @@ function buildSidebarTree({ role, studentId, studentGroup, subject }) {
           role === 'student' &&
           assignment &&
           assignment.targetType === 'group' &&
-          assignment.targetGroup &&
-          assignment.targetGroup !== studentGroup &&
+          (assignment.targetGroup ? assignment.targetGroup !== studentGroup : !seesSharedAssignments(studentGroup)) &&
           !fullAccess
         ) {
           return null;
@@ -125,7 +126,7 @@ function buildSidebarTree({ role, studentId, studentGroup, subject }) {
     const groups = getDistinctStudentGroups();
     for (const group of groups) {
       const children = assignments
-        .filter((a) => a.targetType === 'group' && (a.targetGroup === group || !a.targetGroup))
+        .filter((a) => a.targetType === 'group' && (a.targetGroup === group || (!a.targetGroup && seesSharedAssignments(group))))
         .map((a) => ({ title: a.title, assignmentId: a.id, children: [] }));
       if (children.length > 0) {
         groupCategories.push({ title: `Группа ${group}`, href: null, children });
@@ -142,9 +143,12 @@ function buildSidebarTree({ role, studentId, studentGroup, subject }) {
   //             active page or is the student's current topic;
   //   link    — leaf link with an icon, optional counter / status badge / locked state.
   if (subject === 'sql') return sqlSubjectNav();
+  if (subject === 'python' && role === 'student' && pythonCourse.canSeeCourse({ role, group: studentGroup })) return pythonWithCourseNav();
   if (LANGUAGE_SUBJECTS[subject]) return languageSubjectNav(subject);
   if (subject === IB_SUBJECT_KEY) return ibSubjectNav();
-  if (subject === pybasics.PYBASICS_KEY) return pythonBasicsNav();
+  if (subject === htmlCourse.HTML_KEY) return htmlCourseNav();
+  if (subject === cssCourse.CSS_KEY) return htmlCourseNav(cssCourse);
+  if (subject === 'python-course') return pythonCourseNav();
   if (COURSE_SUBJECTS[subject]) return courseSubjectNav(COURSE_SUBJECTS[subject]);
 
   function backLink() {
@@ -231,34 +235,31 @@ function buildSidebarTree({ role, studentId, studentGroup, subject }) {
     ];
   }
 
-  function pythonBasicsNav() {
-    const { tasks, solved, total } = pybasics.summaryForStudent({ id: studentId, role, group: studentGroup });
-    const base = `/subjects/${pybasics.PYBASICS_KEY}`;
-    // The course is in Uzbek: its navigation too.
+  // «Web-разработка: HTML»: тема — раскрывающаяся группа «N.1. Теория» и «N.2. Практическая работа».
+  // Предметы «Web-разработка: HTML» и «Web-разработка: CSS» — темы «N.1 теория, N.2 практика».
+  function htmlCourseNav(lib = htmlCourse) {
+    const key = lib === htmlCourse ? htmlCourse.HTML_KEY : cssCourse.CSS_KEY;
+    const base = `/subjects/${key}`;
+    const { topics, solved, total, current } = lib.summaryForStudent({ id: studentId, role, group: studentGroup });
     return [
-      { kind: 'back', title: 'Barcha fanlar', href: '/', children: [] },
-      {
-        kind: 'header',
-        icon: pybasics.PYBASICS_ICON,
-        title: pybasics.PYBASICS_TITLE,
-        href: base,
-        sub: 'Kurs sahifasi',
-        done: solved,
-        total,
-        countOf: 'ta topshiriq bajarildi',
-        children: [],
-      },
+      backLink(),
+      { kind: 'header', icon: lib === htmlCourse ? htmlCourse.HTML_ICON : cssCourse.CSS_ICON, title: lib === htmlCourse ? htmlCourse.HTML_TITLE : cssCourse.CSS_TITLE, href: base, done: solved, total, label: 'заданий решено', children: [] },
       {
         kind: 'section',
-        title: pybasics.PYBASICS_TOPIC,
-        children: tasks.map((t) => ({
-          kind: 'link',
-          icon: t.solved ? '✓' : t.unlocked ? '🧪' : '🔒',
-          title: `${t.number}. ${t.title}`,
-          href: `${base}/${t.id}`,
-          locked: !t.unlocked,
-          lockedTitle: 'Oldingi topshiriq bajarilgandan keyin ochiladi',
-          children: [],
+        title: 'Темы',
+        children: topics.map((t) => ({
+          kind: 'group',
+          number: t.number,
+          title: t.title,
+          status: t.done ? 'done' : t.theoryOpen ? 'open' : 'locked',
+          meta: t.ready ? `${t.solved}/${t.total}` : 'скоро',
+          open: Boolean(current && current.key === t.key),
+          children: t.ready
+            ? [
+              { kind: 'link', icon: t.theoryRead ? '✓' : '📖', title: `${t.number}.1. Теория`, href: `${base}/${t.key}/theory`, locked: !t.theoryOpen, lockedTitle: 'Откроется после практической работы предыдущей темы', children: [] },
+              { kind: 'link', icon: t.done ? '✓' : '🧪', title: `${t.number}.2. Практическая работа`, href: `${base}/${t.key}/practice`, meta: `${t.solved}/${t.total}`, locked: !t.practiceOpen, lockedTitle: 'Откроется после теории темы', children: [] },
+            ]
+            : [{ kind: 'link', icon: '⏳', title: 'Тема готовится', href: base, locked: true, lockedTitle: 'Материалы темы ещё готовятся', children: [] }],
         })),
       },
     ];
@@ -301,11 +302,12 @@ function buildSidebarTree({ role, studentId, studentGroup, subject }) {
   }
 
   // SUMMARY tree → nav groups/links for the assignments of one subject (null = Python/JavaScript).
-  function assignmentTreeNav(subjectKey, query) {
+  // keep(node) — дополнительный отбор заданий (у Python — только задания по Python).
+  function assignmentTreeNav(subjectKey, query, keep = () => true) {
     const toNav = (nodes) =>
       nodes
         .map((node) => {
-          if (node.assignmentId && (node.subject || null) !== subjectKey) return null;
+          if (node.assignmentId && ((node.subject || null) !== subjectKey || !keep(node))) return null;
           if (node.assignmentId) {
             return {
               kind: 'link',
@@ -370,7 +372,9 @@ function buildSidebarTree({ role, studentId, studentGroup, subject }) {
   }
 
   function languageSubjectNav(language) {
-    const { assignmentNav, allLeaves } = assignmentTreeNav(null, `?subject=${language}`);
+    const keep = language === 'python' ? (node) => pythonCourse.lessonForAssignment(node.path) !== null : undefined;
+    const { assignmentNav, allLeaves } = assignmentTreeNav(null, `?subject=${language}`, keep);
+    // Python с курсом «Начальный Python»: сначала модули курса, ниже — задания со сдачей и банк.
 
     const bankGroups = [];
     for (const ex of getLanguageExercises(language)) {
@@ -397,6 +401,52 @@ function buildSidebarTree({ role, studentId, studentGroup, subject }) {
       },
       { kind: 'section', title: 'Задания со сдачей', children: assignmentNav },
       { kind: 'section', title: 'Банк задач', filter: true, children: bankGroups },
+    ];
+  }
+
+  // Python с курсом: задания со сдачей по Python стоят в своих уроках (после задач урока). Банка нет — его задачи
+  // и задания «Объекты и словари» стали задачами практики уроков (content/python-course/assignments.json).
+  function pythonWithCourseNav() {
+    const { allLeaves } = assignmentTreeNav(null, '?subject=python', (node) => pythonCourse.lessonForAssignment(node.path) !== null && !pythonCourse.replacedByCourse(node.path));
+    const nav = pythonCourseNav();
+    const leafPath = new Map();
+    (function walk(nodes) {
+      nodes.forEach((n) => (n.assignmentId ? leafPath.set(n.assignmentId, n.path) : walk(n.children || [])));
+    })(attach(tree));
+    for (const leaf of allLeaves) {
+      const lesson = pythonCourse.lessonForAssignment(leafPath.get(leaf.assignmentId));
+      const group = nav.flatMap((s) => s.children || []).find((g) => g.lessonKey === lesson);
+      if (group) group.children.push({ ...leaf, icon: '📎', title: `Сдать: ${leaf.title}` });
+    }
+    return nav;
+  }
+
+  // Курс «Начальный Python»: модуль — раздел, урок — раскрывающаяся группа «N.1. Теория» и «N.2. Практика».
+  function pythonCourseNav() {
+    const base = pythonCourse.COURSE_BASE;
+    const { modules, solved, total, current } = pythonCourse.summaryForStudent({ id: studentId, role, group: studentGroup });
+    return [
+      backLink(),
+      { kind: 'header', icon: '🐍', title: 'Python', href: '/subjects/python', sub: `Курс «${pythonCourse.COURSE_TITLE}»`, done: solved, total, label: 'задач решено', children: [] },
+      ...modules.map((m) => ({
+        kind: 'section',
+        title: `Модуль ${m.number}. ${m.title}`,
+        children: m.lessons.map((l) => ({
+          kind: 'group',
+          lessonKey: l.key,
+          number: l.number,
+          title: `${l.number}. ${l.title}`,
+          status: l.done ? 'done' : l.theoryOpen ? 'open' : 'locked',
+          meta: l.ready ? `${l.solved}/${l.total}` : 'скоро',
+          open: Boolean(current && current.key === l.key),
+          children: l.ready
+            ? [
+              { kind: 'link', icon: l.theoryRead ? '✓' : '📖', title: 'Теория', href: `${base}/${l.key}/theory`, locked: !l.theoryOpen, lockedTitle: 'Откроется после практики предыдущего урока', children: [] },
+              ...l.tasks.map((t) => ({ kind: 'link', icon: t.solved ? '✓' : '🧪', title: `${t.number}. ${t.title}`, href: `${base}/${l.key}/${t.id}`, locked: !l.practiceOpen, lockedTitle: 'Откроется после теории урока', children: [] })),
+            ]
+            : [{ kind: 'link', icon: '⏳', title: 'Урок готовится', href: base, locked: true, lockedTitle: 'Материалы урока ещё готовятся', children: [] }],
+        })),
+      })),
     ];
   }
 

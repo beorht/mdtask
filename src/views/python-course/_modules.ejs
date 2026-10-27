@@ -1,0 +1,39 @@
+<%# Модули и уроки курса «Начальный Python» на странице предмета Python. Нужны summary и base; summary.assignments —
+    задания со сдачей по урокам ({ ключ урока: [задание] }, content/python-course/assignments.json). %>
+  <% summary.modules.forEach(function (m) { %>
+    <section class="subject-block">
+      <h2 class="subject-block-title">Модуль <%= m.number %>. <%= m.title %></h2>
+      <% if (m.lead) { %><p class="subject-block-lead"><%= m.lead %></p><% } %>
+      <ol class="html-topic-list">
+        <% m.lessons.forEach(function (l) { %>
+          <li class="html-topic<%= l.done ? ' is-done' : '' %><%= !l.ready || !l.theoryOpen ? ' is-locked' : '' %>">
+            <span class="ib-task-num" aria-hidden="true"><%= l.done ? '✓' : l.theoryOpen ? l.number : '🔒' %></span>
+            <span class="html-topic-body">
+              <span class="html-topic-title"><%= l.number %>. <%= l.title %></span>
+              <span class="html-topic-lead"><%= l.kind === 'project' ? 'Мини-проект' : 'Теория и практика' %><%= l.ready ? ' · задач: ' + l.total : '' %></span>
+            </span>
+            <span class="html-topic-steps">
+              <% if (!l.ready) { %>
+                <span class="topic-btn topic-btn-none">Готовится</span>
+              <% } else { %>
+                <% if (l.theoryOpen) { %><a class="topic-btn topic-btn-theory" href="<%= base %>/<%= l.key %>/theory"><span aria-hidden="true">📖</span> Теория</a><% } else { %><span class="topic-btn topic-btn-practice is-locked" title="Откроется после практики предыдущего урока"><span aria-hidden="true">🔒</span> Теория</span><% } %>
+                <% if (l.practiceOpen) { %><a class="topic-btn topic-btn-practice<%= l.done ? ' is-done' : '' %>" href="<%= base %>/<%= l.key %>/practice"><span aria-hidden="true"><%= l.done ? '✓' : '🧪' %></span> Практика <span class="topic-btn-count"><%= l.solved %>/<%= l.total %></span></a><% } else { %><span class="topic-btn topic-btn-practice is-locked" title="Откроется после теории урока"><span aria-hidden="true">🔒</span> Практика <span class="topic-btn-count"><%= l.solved %>/<%= l.total %></span></span><% } %>
+              <% } %>
+            </span>
+            <% const extra = (summary.assignments || {})[l.key] || []; %>
+            <% if (extra.length) { %>
+              <ul class="pyc-lesson-assignments" aria-label="Задания со сдачей урока">
+                <% extra.forEach(function (a) { %>
+                  <li>
+                    <a href="/assignment/<%= a.id %>?subject=python"><span aria-hidden="true">📎</span> <%= a.title %></a>
+                    <%- include('../partials/status-label', { a: a }) %>
+                    <span class="due-date<%= a.dueSoon ? ' due-soon' : '' %>">до <%= a.dueDate %></span>
+                  </li>
+                <% }) %>
+              </ul>
+            <% } %>
+          </li>
+        <% }) %>
+      </ol>
+    </section>
+  <% }) %>

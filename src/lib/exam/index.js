@@ -22,7 +22,7 @@ const EXAMS = {
     id: 'ib-final-1',
     title: 'Итоговая контрольная работа',
     subtitle: 'Расследование и восстановление сервера',
-    group: 'IB',
+    group: 'ib-2', // группа IB переименована 27.10.2026 (scripts/fixes/2026-10-27-regroup.js)
     // 20 November 2026, two pairs from 9:00 (+05) with the break: 9:00–11:50.
     startsAt: '2026-11-20T04:00:00.000Z',
     endsAt: '2026-11-20T06:50:00.000Z',
@@ -74,9 +74,12 @@ function phaseFor(exam, user, win = examWindow(exam)) {
 // they open it again. `during` tells the two apart for the page text.
 function examLockFor(user) {
   if (!user || user.role !== 'student' || hasFullAccess(user)) return null;
-  for (const exam of Object.values(EXAMS)) {
+  // The WEB group's exam (src/lib/web-exam) uses the same window table and locks the same way.
+  const webExam = require('../web-exam');
+  const all = [...Object.values(EXAMS).map((e) => [e, examWindow]), ...Object.values(webExam.EXAMS).map((e) => [e, webExam.examWindow])];
+  for (const [exam, windowOf] of all) {
     if (user.group !== exam.group) continue;
-    const win = examWindow(exam);
+    const win = windowOf(exam);
     const during = phaseOf(win) === 'open';
     if (during || win.lockPractice) return { ...exam, window: win, during };
   }

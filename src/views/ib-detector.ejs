@@ -20,7 +20,7 @@
         <div class="sql-task-meta">
           <span class="sql-chip sql-chip-<%= row && row.solved ? 'done' : 'open' %>" data-det-chip><%= row && row.solved ? '✓ Тесты пройдены' : '○ Не сдан' %></span>
           <% if (row && row.defense_ok !== null) { %><span class="sql-chip"><%= row.defense_ok ? '✓ Контрольный вопрос' : '✕ Контрольный вопрос' %></span><% } %>
-          <a class="sql-chip sql-chip-link" href="/subjects/ib/<%= task.key %>">← К терминалу</a>
+          <%- include('partials/back-btn', { href: '/subjects/ib/' + task.key, label: 'К терминалу', extraClass: 'back-btn-sm' }) %>
         </div>
       </header>
 

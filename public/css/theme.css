@@ -1,6 +1,6 @@
 /* Палитра Marple (docs/color-marple.md): малиновый #CA2851, коралловый #FF6766, абрикосовый #FFB173,
-   кремовый #FFE3B3. Основная тема — тёмная (почти чёрный фон со свечением); светлая — своя палитра
-   (блок :root[data-theme="light"] ниже). Карточки — заливка цветом палитры с тёмным текстом (components.css, «Marple»). */
+   кремовый #FFE3B3. Основная тема — тёмная (почти чёрный фон со свечением); светлая — «Тетрадь»
+   (блок :root[data-theme="light"] ниже, docs/color-tetrad.md). Карточки — заливка цветом палитры с тёмным текстом (components.css, «Marple»). */
 :root {
   --marple-crimson: #CA2851;
   --marple-coral: #FF6766;
@@ -100,6 +100,7 @@
   --glow-1: rgba(255, 103, 102, 0.16);
   --glow-2: rgba(255, 177, 115, 0.14);
   --glow-3: rgba(202, 40, 81, 0.08);
+  --glow-4: rgba(255, 227, 179, 0.08);
 
   /* motion */
   --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
@@ -182,40 +183,53 @@
   --glow-1: rgba(255, 103, 102, 0.2);
   --glow-2: rgba(255, 177, 115, 0.13);
   --glow-3: rgba(202, 40, 81, 0.16);
+  --glow-4: rgba(255, 227, 179, 0.06);
 }
 
-/* Светлая тема (с 21.10.2026, по образцам «подписки» и «E.reader»): кремово-жёлтый фон, карточки с тонкой
-   тёмной обводкой, цветные карточки голубая / жёлтая / мятная / оранжевая / графитовая, чёрные кнопки-«пилюли»,
-   акцент — красно-оранжевый. Только переопределения: тёмная тема не меняется. */
+/* Светлая тема «Тетрадь» (с 26.10.2026, из EmmetEmulator, docs/color-tetrad.md): тёплая бумага вместо белого,
+   «чернильный» тёмно-коричневый текст, один акцент — дерево; карточки — приглушённые цвета схемы контейнеров,
+   редакторы кода — светлый лист в клетку. Шрифты и свечение фона — как в тёмной теме Marple (Open Sans;
+   коралловое и абрикосовое пятно справа сверху, малиновое — слева снизу, слабее, чем на тёмном фоне).
+   Только переопределения: тёмная тема Marple не меняется. */
 :root[data-theme="light"] {
-  --light-blue: #9DB9E0;
-  --light-yellow: #F5D24A;
-  --light-mint: #8FCDB7;
-  --light-orange: #EC7B55;
-  --light-red: #E8574A;
-  --light-graphite: #3D3B3A;
-  --light-beige: #EFE6DC;
+  --tetrad-page: #F1EBE2;
+  --tetrad-bg: #FBF8F3;
+  --tetrad-surface: #FFFDF9;
+  --tetrad-border: #E6E0D8;
+  --tetrad-ink: #3B3835;
+  --tetrad-ink-hover: #2B2926;
+  --tetrad-wood: #B88A5A;
+  --tetrad-wood-text: #8A5F35;
+  --tetrad-sand: #C9B79C;
+  --tetrad-cream: #EDE4D3;
+  /* цветные карточки — цвета контейнеров схемы: заливка / линия */
+  --tetrad-blue: #DCE7F7;     --tetrad-blue-line: #8BAEE0;
+  --tetrad-orange: #FBE3CC;   --tetrad-orange-line: #E5A56B;
+  --tetrad-green: #DEEEE2;    --tetrad-green-line: #8CC39E;
+  --tetrad-violet: #E7E0F3;   --tetrad-violet-line: #A897D3;
+  --tetrad-sandy: #EDE4D3;    --tetrad-sandy-line: #C9B79C;
+  --tetrad-red: #F6E3DC;      --tetrad-red-line: #A9452F;
 
-  --color-coral: #E2603E;
-  --color-coral-dark: #B8442A;
-  --color-coral-darker: #8E3320;
-  --color-peach: #EC7B55;
-  --color-peach-light: rgba(226, 96, 62, 0.12);
-  --color-gradient-brand: linear-gradient(90deg, #E8574A, #EC7B55, #F5D24A, #8FCDB7);
+  --color-coral: var(--tetrad-wood);
+  --color-coral-dark: var(--tetrad-wood-text);
+  --color-coral-darker: #6E4A28;
+  --color-peach: var(--tetrad-sand);
+  --color-peach-light: var(--tetrad-cream);
+  --color-gradient-brand: linear-gradient(90deg, #8BAEE0, #E5A56B, #8CC39E, #A897D3);
 
-  --color-status-done: #2E7D4F;
-  --color-status-failed: #C23B2E;
-  --color-status-pending: #A86510;
-  --color-status-info: #3D6A9E;
-  --color-status-current: #E2603E;
-  --color-status-not-started: #A39A86;
+  --color-status-done: #55743F;
+  --color-status-failed: #A9452F;
+  --color-status-pending: #9A6A2C;
+  --color-status-info: #2F5FA7;
+  --color-status-current: var(--tetrad-wood);
+  --color-status-not-started: #776F65;
 
-  --color-ink: #1C1A1B;
-  --color-ink-soft: #5F584B;
-  --color-paper: #FAF6F3;
-  --color-paper-muted: #F2ECE6;
-  --color-surface: #FFFFFF;
-  --color-border: rgba(28, 26, 27, 0.22);
+  --color-ink: #3D3A36;
+  --color-ink-soft: #5A5651;
+  --color-paper: var(--tetrad-page);
+  --color-paper-muted: #F3EEE6;
+  --color-surface: var(--tetrad-bg);
+  --color-border: var(--tetrad-border);
 
   --bg: var(--color-paper);
   --sidebar-bg: var(--color-paper-muted);
@@ -227,30 +241,48 @@
   --accent-text-hover: var(--color-coral-darker);
   --accent-soft-bg: var(--color-peach-light);
   --border: var(--color-border);
-  --on-accent-text: #1C1A1B;
+  --on-accent-text: #FBF8F3;
 
-  --header-bg: rgba(250, 246, 243, 0.85);
-  --header-border: rgba(28, 26, 27, 0.14);
+  --header-bg: rgba(241, 235, 226, 0.88);
+  --header-border: var(--tetrad-border);
   --header-blur: blur(16px);
 
-  --sidebar-active-bg: rgba(226, 96, 62, 0.16);
-  --sidebar-active-border: #E2603E;
+  --sidebar-active-bg: var(--tetrad-cream);
+  --sidebar-active-border: var(--tetrad-wood);
 
+  /* скругления и тени — размеры тёмной темы, цвет — «чернильный» */
   --card-shadow: none;
-  --card-shadow-hover: 0 10px 24px rgba(28, 26, 27, 0.12);
-  --login-card-shadow: 0 16px 40px rgba(28, 26, 27, 0.12);
+  --card-shadow-hover: 0 12px 30px rgba(59, 56, 53, 0.18);
+  --login-card-shadow: 0 16px 50px rgba(59, 56, 53, 0.22);
 
-  --btn-primary-shadow-hover: 0 6px 16px rgba(28, 26, 27, 0.22);
-  --btn-flat-bg: #1C1A1B;
-  --btn-flat-bg-hover: #3A3634;
-  --btn-flat-text: #F5EBC9;
+  --btn-primary-bg: var(--tetrad-ink);
+  --btn-primary-bg-hover: var(--tetrad-ink-hover);
+  --btn-primary-shadow-hover: 0 10px 24px -14px rgba(59, 56, 53, 0.6);
+  --btn-flat-bg: var(--tetrad-ink);
+  --btn-flat-bg-hover: var(--tetrad-ink-hover);
+  --btn-flat-text: #FBF8F3;
 
-  --selection-bg: rgba(226, 96, 62, 0.22);
+  /* редакторы кода — светлый лист в клетку «Тетради» */
+  --editor-bg: var(--tetrad-surface);
+  --editor-text: #3D3A36;
+  --editor-border: var(--tetrad-border);
+  --editor-focus: var(--tetrad-wood);
+  --editor-selection: rgba(201, 183, 156, 0.45);
+  --grid-line: rgba(184, 138, 90, 0.13);
 
-  --glow-1: rgba(236, 123, 85, 0.2);
-  --glow-2: rgba(157, 185, 224, 0.28);
-  --glow-3: rgba(143, 205, 183, 0.24);
+  --selection-bg: rgba(201, 183, 156, 0.45);
+
+  /* свечение фона — цвета тёмной темы Marple, приглушённые для бумажного фона */
+  --glow-1: rgba(255, 103, 102, 0.24);
+  --glow-2: rgba(255, 177, 115, 0.22);
+  --glow-3: rgba(202, 40, 81, 0.13);
+  --glow-4: rgba(255, 177, 115, 0.14);
 }
+
+:root[data-theme="light"] h1,
+:root[data-theme="light"] h2,
+:root[data-theme="light"] h3 { color: var(--tetrad-ink); }
+:root[data-theme="light"] :focus-visible { outline: 2px solid var(--tetrad-wood); outline-offset: 2px; }
 
 *, *::before, *::after {
   box-sizing: border-box;
@@ -269,27 +301,57 @@ body {
     color var(--duration-theme) var(--ease-standard);
 }
 
-/* Фон: почти чёрный (светлая тема — кремовый) с мягкими пятнами свечения, как на образцах:
-   коралловое и абрикосовое пятно справа сверху, малиновое — слева снизу. Пятна — на отдельном
-   неподвижном слое (position: fixed): при прокрутке он не перерисовывается, в отличие от
-   background-attachment: fixed, из-за которого прокрутка и набор в редакторе подтормаживали. */
+/* Фон: почти чёрный (светлая тема — бумажная) с размытыми пятнами свечения цветов Marple по всей странице:
+   body::before — коралловое и абрикосовое справа сверху, малиновое слева снизу; body::after — пятна слева,
+   справа снизу и по центру. Пятна — на отдельных неподвижных слоях (position: fixed): при прокрутке они не
+   перерисовываются, в отличие от background-attachment: fixed, из-за которого прокрутка и набор в редакторе
+   подтормаживали. Слои очень медленно «бьются, как сердце» (двойной толчок и долгий покой); анимируются только
+   transform и opacity — это делает видеокарта, без перерисовки. При prefers-reduced-motion анимации нет. */
 /* Цвета свечения — анимируемые свойства: при смене темы пятна плавно перекрашиваются, а не «щёлкают». */
 @property --glow-1 { syntax: '<color>'; inherits: true; initial-value: transparent; }
 @property --glow-2 { syntax: '<color>'; inherits: true; initial-value: transparent; }
 @property --glow-3 { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --glow-4 { syntax: '<color>'; inherits: true; initial-value: transparent; }
 
-body::before {
+body::before,
+body::after {
   content: '';
   position: fixed;
-  inset: 0;
+  inset: -80px;             /* запас под размытие и увеличение — края пятен не обрезаются */
   z-index: -1;
   pointer-events: none;
-  background-image:
-    radial-gradient(760px circle at 88% -8%, var(--glow-1), transparent 62%),
-    radial-gradient(520px circle at 70% 6%, var(--glow-2), transparent 60%),
-    radial-gradient(900px circle at -6% 105%, var(--glow-3), transparent 62%);
+  filter: blur(28px);
+  transform-origin: 50% 50%;
+  will-change: transform, opacity;
+  animation: glow-heartbeat 11s ease-in-out infinite;
   transition: --glow-1 var(--duration-theme) var(--ease-standard), --glow-2 var(--duration-theme) var(--ease-standard),
-    --glow-3 var(--duration-theme) var(--ease-standard);
+    --glow-3 var(--duration-theme) var(--ease-standard), --glow-4 var(--duration-theme) var(--ease-standard);
+}
+
+body::before {
+  background-image:
+    radial-gradient(760px circle at 88% -2%, var(--glow-1), transparent 62%),
+    radial-gradient(520px circle at 70% 10%, var(--glow-2), transparent 60%),
+    radial-gradient(900px circle at -2% 100%, var(--glow-3), transparent 62%);
+}
+
+/* Второй слой бьётся в противофазе: пока первый в покое, этот делает свой толчок. */
+body::after {
+  background-image:
+    radial-gradient(560px circle at 4% 30%, var(--glow-2), transparent 62%),
+    radial-gradient(640px circle at 96% 82%, var(--glow-1), transparent 62%),
+    radial-gradient(480px circle at 46% 58%, var(--glow-4), transparent 64%),
+    radial-gradient(420px circle at 30% -4%, var(--glow-3), transparent 60%);
+  animation-delay: -5.5s;
+}
+
+/* Сердцебиение: два мягких толчка (сильный и слабый) и долгий покой. */
+@keyframes glow-heartbeat {
+  0%, 100% { transform: scale(1); opacity: 0.82; }
+  10% { transform: scale(1.045); opacity: 1; }
+  20% { transform: scale(1.01); opacity: 0.88; }
+  30% { transform: scale(1.035); opacity: 0.97; }
+  52% { transform: scale(1); opacity: 0.82; }
 }
 
 /* Переключение темы (theme-toggle.js ставит класс на время перехода): все цвета страницы меняются
@@ -298,7 +360,7 @@ body::before {
 .theme-switching *::before,
 .theme-switching *::after {
   transition-property: background-color, color, border-color, outline-color, box-shadow, fill, stroke,
-    --glow-1, --glow-2, --glow-3 !important;
+    --glow-1, --glow-2, --glow-3, --glow-4 !important;
   transition-duration: var(--duration-theme) !important;
   transition-timing-function: var(--ease-standard) !important;
 }

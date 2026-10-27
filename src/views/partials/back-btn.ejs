@@ -1,0 +1,3 @@
+<%# Кнопка «назад» (на главную, к темам, к терминалу…) — общий вид страниц сайта (.back-btn в components.css).
+    Параметры: href, label, extraClass (необязательно, например «back-btn-sm»). %>
+<a class="back-btn<%= typeof extraClass !== 'undefined' && extraClass ? ' ' + extraClass : '' %>" href="<%= href %>"><span class="back-btn-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></span><span class="back-btn-label"><%= label %></span></a>

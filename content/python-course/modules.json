@@ -1,0 +1,68 @@
+[
+  { "key": "m1", "title": "Введение в Python и алгоритмы", "lead": "Первая программа, что такое алгоритм и как перевести его в код.", "lessons": [
+    { "key": "intro", "dir": "m1/01-intro", "title": "Знакомство с Python" },
+    { "key": "algorithm", "dir": "m1/02-algorithm", "title": "Алгоритм: свойства, блок-схемы, псевдокод" },
+    { "key": "thinking", "dir": "m1/03-thinking", "title": "Практика: алгоритмическое мышление" }
+  ] },
+  { "key": "m2", "title": "Основы синтаксиса", "lead": "Переменные, строки, условия, исключения, списки, циклы, словари, кортежи и множества.", "lessons": [
+    { "key": "variables", "dir": "m2/01-variables", "title": "Переменные, типы данных, ввод" },
+    { "key": "strings", "dir": "m2/02-strings", "title": "Строки: срезы и методы" },
+    { "key": "operators", "dir": "m2/03-operators", "title": "Операторы и выражения" },
+    { "key": "conditions", "dir": "m2/04-conditions", "title": "Условия if / elif / else" },
+    { "key": "conditions-practice", "dir": "m2/05-conditions-practice", "title": "Практика: условия" },
+    { "key": "exceptions", "dir": "m2/06-exceptions", "title": "Исключения try / except" },
+    { "key": "lists", "dir": "m2/07-lists", "title": "Списки" },
+    { "key": "for", "dir": "m2/08-for", "title": "Цикл for и range" },
+    { "key": "dicts", "dir": "m2/09-dicts", "title": "Словари" },
+    { "key": "collections-practice", "dir": "m2/10-collections-practice", "title": "Практика: списки, циклы, словари" },
+    { "key": "while", "dir": "m2/11-while", "title": "Цикл while, break и continue" },
+    { "key": "guess", "dir": "m2/12-guess", "title": "Мини-проект «Угадай число»", "kind": "project" },
+    { "key": "tuples-sets", "dir": "m2/13-tuples-sets", "title": "Кортежи и множества" },
+    { "key": "catalog", "dir": "m2/14-catalog", "title": "Мини-проект «Каталог продуктов»", "kind": "project" }
+  ] },
+  { "key": "m3", "title": "Функции, модули, алгоритмы", "lead": "Функции, модули, файлы и JSON, сортировка и поиск.", "lessons": [
+    { "key": "functions", "dir": "m3/01-functions", "title": "Функции: создание, вызов, аргументы" },
+    { "key": "scope", "dir": "m3/02-scope", "title": "Область видимости" },
+    { "key": "return", "dir": "m3/03-return", "title": "Возврат значения: return" },
+    { "key": "args", "dir": "m3/04-args", "title": "Значения по умолчанию, *args, **kwargs" },
+    { "key": "modules", "dir": "m3/05-modules", "title": "Модули и импорт" },
+    { "key": "stdlib", "dir": "m3/06-stdlib", "title": "random, math, datetime" },
+    { "key": "password", "dir": "m3/07-password", "title": "Мини-проект «Генератор паролей»", "kind": "project" },
+    { "key": "bmi", "dir": "m3/08-bmi", "title": "Мини-проект «ИМТ-калькулятор»", "kind": "project" },
+    { "key": "files", "dir": "m3/09-files", "title": "Файлы: open и with" },
+    { "key": "json", "dir": "m3/10-json", "title": "JSON" },
+    { "key": "notes", "dir": "m3/11-notes", "title": "Мини-проект «Заметки / База клиентов»", "kind": "project" },
+    { "key": "fizzbuzz", "dir": "m3/12-fizzbuzz", "title": "Мини-проект FizzBuzz", "kind": "project" },
+    { "key": "hangman", "dir": "m3/13-hangman", "title": "Мини-проект «Виселица»", "kind": "project" },
+    { "key": "sorting", "dir": "m3/14-sorting", "title": "Пузырьковая сортировка и линейный поиск" },
+    { "key": "sorting-practice", "dir": "m3/15-sorting-practice", "title": "Практика: сортировка и поиск" }
+  ] },
+  { "key": "m4", "title": "ООП", "lead": "Рекурсия, функции высшего порядка, классы и объекты.", "lessons": [
+    { "key": "recursion", "dir": "m4/01-recursion", "title": "Рекурсия" },
+    { "key": "decorators", "dir": "m4/02-decorators", "title": "Функции высшего порядка и декораторы" },
+    { "key": "classes", "dir": "m4/03-classes", "title": "Классы и объекты" },
+    { "key": "oop-pillars", "dir": "m4/04-oop-pillars", "title": "Инкапсуляция, наследование, полиморфизм, абстракция" },
+    { "key": "magic", "dir": "m4/05-magic", "title": "__str__, __repr__, @property" },
+    { "key": "oop-practice-1", "dir": "m4/06-oop-practice-1", "title": "Практика ООП, часть 1" },
+    { "key": "oop-practice-2", "dir": "m4/07-oop-practice-2", "title": "Практика ООП, часть 2" },
+    { "key": "oop-project", "dir": "m4/08-oop-project", "title": "Мини-проект ООП", "kind": "project" }
+  ] },
+  { "key": "m5", "title": "Базы данных и API", "lead": "SQL, sqlite3 в Python, запросы к учебному API сайта.", "lessons": [
+    { "key": "sql", "dir": "m5/01-sql", "title": "SQL: таблицы, вставка, выборка, изменение" },
+    { "key": "sqlite-1", "dir": "m5/02-sqlite-1", "title": "sqlite3 в Python, часть 1" },
+    { "key": "sqlite-2", "dir": "m5/03-sqlite-2", "title": "sqlite3 в Python, часть 2" },
+    { "key": "api", "dir": "m5/04-api", "title": "Что такое API и REST" },
+    { "key": "requests", "dir": "m5/05-requests", "title": "Библиотека requests" },
+    { "key": "api-keys", "dir": "m5/06-api-keys", "title": "API-ключи и авторизация" },
+    { "key": "dotenv", "dir": "m5/07-dotenv", "title": "Файл .env и python-dotenv" },
+    { "key": "api-practice", "dir": "m5/08-api-practice", "title": "Практика: подключение к API" }
+  ] },
+  { "key": "m6", "title": "Сетевое программирование: сокеты", "lead": "Программы, которые общаются по сети, — в учебной сети сайта.", "lessons": [
+    { "key": "echo", "dir": "m6/01-echo", "title": "Первая сетевая программа: эхо-сервер" },
+    { "key": "lan", "dir": "m6/02-lan", "title": "Связь двух программ по сети" },
+    { "key": "json-net", "dir": "m6/03-json-net", "title": "Передача JSON по сети" },
+    { "key": "registrar", "dir": "m6/04-registrar", "title": "Сетевой регистратор: сокеты и SQLite" },
+    { "key": "phonebook", "dir": "m6/05-phonebook", "title": "Сетевой телефонный справочник" },
+    { "key": "messenger", "dir": "m6/06-messenger", "title": "Мини-проект «Сетевой мессенджер»", "kind": "project" }
+  ] }
+]

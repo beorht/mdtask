@@ -1,8 +1,8 @@
-// Checks the output of a student's program in «Простое программирование на Python».
-// The program runs in the student's browser (public/js/python-basics.js, Pyodide) once per
-// test with the test's input lines; the browser sends back only what it printed. The expected
-// output stays on the server: only the first `openTests` tests are shown to the student.
-// scripts/python-basics/check.py applies the same rules (normalize) to a .py file.
+// Checks the output of a student's program: the «Начальный Python» course (src/lib/python-course/), the IB exam
+// (normalize, publicTests) and the IB detector (normalize). The program runs in the student's browser (Pyodide,
+// public/js/python-worker.js) once per test with the test's input lines; the browser sends back only what it
+// printed. The expected output stays on the server: only the first `openTests` tests are shown to the student.
+// scripts/python-course/check.py applies the same rules (normalize) to a .py file.
 
 const MAX_OUTPUT = 20000;
 
@@ -33,7 +33,7 @@ function publicTests(task) {
 // runs: [{ stdout, error, timeout }] in test order (error = last line of the traceback).
 function checkRuns(task, runs) {
   if (!Array.isArray(runs) || runs.length !== task.tests.length) {
-    throw new Error(`${task.tests.length} ta ishga tushirish natijasi kerak, keldi: ${Array.isArray(runs) ? runs.length : 0}`);
+    throw new Error(`Нужно ${task.tests.length} результатов запуска, пришло: ${Array.isArray(runs) ? runs.length : 0}.`);
   }
   const tests = task.tests.map((test, i) => {
     const run = runs[i] || {};
@@ -56,21 +56,21 @@ function checkRuns(task, runs) {
   return { tests, passed, total: tests.length, solved: passed === tests.length };
 }
 
-// A short, answer-free reason a test failed (in Uzbek, like the whole course).
+// A short, answer-free reason a test failed.
 function hintFor(test, stdout, error) {
-  if (error === 'timeout') return 'Dastur 5 soniyadan ko‘proq ishladi va to‘xtatildi (cheksiz sikl yoki ortiqcha input()?).';
+  if (error === 'timeout') return 'Программа работала дольше 5 секунд и была остановлена (бесконечный цикл или лишний input()?).';
   if (error) {
-    if (/EOFError/.test(error)) return 'Dastur input() ni testdagi kiritish qatorlaridan ko‘proq marta chaqiryapti.';
-    return 'Dastur xato bilan tugadi: ' + error;
+    if (/EOFError/.test(error)) return 'Программа вызывает input() больше раз, чем строк ввода в тесте.';
+    return 'Программа завершилась с ошибкой: ' + error;
   }
   const got = normalize(stdout).split('\n');
   const want = normalize(test.output).split('\n');
-  if (!normalize(stdout)) return 'Dastur hech narsa chiqarmadi.';
+  if (!normalize(stdout)) return 'Программа ничего не вывела.';
   if (got.length !== want.length) {
-    return `Dastur ${got.length} ta qator chiqardi, kerak: ${want.length} ta.`;
+    return `Программа вывела строк: ${got.length}, нужно: ${want.length}.`;
   }
   const line = got.findIndex((g, i) => g !== want[i]);
-  return `Chiqishning ${line + 1}-qatori mos kelmaydi.`;
+  return `Не совпадает строка вывода № ${line + 1}.`;
 }
 
 module.exports = { normalize, publicTests, checkRuns, MAX_OUTPUT };

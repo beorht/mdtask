@@ -41,8 +41,8 @@ test.beforeEach(() => {
   db.__resetForTests();
   fs.rmSync(EXAM_DIR, { recursive: true, force: true });
   __resetLogForTests();
-  db.createUser({ id: 'ib-1', role: 'student', name: 'Студент Один', group: 'IB', mustChangePassword: false });
-  db.createUser({ id: 'ib-2', role: 'student', name: 'Студент Два', group: 'IB', mustChangePassword: false });
+  db.createUser({ id: 'ib-1', role: 'student', name: 'Студент Один', group: 'ib-2', mustChangePassword: false });
+  db.createUser({ id: 'ib-2', role: 'student', name: 'Студент Два', group: 'ib-2', mustChangePassword: false });
   db.createUser({ id: 'tester', role: 'student', name: 'Тестовый Студент', group: 'TEST', mustChangePassword: false });
   exam.issueVariant(DEF, 'ib-1', 0);
   exam.issueVariant(DEF, 'ib-2', 1);

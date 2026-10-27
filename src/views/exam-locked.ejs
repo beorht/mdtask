@@ -15,7 +15,7 @@
         <h1>🔒 Закрыто преподавателем</h1>
         <p>Практические задания, SQL-тренажёр и задания по информационной безопасности сейчас закрыты. Их откроет преподаватель.</p>
       <% } %>
-      <p><% if (exam.during) { %><a class="btn btn-primary" href="/exam/<%= exam.id %>">Перейти к контрольной →</a> <% } %><a class="btn btn-secondary" href="/">На главную</a></p>
+      <p><% if (exam.during) { %><a class="btn btn-primary" href="/exam/<%= exam.id %>">Перейти к контрольной →</a> <% } %><%- include('partials/back-btn', { href: '/', label: 'На главную' }) %></p>
     </section>
   </main>
   <%- include('partials/scripts') %>

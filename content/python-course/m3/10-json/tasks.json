@@ -1,0 +1,145 @@
+[
+  {
+    "id": "json-01",
+    "title": "Разбор строки",
+    "statement": "Дана строка в формате JSON — объект с полями name, age и langs (список). Выведите «Имя: …», «Возраст: …» и «Языки: …» (через запятую и пробел). Если строка — не JSON, выведите «Ошибка JSON».",
+    "openTests": 2,
+    "tests": [
+      {
+        "input": [
+          "{\"name\": \"Азиз\", \"age\": 19, \"langs\": [\"python\", \"sql\"]}"
+        ],
+        "output": "Имя: Азиз\nВозраст: 19\nЯзыки: python, sql"
+      },
+      {
+        "input": [
+          "{\"name\": \"Ли\", \"age\": 30, \"langs\": []}"
+        ],
+        "output": "Имя: Ли\nВозраст: 30\nЯзыки: "
+      },
+      {
+        "input": [
+          "{'name': 'x'}"
+        ],
+        "output": "Ошибка JSON"
+      }
+    ],
+    "require": [
+      "import:json"
+    ]
+  },
+  {
+    "id": "json-02",
+    "title": "Склад из JSON",
+    "statement": "В файле products.json — список товаров с полями name, price, count, in_stock. Выведите названия товаров в наличии через запятую и пробел и во второй строке — «Стоимость запаса: <сумма price × count по товарам в наличии>».",
+    "openTests": 2,
+    "tests": [
+      {
+        "input": [],
+        "output": "чай, сахар\nСтоимость запаса: 120000",
+        "files": {
+          "products.json": "[\n  {\"name\": \"чай\", \"price\": 20000, \"count\": 3, \"in_stock\": true},\n  {\"name\": \"кофе\", \"price\": 45000, \"count\": 0, \"in_stock\": false},\n  {\"name\": \"сахар\", \"price\": 12000, \"count\": 5, \"in_stock\": true}\n]\n"
+        }
+      },
+      {
+        "input": [],
+        "output": "вода\nСтоимость запаса: 30000",
+        "files": {
+          "products.json": "[{\"name\": \"вода\", \"price\": 3000, \"count\": 10, \"in_stock\": true}]\n"
+        }
+      }
+    ],
+    "require": [
+      "import:json",
+      "with"
+    ]
+  },
+  {
+    "id": "json-03",
+    "title": "Сохранить профиль",
+    "statement": "Дано n и n строк «ключ значение» (значение — слово или целое число). Соберите словарь (числа — как int), сохраните его в profile.json функцией json.dump, затем прочитайте файл обратно и выведите json.dumps(данные, ensure_ascii=False, sort_keys=True).",
+    "openTests": 2,
+    "tests": [
+      {
+        "input": [
+          "3",
+          "name Лола",
+          "age 19",
+          "city Ургенч"
+        ],
+        "output": "{\"age\": 19, \"city\": \"Ургенч\", \"name\": \"Лола\"}"
+      },
+      {
+        "input": [
+          "2",
+          "score -5",
+          "b x"
+        ],
+        "output": "{\"b\": \"x\", \"score\": -5}"
+      }
+    ],
+    "require": [
+      "import:json",
+      "with"
+    ]
+  },
+  {
+    "id": "json-04",
+    "title": "Расходы по категориям",
+    "statement": "В файле transactions.json — список операций с полями id, category, amount. Выведите по каждой категории (по убыванию суммы, при равенстве — по алфавиту) «категория: сумма», затем «Итого: …».",
+    "openTests": 2,
+    "tests": [
+      {
+        "input": [],
+        "output": "связь: 50000\nеда: 47500\nтранспорт: 6000\nИтого: 103500",
+        "files": {
+          "transactions.json": "[\n  {\"id\": 1, \"category\": \"еда\", \"amount\": 35000},\n  {\"id\": 2, \"category\": \"транспорт\", \"amount\": 4000},\n  {\"id\": 3, \"category\": \"еда\", \"amount\": 12500},\n  {\"id\": 4, \"category\": \"связь\", \"amount\": 50000},\n  {\"id\": 5, \"category\": \"транспорт\", \"amount\": 2000}\n]\n"
+        }
+      },
+      {
+        "input": [],
+        "output": "а: 5\nб: 5\nИтого: 10",
+        "files": {
+          "transactions.json": "[{\"id\": 1, \"category\": \"б\", \"amount\": 5}, {\"id\": 2, \"category\": \"а\", \"amount\": 5}]\n"
+        }
+      }
+    ],
+    "require": [
+      "import:json"
+    ]
+  },
+  {
+    "id": "json-05",
+    "title": "Путь в настройках",
+    "statement": "В файле settings.json — вложенные словари. Дано n запросов вида «a.b.c» (путь по ключам через точку). Для каждого выведите найденное значение (числа и строки как есть, словари и списки — json.dumps с ensure_ascii=False) или «Нет».",
+    "openTests": 2,
+    "tests": [
+      {
+        "input": [
+          "4",
+          "app.name",
+          "app.window.width",
+          "db",
+          "app.theme.color"
+        ],
+        "output": "Тетрадь\n800\n{\"path\": \"data.db\"}\nНет",
+        "files": {
+          "settings.json": "{\"app\": {\"name\": \"Тетрадь\", \"window\": {\"width\": 800, \"height\": 600}}, \"db\": {\"path\": \"data.db\"}}\n"
+        }
+      },
+      {
+        "input": [
+          "1",
+          "x"
+        ],
+        "output": "[1, 2]",
+        "files": {
+          "settings.json": "{\"x\": [1, 2]}\n"
+        }
+      }
+    ],
+    "require": [
+      "import:json"
+    ]
+  }
+]

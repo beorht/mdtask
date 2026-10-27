@@ -1,0 +1,91 @@
+<header>
+  <h1>Lingvo</h1>
+  <p>Языковая школа в Фергане</p>
+  <nav>
+    <ul>
+      <li><a href="#courses">Курсы</a></li>
+      <li><a href="#prices">Цены</a></li>
+      <li><a href="#signup">Запись</a></li>
+    </ul>
+  </nav>
+</header>
+<main>
+  <section id="courses">
+    <h2>Курсы</h2>
+    <article>
+      <h3>Английский</h3>
+      <img src="english.jpg" alt="Флаг Великобритании">
+      <p>Для начинающих и продолжающих.</p>
+    </article>
+    <article>
+      <h3>Корейский</h3>
+      <img src="korean.jpg" alt="Флаг Кореи">
+      <p>Подготовка к экзамену TOPIK.</p>
+    </article>
+  </section>
+  <section id="prices">
+    <h2>Цены</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Курс</th>
+          <th>Занятий в неделю</th>
+          <th>Цена в месяц</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Английский</td>
+          <td>3</td>
+          <td>400 000 сум</td>
+        </tr>
+        <tr>
+          <td>Корейский</td>
+          <td>2</td>
+          <td>350 000 сум</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+  <section>
+    <h2>Почему мы</h2>
+    <ul>
+      <li>Группы до 8 человек</li>
+      <li>Первое занятие бесплатно</li>
+      <li>Сертификат по окончании</li>
+    </ul>
+    <details>
+      <summary>Можно ли заниматься онлайн?</summary>
+      <p>Да, все курсы есть и в онлайн-формате.</p>
+    </details>
+  </section>
+  <section id="signup">
+    <h2>Запись</h2>
+    <form action="/signup" method="post">
+      <label for="name">Имя</label>
+      <input type="text" id="name" name="name" required>
+      <label for="phone">Телефон</label>
+      <input type="tel" id="phone" name="phone" required>
+      <label for="course">Курс</label>
+      <select id="course" name="course">
+        <option value="english">Английский</option>
+        <option value="korean">Корейский</option>
+      </select>
+      <button type="submit">Записаться</button>
+    </form>
+  </section>
+</main>
+<aside>
+  <h2>Отзыв</h2>
+  <blockquote>
+    <p>За полгода сдала IELTS на 6.5!</p>
+  </blockquote>
+  <p><cite>Дилноза, выпускница 2025 года</cite></p>
+</aside>
+<footer>
+  <address>
+    Фергана, ул. Мустакиллик, 15<br>
+    <a href="tel:+998732001020">+998 73 200-10-20</a>
+  </address>
+  <p>© 2026 Lingvo</p>
+</footer>

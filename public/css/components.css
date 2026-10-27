@@ -63,8 +63,20 @@
   transition: background-color var(--duration-slow) var(--ease-standard),
     border-color var(--duration-slow) var(--ease-standard);
 }
-.app-brand { display: flex; align-items: center; gap: 0.4rem; text-decoration: none; color: var(--text); font-weight: bold; font-size: 1.1rem; flex-shrink: 0; }
+.app-brand { display: flex; align-items: center; gap: 0.55rem; text-decoration: none; color: var(--text); font-weight: bold; font-size: 1.25rem; flex-shrink: 0; }
 .app-brand:hover { text-decoration: none; color: var(--accent-text); }
+/* Логотип (public/img/logo-mark.png — прозрачный значок) рисуется маской цветом текста: виден в обеих темах. */
+.app-brand-mark,
+.login-logo {
+  display: inline-block;
+  flex: none;
+  background: currentColor;
+  -webkit-mask: url('/img/logo-mark.png') center / contain no-repeat;
+  mask: url('/img/logo-mark.png') center / contain no-repeat;
+}
+.app-brand-mark { width: 2.7rem; height: 2.7rem; }
+.login-logo { display: block; width: 4.5rem; height: 4.5rem; margin: 0 0 0.6rem; background: var(--color-gradient-brand); }
+:root[data-theme="light"] .login-logo { background: var(--tetrad-ink); }
 .app-header-title {
   color: var(--text-soft);
   font-size: 0.95rem;
@@ -1074,11 +1086,8 @@ a.topic-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2p
 /* ---------- Subject navigation (left sidebar on subject pages) ---------- */
 .sidebar-subject { padding: 0.75rem 0.75rem 1.5rem; gap: 0.25rem; font-size: 0.95rem; }
 .sidebar-subject a { border-left: 0; }
-.sidebar-subject .nav-back {
-  display: inline-flex; align-items: center; gap: 0.4rem; align-self: flex-start;
-  padding: 0.3rem 0.6rem; border-radius: 999px; font-size: 0.85rem; color: var(--text-soft);
-}
-.sidebar-subject .nav-back:hover { color: var(--accent-text); background: var(--accent-soft-bg); }
+/* «← Все предметы» в меню предмета — общая кнопка .back-btn (ниже в файле). */
+.sidebar-subject .nav-back { margin-bottom: 0.25rem; }
 
 .nav-header {
   margin: 0.4rem 0 0.75rem; padding: 0.75rem; border-radius: 10px;
@@ -1380,6 +1389,7 @@ a.topic-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2p
 .subject-card-sql { --card-bg: var(--marple-coral); }
 .subject-card-pybasics { --card-bg: #FFCB94; }
 .subject-card-pis { --card-bg: #FF8C6E; }
+.subject-card-emmet { --card-bg: #FFCB94; }
 .subject-card-ib,
 .exam-home-card {
   --card-bg: var(--marple-crimson);
@@ -1396,8 +1406,25 @@ a.subject-card, a.assignment-card, a.ib-task-card, a.exam-home-card { color: var
 .subject-card:hover, a.assignment-card:hover, a.ib-task-card:hover, .exam-home-card:hover {
   background: var(--card-bg);
   border-color: transparent;
-  box-shadow: var(--card-shadow-hover);
+  box-shadow: 0 12px 30px -6px var(--card-glow);
 }
+/* Наведение — одинаково в обеих темах (как было в светлой): карточка приподнимается, текст остаётся цветом
+   карточки без подчёркивания. Тень — цвета самой карточки: на тёмном фоне — мягкое свечение её цветом,
+   на светлом — тот же цвет, затемнённый «чернилами», чтобы тень была видна на бумаге. */
+.subject-card, .assignment-card, .ib-task-card, .exam-home-card {
+  --card-glow: color-mix(in srgb, var(--card-bg) 42%, transparent);
+}
+:root[data-theme="light"] .subject-card,
+:root[data-theme="light"] .assignment-card,
+:root[data-theme="light"] .ib-task-card,
+:root[data-theme="light"] .exam-home-card {
+  --card-glow: color-mix(in srgb, color-mix(in srgb, var(--card-bg) 50%, #3B3835) 30%, transparent);
+}
+a.subject-card:hover,
+a.assignment-card:hover,
+a.ib-task-card:hover,
+a.exam-home-card:hover,
+.content a.subject-card:hover { color: var(--card-ink); text-decoration: none; }
 .subject-card:focus-visible, a.assignment-card:focus-visible, a.ib-task-card:focus-visible {
   outline: 3px solid var(--card-ink);
   outline-offset: 3px;
@@ -1539,51 +1566,129 @@ a.subject-card, a.assignment-card, a.ib-task-card, a.exam-home-card { color: var
 }
 
 /* ======================================================= Светлая тема ===
-   Карточки как на образцах: цветные (голубая, жёлтая, мятная, оранжевая) и графитовая с кремовым текстом,
-   второстепенные кнопки — контурные «пилюли». Тёмная тема этим блоком не затрагивается. */
-:root[data-theme="light"] .subject-card-sql { --card-bg: var(--light-orange); }
-:root[data-theme="light"] .subject-card-python { --card-bg: var(--light-yellow); }
-:root[data-theme="light"] .subject-card-javascript { --card-bg: var(--light-blue); }
-:root[data-theme="light"] .subject-card-pybasics { --card-bg: var(--light-mint); }
-:root[data-theme="light"] .subject-card-pis { --card-bg: var(--light-beige); box-shadow: inset 0 0 0 1px var(--border); }
+   «Тетрадь» (docs/color-tetrad.md): здесь только цвета — карточки в приглушённых цветах схемы контейнеров,
+   тёмные элементы — «чернильные» #3B3835, редакторы — светлый лист в клетку. Рамки, скругления, размеры и
+   тени — как в тёмной теме; у карточек — линия 1px #E6DED3, чтобы они были заметнее на бумаге. Тёмная тема этим блоком не затрагивается. */
+:root[data-theme="light"] .subject-card,
+:root[data-theme="light"] .assignment-card,
+:root[data-theme="light"] .ib-task-card,
+:root[data-theme="light"] .exam-home-card {
+  --card-ink: #3D3A36;
+  --card-soft: #5A5651;
+  --card-pill: rgba(59, 56, 53, 0.08);
+}
+:root[data-theme="light"] .subject-card-sql { --card-bg: var(--tetrad-orange); }
+:root[data-theme="light"] .subject-card-python { --card-bg: var(--tetrad-sandy); }
+:root[data-theme="light"] .subject-card-javascript { --card-bg: var(--tetrad-blue); }
+:root[data-theme="light"] .subject-card-pybasics { --card-bg: var(--tetrad-green); }
+:root[data-theme="light"] .subject-card-pis { --card-bg: var(--tetrad-violet); }
+:root[data-theme="light"] .subject-card-emmet { --card-bg: var(--tetrad-green); }
 :root[data-theme="light"] .subject-card-ib {
-  --card-bg: var(--light-graphite);
-  --card-ink: #F5EBC9;
-  --card-soft: rgba(245, 235, 201, 0.8);
+  --card-bg: var(--tetrad-ink);
+  --card-ink: #FBF8F3;
+  --card-soft: rgba(251, 248, 243, 0.8);
   --card-pill: rgba(255, 255, 255, 0.14);
 }
+:root[data-theme="light"] .exam-home-card { --card-bg: var(--tetrad-red); }
+:root[data-theme="light"] .subject-card,
+:root[data-theme="light"] .assignment-card,
+:root[data-theme="light"] .ib-task-card,
+:root[data-theme="light"] .exam-home-card,
+:root[data-theme="light"] .subject-card:hover,
+:root[data-theme="light"] a.assignment-card:hover,
+:root[data-theme="light"] a.ib-task-card:hover,
+:root[data-theme="light"] .exam-home-card:hover { border: 1px solid #E6DED3; }  /* линия по краю — карточки заметнее на бумаге */
+
+/* Тёмные круги и полоски на карточках — «чернильные», на графитовой карточке ИБ — бумажные. */
+:root[data-theme="light"] .subject-card-icon,
+:root[data-theme="light"] .subject-card-go,
+:root[data-theme="light"] .subject-card .progress-fill,
+:root[data-theme="light"] .ib-task-num,
+:root[data-theme="light"] .ib-task-card.is-solved .ib-task-num,
+:root[data-theme="light"] .exam-home-card .subject-card-go,
+:root[data-theme="light"] .assignment-card > .badge { background: var(--tetrad-ink); }
 :root[data-theme="light"] .subject-card-ib .subject-card-icon,
-:root[data-theme="light"] .subject-card-ib .subject-card-go { background: #F5EBC9; color: #1C1A1B; }
-:root[data-theme="light"] .subject-card-ib .progress-fill { background: var(--light-yellow); }
-:root[data-theme="light"] .exam-home-card { --card-bg: var(--light-red); --card-ink: #1C1A1B; --card-soft: rgba(28, 26, 27, 0.78); }
+:root[data-theme="light"] .subject-card-ib .subject-card-go { background: #FBF8F3; color: var(--tetrad-ink); }
+:root[data-theme="light"] .subject-card-ib .progress-fill { background: var(--tetrad-sand); }
+:root[data-theme="light"] .ib-task-num { color: #FBF8F3; }
+:root[data-theme="light"] .ib-task-card.is-solved .ib-task-num,
+:root[data-theme="light"] .assignment-card > .badge-done { color: #B9D3A6; }
+:root[data-theme="light"] .assignment-card > .badge-pending { color: #E8C48F; }
+:root[data-theme="light"] .assignment-card > .badge-not_done { color: #F0A792; }
 
 :root[data-theme="light"] .assignment-list > li:nth-child(4n + 1) .assignment-card,
-:root[data-theme="light"] .ib-task-list > li:nth-child(4n + 1) .ib-task-card { --card-bg: var(--light-blue); }
+:root[data-theme="light"] .ib-task-list > li:nth-child(4n + 1) .ib-task-card { --card-bg: var(--tetrad-blue); }
 :root[data-theme="light"] .assignment-list > li:nth-child(4n + 2) .assignment-card,
-:root[data-theme="light"] .ib-task-list > li:nth-child(4n + 2) .ib-task-card { --card-bg: var(--light-yellow); }
+:root[data-theme="light"] .ib-task-list > li:nth-child(4n + 2) .ib-task-card { --card-bg: var(--tetrad-sandy); }
 :root[data-theme="light"] .assignment-list > li:nth-child(4n + 3) .assignment-card,
-:root[data-theme="light"] .ib-task-list > li:nth-child(4n + 3) .ib-task-card { --card-bg: var(--light-mint); }
+:root[data-theme="light"] .ib-task-list > li:nth-child(4n + 3) .ib-task-card { --card-bg: var(--tetrad-green); }
 :root[data-theme="light"] .assignment-list > li:nth-child(4n + 4) .assignment-card,
-:root[data-theme="light"] .ib-task-list > li:nth-child(4n + 4) .ib-task-card { --card-bg: var(--light-orange); }
+:root[data-theme="light"] .ib-task-list > li:nth-child(4n + 4) .ib-task-card { --card-bg: var(--tetrad-orange); }
 
-/* Панели — светлые с тонкой тёмной обводкой, как карточки «Upcoming» на образце. */
-:root[data-theme="light"] .task-panel,
-:root[data-theme="light"] .submission-card { background: var(--surface); border: 1px solid var(--border); box-shadow: none; }
+/* Поля ввода — светлее панели, рамка в фокусе — песок с кольцом. */
+:root[data-theme="light"] input[type="text"],
+:root[data-theme="light"] input[type="password"],
+:root[data-theme="light"] input[type="search"],
+:root[data-theme="light"] input[type="number"],
+:root[data-theme="light"] select,
+:root[data-theme="light"] textarea:not(.sql-console):not(.code-file-source) { background: var(--tetrad-surface); border-color: var(--border); color: var(--text); }
+:root[data-theme="light"] input:focus,
+:root[data-theme="light"] select:focus,
+:root[data-theme="light"] textarea:focus { border-color: var(--tetrad-sand); box-shadow: 0 0 0 3px rgba(201, 183, 156, 0.25); outline: none; }
 
 /* Второстепенная кнопка — контурная «пилюля». */
 :root[data-theme="light"] .btn-secondary {
   background: transparent;
-  color: #1C1A1B;
-  border: 1px solid rgba(28, 26, 27, 0.55);
+  color: var(--tetrad-ink);
+  border: 1px solid var(--tetrad-sand);
 }
-:root[data-theme="light"] .btn-secondary:hover { background: rgba(28, 26, 27, 0.07); color: #1C1A1B; }
+:root[data-theme="light"] .btn-secondary:hover { background: var(--tetrad-cream); color: var(--tetrad-ink); }
 :root[data-theme="light"] .content a.btn-secondary,
-:root[data-theme="light"] .content a.btn-secondary:hover { color: #1C1A1B; }
+:root[data-theme="light"] .content a.btn-secondary:hover { color: var(--tetrad-ink); }
 
-/* Активный пункт меню: тёмный текст на красно-оранжевом (кремовый был бы плохо виден). */
+/* Активный пункт меню: чернильный текст на кремовом, слева полоска «дерево». */
+:root[data-theme="light"] .sidebar-subject .nav-link.active { background: var(--tetrad-cream); box-shadow: inset 3px 0 0 var(--tetrad-wood); }
 :root[data-theme="light"] .sidebar-subject .nav-link.active,
-:root[data-theme="light"] .sidebar-subject .nav-link.active .nav-count { color: #1C1A1B; }
+:root[data-theme="light"] .sidebar-subject .nav-link.active .nav-count { color: var(--tetrad-ink); }
 
+/* Встроенный код в тексте — кремовая плашка с текстом «дерево». */
+:root[data-theme="light"] .content :not(pre) > code { background: var(--tetrad-cream); color: var(--tetrad-wood-text); }
+
+/* CodeMirror (тема material-darker на всех редакторах) — в светлой теме светлый лист «Тетради». */
+:root[data-theme="light"] .cm-s-material-darker.CodeMirror,
+:root[data-theme="light"] .code-file-pane .CodeMirror.cm-s-material-darker { background: var(--editor-bg); color: var(--editor-text); }
+:root[data-theme="light"] .cm-s-material-darker .CodeMirror-gutters,
+:root[data-theme="light"] .code-file-pane .cm-s-material-darker .CodeMirror-gutters { background: var(--editor-bg); border-right: 1px solid rgba(169, 69, 47, 0.22); }
+:root[data-theme="light"] .cm-s-material-darker .CodeMirror-linenumber { color: #B5AB9E; }
+:root[data-theme="light"] .cm-s-material-darker .CodeMirror-cursor { border-left-color: var(--tetrad-ink); }
+:root[data-theme="light"] .cm-s-material-darker div.CodeMirror-selected,
+:root[data-theme="light"] .cm-s-material-darker.CodeMirror-focused div.CodeMirror-selected { background: var(--editor-selection); }
+:root[data-theme="light"] .cm-s-material-darker .CodeMirror-line::selection,
+:root[data-theme="light"] .cm-s-material-darker .CodeMirror-line > span::selection,
+:root[data-theme="light"] .cm-s-material-darker .CodeMirror-line > span > span::selection { background: var(--editor-selection); }
+:root[data-theme="light"] .cm-s-material-darker .CodeMirror-activeline-background { background: rgba(237, 228, 211, 0.5); }
+:root[data-theme="light"] .cm-s-material-darker .cm-tag,
+:root[data-theme="light"] .cm-s-material-darker .cm-keyword { color: #8F5B2E; }
+:root[data-theme="light"] .cm-s-material-darker .cm-attribute,
+:root[data-theme="light"] .cm-s-material-darker .cm-property { color: #5A6E4B; }
+:root[data-theme="light"] .cm-s-material-darker .cm-string,
+:root[data-theme="light"] .cm-s-material-darker .cm-string-2 { color: #A14B33; }
+:root[data-theme="light"] .cm-s-material-darker .cm-number,
+:root[data-theme="light"] .cm-s-material-darker .cm-atom { color: #9A6A2C; }
+:root[data-theme="light"] .cm-s-material-darker .cm-def,
+:root[data-theme="light"] .cm-s-material-darker .cm-builtin,
+:root[data-theme="light"] .cm-s-material-darker .cm-qualifier { color: #2F5FA7; }
+:root[data-theme="light"] .cm-s-material-darker .cm-variable,
+:root[data-theme="light"] .cm-s-material-darker .cm-variable-2,
+:root[data-theme="light"] .cm-s-material-darker .cm-variable-3,
+:root[data-theme="light"] .cm-s-material-darker .cm-type { color: #3D3A36; }
+:root[data-theme="light"] .cm-s-material-darker .cm-operator,
+:root[data-theme="light"] .cm-s-material-darker .cm-bracket,
+:root[data-theme="light"] .cm-s-material-darker .cm-punctuation { color: #9A9083; }
+:root[data-theme="light"] .cm-s-material-darker .cm-meta { color: #6A4FA3; }
+:root[data-theme="light"] .cm-s-material-darker .cm-comment { color: #776F65; font-style: italic; }
+:root[data-theme="light"] .cm-s-material-darker .cm-error { color: #FBF8F3; background-color: #A9452F; }
+:root[data-theme="light"] .cm-s-material-darker .CodeMirror-matchingbracket { color: var(--tetrad-ink) !important; background: var(--tetrad-cream); }
 
 /* Смена цвета при наведении и фокусе — плавная и медленная у всех интерактивных элементов
    (движение — подъём карточек, нажатие кнопок — остаётся быстрым). */
@@ -1592,4 +1697,185 @@ a, button, .btn, input[type="submit"], .nav-link, .tab-btn, .tag, .sql-chip, .st
   transition-property: color, background-color, border-color, box-shadow, transform;
   transition-duration: var(--duration-color), var(--duration-color), var(--duration-color), var(--duration-color), var(--duration-fast);
   transition-timing-function: var(--ease-standard);
+}
+
+/* ---------- Итоговая контрольная WEB (src/views/web-exam/index.ejs) ---------- */
+.web-exam-page { max-width: none; }
+.web-exam-spec > summary { cursor: pointer; list-style: none; }
+.web-exam-spec > summary::-webkit-details-marker { display: none; }
+.web-exam-spec > summary::after { content: ' ▾'; color: var(--text-soft); }
+.web-exam-spec:not([open]) > summary::after { content: ' ▸'; }
+.web-exam-reqs { padding-left: 1.4rem; }
+.web-exam-reqs li { margin: 0.4rem 0; }
+.web-exam-pts { display: inline-block; margin-left: 0.35rem; padding: 0 0.5rem; border-radius: 999px; font-size: 0.78rem; background: var(--accent-soft-bg); color: var(--accent-text); }
+.web-exam-workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1rem; align-items: start; margin-top: 1rem; }
+.web-exam-workspace > .task-panel { margin-bottom: 0; min-width: 0; }
+.web-exam-tabs { display: flex; gap: 0.25rem; flex-wrap: wrap; }
+.web-exam-tabs .tab-btn { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.web-exam-pane { --cm-h: clamp(380px, 62vh, 860px); }
+.web-exam-pane .CodeMirror { height: var(--cm-h); min-height: 0; }
+.web-exam-pane .CodeMirror-scroll { min-height: 0; }
+.web-exam-pane .CodeMirror-lines { min-height: calc(var(--cm-h) - 8px); }
+/* Строка адреса предпросмотра (web-runner.js): «◀ ▶», адрес с «#», «↵». */
+.web-nav { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+.web-nav-btn { flex: none; min-width: 34px; height: 34px; padding: 0 8px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text); font: inherit; cursor: pointer; transition: border-color var(--duration-color) var(--ease-standard); }
+.web-nav-btn:hover:not(:disabled) { border-color: var(--accent, currentColor); }
+.web-nav-btn:disabled { opacity: .4; cursor: default; }
+.web-nav-addr { flex: 1; min-width: 0; display: flex; align-items: center; height: 34px; padding: 0 12px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; transition: border-color var(--duration-color) var(--ease-standard); }
+.web-nav-prefix { flex: none; opacity: .6; }
+.web-nav-addr input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text); font: inherit; padding: 0 0 0 2px; }
+.web-nav-addr:focus-within { border-color: var(--accent, currentColor); }
+.web-exam-frame { width: 100%; height: clamp(380px, 62vh, 860px); border: 1px solid var(--border); border-radius: 12px; background: #fff; }
+.web-exam-console { min-height: 120px; max-height: 240px; }
+@media (max-width: 1100px) {
+  .web-exam-workspace { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ---------- Предмет «Web-разработка: HTML» (src/views/html-course/) ---------- */
+.subject-card-html { --card-bg: #FF9E7D; }
+:root[data-theme="light"] .subject-card-html { --card-bg: var(--tetrad-violet); }
+
+.html-topic-list { list-style: none; margin: 1.25rem 0 0; padding: 0; display: grid; gap: 0.65rem; }
+.html-topic {
+  display: flex; align-items: center; gap: 1rem; padding: 0.9rem 1.2rem;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
+}
+.html-topic.is-locked { opacity: 0.62; }
+.html-topic .ib-task-num { flex: none; }
+.html-topic-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.15rem; }
+.html-topic-title { font-weight: 700; }
+.html-topic-lead { font-size: 0.9rem; color: var(--text-soft); line-height: 1.45; }
+.html-topic-steps { flex: none; display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: flex-end; }
+@media (max-width: 760px) {
+  .html-topic { flex-wrap: wrap; }
+  .html-topic-steps { width: 100%; justify-content: flex-start; }
+}
+
+.html-theory-kicker { margin: 0; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent-text); }
+.html-theory h1 { margin-top: 0.2rem; }
+.html-theory-next { margin: 2rem 0 1rem; }
+
+/* Живой пример: код слева, вид справа (public/js/html-examples.js). Обе половины — одной высоты и начинаются
+   на одной линии; высоту окна вида скрипт подбирает под содержимое примера, без прокрутки внутри. */
+.html-example {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0.85rem; align-items: stretch;
+  margin: 1.25rem 0 1.75rem;
+}
+.html-example-code { display: flex; min-width: 0; }
+.content .html-example-code pre {
+  flex: 1; margin: 0; overflow: visible;
+  white-space: pre-wrap; overflow-wrap: anywhere;   /* длинная строка переносится, а не уходит в прокрутку */
+}
+.content .html-example-code pre code { white-space: inherit; }
+.html-example-view {
+  display: flex; flex-direction: column; min-width: 0;
+  border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: #FFFFFF;
+}
+.html-example-caption {
+  padding: 0.3rem 0.75rem; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+  color: #776F65; background: #F3EEE6; border-bottom: 1px solid #E6DED3;
+}
+.html-example-frame { flex: 1; display: flex; }
+.html-example-frame iframe { flex: 1; width: 100%; min-height: 140px; border: 0; background: #FFFFFF; }
+@media (max-width: 900px) {
+  .html-example { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ---------- Курс «Начальный Python» (src/views/python-course/) ---------- */
+.py-example { margin: 1rem 0 1.5rem; }
+.content .py-example pre:first-child { margin-bottom: 0.5rem; }
+.py-example-bar { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+.py-example-run { cursor: pointer; }
+.py-example-run:disabled { opacity: 0.6; cursor: progress; }
+.py-example-note { font-size: 0.85rem; color: var(--text-soft); }
+.py-example-output { margin-top: 0.5rem; max-height: 260px; overflow: auto; }
+.pyc-rules { margin: 0.25rem 0 0.75rem; }
+.pyc-task-nav { display: flex; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap; margin: 0.25rem 0 1rem; }
+button.topic-btn { font-family: inherit; cursor: pointer; }
+button.topic-btn:disabled { opacity: 0.6; cursor: progress; }
+.pyc-file-name { font-size: 0.75rem; font-weight: 700; color: var(--text-soft); margin-top: 0.25rem; }
+
+/* Карточки тем (HTML) и уроков (Python) — заливка цветами палитры по очереди, как у списков заданий: тёмная тема —
+   цвета Marple с тёмным текстом, светлая — приглушённые цвета «Тетради» с линией #E6DED3. */
+.html-topic-list > .html-topic {
+  --card-ink: var(--marple-ink);
+  --card-soft: var(--marple-ink-soft);
+  --card-pill: rgba(28, 26, 27, 0.12);
+  background: var(--card-bg);
+  color: var(--card-ink);
+  border: none;
+  border-radius: var(--card-radius);
+}
+.html-topic-list > .html-topic:nth-child(4n + 1) { --card-bg: var(--marple-apricot); }
+.html-topic-list > .html-topic:nth-child(4n + 2) { --card-bg: var(--marple-cream); }
+.html-topic-list > .html-topic:nth-child(4n + 3) { --card-bg: var(--marple-coral); }
+.html-topic-list > .html-topic:nth-child(4n + 4) { --card-bg: #E4DED8; }
+.html-topic-list > .html-topic .html-topic-lead { color: var(--card-soft); }
+.html-topic-list > .html-topic .ib-task-num { background: var(--marple-ink); color: var(--marple-cream); }
+.html-topic-list > .html-topic .topic-btn-theory { background: rgba(255, 255, 255, 0.55); color: #1F3F66; border-color: #1F3F66; }
+.html-topic-list > .html-topic .topic-btn-none { color: var(--card-soft); border-color: rgba(28, 26, 27, 0.25); }
+.html-topic-list > .html-topic .topic-btn-practice.is-locked { background: rgba(28, 26, 27, 0.12); border-color: transparent; color: var(--card-soft); }
+.html-topic-list > .html-topic.is-locked { opacity: 0.72; }
+
+:root[data-theme="light"] .html-topic-list > .html-topic {
+  --card-ink: #3D3A36;
+  --card-soft: #5A5651;
+  border: 1px solid #E6DED3;
+}
+:root[data-theme="light"] .html-topic-list > .html-topic:nth-child(4n + 1) { --card-bg: var(--tetrad-blue); }
+:root[data-theme="light"] .html-topic-list > .html-topic:nth-child(4n + 2) { --card-bg: var(--tetrad-sandy); }
+:root[data-theme="light"] .html-topic-list > .html-topic:nth-child(4n + 3) { --card-bg: var(--tetrad-green); }
+:root[data-theme="light"] .html-topic-list > .html-topic:nth-child(4n + 4) { --card-bg: var(--tetrad-orange); }
+:root[data-theme="light"] .html-topic-list > .html-topic .ib-task-num { background: var(--tetrad-ink); color: #FBF8F3; }
+:root[data-theme="light"] .html-topic-list > .html-topic .topic-btn-theory { background: rgba(255, 255, 255, 0.6); color: #2F5FA7; border-color: #2F5FA7; }
+/* На цветных карточках кнопка «Практика» — тёмная «пилюля», иначе на коралловой карточке она сливается с фоном. */
+.html-topic-list > .html-topic .topic-btn-practice:not(.is-locked):not(.is-done) { background: var(--marple-ink); border-color: var(--marple-ink); color: var(--marple-cream); }
+.html-topic-list > .html-topic .topic-btn-theory { background: rgba(255, 255, 255, 0.75); }
+:root[data-theme="light"] .html-topic-list > .html-topic .topic-btn-practice:not(.is-locked):not(.is-done) { background: var(--tetrad-ink); border-color: var(--tetrad-ink); color: #FBF8F3; }
+:root[data-theme="dark"] .html-topic-list > .html-topic .topic-btn-theory { color: #1F3F66; border-color: #1F3F66; background: rgba(255, 255, 255, 0.75); }
+
+/* Задания со сдачей внутри карточки урока Python (_modules.ejs) — строка на всю ширину карточки. */
+.html-topic-list > .html-topic:has(.pyc-lesson-assignments) { flex-wrap: wrap; }
+.pyc-lesson-assignments { flex-basis: 100%; list-style: none; margin: 0.2rem 0 0; padding: 0.6rem 0 0 3.2rem; border-top: 1px dashed rgba(28, 26, 27, 0.25); display: grid; gap: 0.4rem; }
+.pyc-lesson-assignments li { display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; }
+.pyc-lesson-assignments li > a, .pyc-lesson-assignments li > a:visited { color: var(--card-ink, inherit); font-size: 0.95rem; font-weight: 600; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; margin-right: auto; }
+.pyc-lesson-assignments li > a:hover { color: var(--card-ink, inherit); text-decoration-thickness: 2px; }
+.pyc-lesson-assignments .status-pill { background: rgba(28, 26, 27, 0.82); color: var(--marple-cream); padding: 0.1rem 0.6rem; border-radius: 999px; font-size: 0.78rem; }
+:root[data-theme="light"] .pyc-lesson-assignments .status-pill { background: var(--tetrad-ink); color: #FBF8F3; }
+.pyc-lesson-assignments .due-date { color: var(--card-soft, inherit); font-size: 0.85rem; }
+@media (max-width: 640px) { .pyc-lesson-assignments { padding-left: 0; } }
+
+/* Карточка предмета «Web-разработка: CSS». */
+.subject-card-css { --card-bg: #FFC08A; }
+:root[data-theme="light"] .subject-card-css { --card-bg: var(--tetrad-sandy); }
+
+/* Кнопка «назад» (partials/back-btn.ejs): меню предмета «Все предметы», «К темам», «На главную», «К терминалу».
+   «Пилюля» с кружком-стрелкой; при наведении кружок заливается акцентом и стрелка отъезжает влево. */
+a.back-btn, .content a.back-btn, .sidebar-subject a.back-btn {
+  display: inline-flex; align-items: center; gap: 0.55rem; align-self: flex-start;
+  padding: 0.25rem 0.95rem 0.25rem 0.25rem; border-radius: 999px;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text);
+  font-weight: 600; font-size: 0.9rem; line-height: 1.2; text-decoration: none;
+  transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+.back-btn-arrow {
+  display: inline-grid; place-items: center; flex: none; width: 1.8rem; height: 1.8rem; border-radius: 50%;
+  background: var(--accent-soft-bg); color: var(--accent-text);
+  transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+.back-btn-arrow svg { width: 1rem; height: 1rem; }
+a.back-btn:hover, .content a.back-btn:hover, .sidebar-subject a.back-btn:hover {
+  border-color: var(--accent); color: var(--text); text-decoration: none;
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+a.back-btn:hover .back-btn-arrow { transform: translateX(-3px); background: var(--accent); color: var(--marple-ink); }
+a.back-btn:active { transform: translateY(1px); box-shadow: none; }
+a.back-btn:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+a.back-btn.back-btn-sm { font-size: 0.85rem; padding-right: 0.8rem; }
+.back-btn-sm .back-btn-arrow { width: 1.55rem; height: 1.55rem; }
+:root[data-theme="light"] a.back-btn:hover .back-btn-arrow { color: #FFFFFF; }
+@media (prefers-reduced-motion: reduce) {
+  a.back-btn, .back-btn-arrow { transition: none; }
+  a.back-btn:hover .back-btn-arrow { transform: none; }
 }

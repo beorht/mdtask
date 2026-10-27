@@ -1,0 +1,24 @@
+<!-- src/views/html-course/theory.ejs — N.1. Теория темы предмета «Web-разработка: HTML» (content/html/<тема>/theory.md, src/lib/html-course/theory.js) -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <%- include('../partials/head', { pageTitle: topic.number + '.1. ' + topic.title }) %>
+</head>
+<body>
+  <%- include('../partials/header') %>
+  <div class="app-layout">
+    <%- include('../partials/sidebar') %>
+    <main class="content html-theory">
+      <nav class="breadcrumbs"><a href="/">Главная</a> / <a href="<%= base %>"><%= title %></a> / Тема <%= topic.number %></nav>
+      <p class="html-theory-kicker">Тема <%= topic.number %> · <%= topic.number %>.1. Теория</p>
+      <h1><%= topic.title %></h1>
+      <div class="markdown-body"><%- html %></div>
+      <div class="html-theory-next">
+        <a class="topic-btn topic-btn-practice topic-btn-lg" href="<%= base %>/<%= topic.key %>/practice"><span aria-hidden="true">🧪</span> К практической работе <span class="topic-btn-count"><%= topic.solved %>/<%= topic.total %></span></a>
+      </div>
+    </main>
+  </div>
+  <%- include('../partials/scripts') %>
+  <script src="/js/html-examples.js" defer></script>
+</body>
+</html>

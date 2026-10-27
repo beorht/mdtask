@@ -244,8 +244,8 @@ CREATE TABLE IF NOT EXISTS ib_task_defense (
   PRIMARY KEY (task, student_id)
 );
 
--- «Простое программирование на Python» (src/lib/python-basics.js): черновик кода и итог по
--- заданию для студента. Код выполняется в браузере студента, сервер сверяет только вывод.
+-- «Простое программирование на Python» (курс убран с сайта 26.10.2026, материал и код — docs/archive/pybasics/):
+-- черновик кода и итог по заданию для студента. Таблицы оставлены, чтобы не потерять результаты студентов.
 CREATE TABLE IF NOT EXISTS python_basics_progress (
   student_id TEXT NOT NULL REFERENCES users(id),
   task_id TEXT NOT NULL,
@@ -342,3 +342,122 @@ CREATE TABLE IF NOT EXISTS exam_pcs (
   room TEXT,
   updated_at TEXT NOT NULL
 );
+
+-- Входы на сайт (express-session, src/lib/session-store.js): перезапуск сервера не выкидывает студентов.
+-- sess — JSON сессии, expires_at — миллисекунды Unix.
+CREATE TABLE IF NOT EXISTS sessions (
+  sid TEXT PRIMARY KEY,
+  sess TEXT NOT NULL,
+  expires_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at);
+
+-- Тренажёр «Emmet · Тетрадь» (группа WEB, src/lib/emmet/, src/routes/emmet.js): личный набор работ Emmet,
+-- статистика по каждой работе (JSON, поля как в docs/emmet/04-data-model.md), журнал событий и
+-- «Завершить / Открыть занятие» по группам.
+CREATE TABLE IF NOT EXISTS emmet_assignments (
+  student_id TEXT PRIMARY KEY,
+  ids TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS emmet_progress (
+  student_id TEXT NOT NULL,
+  exercise_id TEXT NOT NULL,
+  stats TEXT NOT NULL,
+  solved_at TEXT,
+  updated_at TEXT NOT NULL,
+  PRIMARY KEY (student_id, exercise_id)
+);
+CREATE TABLE IF NOT EXISTS emmet_events (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  student_id TEXT NOT NULL,
+  exercise_id TEXT NOT NULL,
+  type TEXT NOT NULL,
+  status TEXT,
+  client_status TEXT,
+  handwritten INTEGER NOT NULL DEFAULT 0,
+  kind TEXT,
+  ms INTEGER,
+  code TEXT,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_emmet_events_student ON emmet_events(student_id, id);
+CREATE TABLE IF NOT EXISTS emmet_sessions (
+  student_group TEXT PRIMARY KEY,
+  closed_at TEXT
+);
+
+-- Предмет «Web-разработка: HTML» (src/lib/html-course/, src/routes/html-course.js; пока только группа TEST):
+-- статистика по каждому шагу (item_id: «<тема>:theory» — теория прочитана, иначе id задания практики; JSON как у
+-- emmet_progress) и журнал событий практики (открыл, попытка с кодом и проверкой сервера, вставка, уход со страницы).
+CREATE TABLE IF NOT EXISTS html_progress (
+  student_id TEXT NOT NULL,
+  item_id TEXT NOT NULL,
+  stats TEXT NOT NULL,
+  solved_at TEXT,
+  updated_at TEXT NOT NULL,
+  PRIMARY KEY (student_id, item_id)
+);
+CREATE TABLE IF NOT EXISTS html_events (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  student_id TEXT NOT NULL,
+  item_id TEXT NOT NULL,
+  type TEXT NOT NULL,
+  status TEXT,
+  client_status TEXT,
+  kind TEXT,
+  ms INTEGER,
+  code TEXT,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_html_events_student ON html_events(student_id, id);
+
+-- Предмет «Web-разработка: CSS» (src/lib/css-course/, src/routes/css-course.js):
+-- статистика по каждому шагу (item_id: «<тема>:theory» — теория прочитана, иначе id задания практики; JSON как у
+-- emmet_progress) и журнал событий практики (открыл, попытка с кодом и проверкой сервера, вставка, уход со страницы).
+CREATE TABLE IF NOT EXISTS css_progress (
+  student_id TEXT NOT NULL,
+  item_id TEXT NOT NULL,
+  stats TEXT NOT NULL,
+  solved_at TEXT,
+  updated_at TEXT NOT NULL,
+  PRIMARY KEY (student_id, item_id)
+);
+CREATE TABLE IF NOT EXISTS css_events (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  student_id TEXT NOT NULL,
+  item_id TEXT NOT NULL,
+  type TEXT NOT NULL,
+  status TEXT,
+  client_status TEXT,
+  kind TEXT,
+  ms INTEGER,
+  code TEXT,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_css_events_student ON css_events(student_id, id);
+
+-- Курс «Начальный Python» в предмете Python (src/lib/python-course/, src/routes/python-course.js; пока только TEST):
+-- прогресс по шагам (item_id: «<урок>:theory» — теория прочитана, иначе id задачи; черновик кода; stats — JSON:
+-- попытки, лучший результат, вставки, уходы со страницы) и каждая проверка (код, тесты, запрещённые конструкции).
+CREATE TABLE IF NOT EXISTS python_course_progress (
+  student_id TEXT NOT NULL,
+  item_id TEXT NOT NULL,
+  draft TEXT,
+  stats TEXT NOT NULL DEFAULT '{}',
+  solved_at TEXT,
+  updated_at TEXT NOT NULL,
+  PRIMARY KEY (student_id, item_id)
+);
+CREATE TABLE IF NOT EXISTS python_course_attempts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  student_id TEXT NOT NULL,
+  task_id TEXT NOT NULL,
+  code TEXT NOT NULL,
+  passed INTEGER NOT NULL,
+  total INTEGER NOT NULL,
+  forbidden TEXT NOT NULL DEFAULT '[]',
+  results TEXT NOT NULL DEFAULT '[]',
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_python_course_attempts ON python_course_attempts(student_id, task_id, id);

@@ -7,7 +7,7 @@
     <script>try { if (localStorage.getItem('sidebarCollapsed') === '1') document.documentElement.classList.add('sidebar-collapsed'); } catch (e) {}</script>
   <% } %>
   <a href="<%= user.role === 'teacher' ? '/admin' : '/' %>" class="app-brand">
-    <span class="app-brand-mark">📚</span><span class="app-brand-name">mdtask</span>
+    <span class="app-brand-mark" aria-hidden="true"></span><span class="app-brand-name">mdtask</span>
   </a>
   <% if (typeof pageTitle !== 'undefined' && pageTitle) { %>
     <span class="app-header-title"><%= pageTitle %></span>

@@ -1,0 +1,34 @@
+{
+  "_comment": "Задания со сдачей (content/src, путь из SUMMARY.md), которые относятся к Python, и урок курса «Начальный Python», к которому каждое привязано. Остальные задания в предмете Python не показываются. * — любая часть пути без «/» (папка студента у личных заданий). replacedBy — задания, переделанные в задачи практики уроков (id задач курса): тем, кому открыт курс, они не показываются; банк задач Python им тоже не показывается (его задачи — pyb-* в уроках).",
+  "rules": [
+    {
+      "path": "section-obekty-i-slovari/*",
+      "lesson": "dicts",
+      "replacedBy": [
+        "pyd-01",
+        "pyd-02",
+        "pyd-03",
+        "pyd-04",
+        "pyd-05",
+        "pyd-06",
+        "pyd-07",
+        "pyd-08",
+        "pyd-09",
+        "pyd-10",
+        "pyd-11",
+        "pyd-12",
+        "pyd-13",
+        "pyd-14",
+        "pyd-15"
+      ]
+    },
+    {
+      "path": "individual/*/svoi-modul-dlya-raboty-s-bazoi-dannyh.md",
+      "lesson": "sqlite-1"
+    },
+    {
+      "path": "individual/*/uchet-biblioteki-analiz-vydachi-knig-na-python-i-sqlite.md",
+      "lesson": "sqlite-2"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+<!-- src/views/python-course/theory.ejs — N.1. Теория урока курса «Начальный Python» (content/python-course/<урок>/theory.md) -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <%- include('../partials/head', { pageTitle: lesson.number + '. ' + lesson.title }) %>
+</head>
+<body>
+  <%- include('../partials/header') %>
+  <div class="app-layout">
+    <%- include('../partials/sidebar') %>
+    <main class="content html-theory">
+      <nav class="breadcrumbs"><a href="/">Главная</a> / <a href="/subjects/python">Python</a> / <a href="<%= base %>"><%= courseTitle %></a> / Урок <%= lesson.number %></nav>
+      <p class="html-theory-kicker">Урок <%= lesson.number %> · Теория</p>
+      <h1><%= lesson.title %></h1>
+      <div class="markdown-body"><%- html %></div>
+      <div class="html-theory-next">
+        <a class="topic-btn topic-btn-practice topic-btn-lg" href="<%= base %>/<%= lesson.key %>/practice"><span aria-hidden="true">🧪</span> <%= lesson.kind === 'project' ? 'К мини-проекту' : 'К практике' %> <span class="topic-btn-count"><%= lesson.solved %>/<%= lesson.total %></span></a>
+      </div>
+    </main>
+  </div>
+  <%- include('../partials/scripts') %>
+  <script src="/js/python-course-theory.js" defer></script>
+</body>
+</html>

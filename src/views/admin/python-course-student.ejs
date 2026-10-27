@@ -1,0 +1,49 @@
+<%- include('partials/start') %>
+<% const d = detail; const r = d.row; %>
+<nav class="a-breadcrumbs" aria-label="Навигация"><a href="/admin/python-course">Начальный Python</a><span>/</span><span><%= d.student.name %></span></nav>
+
+<div class="a-page-head">
+  <div>
+    <h1><%= d.student.name %></h1>
+    <p class="a-subtitle">ID <code><%= d.student.id %></code> · группа <%= d.student.group || '—' %> · решено задач <strong><%= r.solved %></strong> · проверок <%= r.sum.attempts %><%= r.lastAt ? ' · последнее действие ' + view.formatDateTime(r.lastAt) : '' %></p>
+    <% if (r.signals.length) { %><p class="a-muted">Сигналы: <strong><%= r.signals.join(', ') %></strong></p><% } %>
+  </div>
+  <div class="a-page-actions">
+    <form method="post" action="/admin/python-course/students/<%= d.student.id %>/reset" data-confirm="Сбросить прогресс?|Черновики, решения и попытки студента по курсу будут удалены.|Сбросить">
+      <button type="submit" class="a-btn a-btn-secondary">Сбросить</button>
+    </form>
+  </div>
+</div>
+
+<% d.lessons.forEach(function (l) { %>
+<section class="a-card a-card-flush">
+  <div class="a-card-head"><h2><%= l.number %>. <%= l.title %></h2><p class="a-muted">Теория: <%= l.theory ? 'прочитана ' + view.formatDateTime(l.theory.solvedAt || l.theory.updatedAt) : 'не открывал' %></p></div>
+  <div class="a-table-wrap">
+    <table class="a-table a-table-cards">
+      <thead><tr><th>№</th><th>Задача</th><th>Состояние</th><th class="a-num">Проверок</th><th class="a-num">Лучший результат</th><th class="a-num">Вставок</th><th class="a-num">Уходов</th><th>Решено</th></tr></thead>
+      <tbody>
+        <% l.items.forEach(function (it) { const s = it.item ? it.item.stats : null; const state = it.item && it.item.solvedAt ? 'done' : s && s.attempts ? 'in_progress' : 'not_submitted'; %>
+          <tr>
+            <td data-label="№"><%= l.number %>.<%= it.task.number %></td>
+            <td data-label="Задача"><%= it.task.title %>
+              <% if (it.item && it.item.draft) { %><details><summary class="a-muted"><%= it.item.solvedAt ? 'Код (последний)' : 'Черновик' %></summary><pre class="a-code"><%= it.item.draft %></pre></details><% } %>
+              <% if (it.attempts.length) { %><details><summary class="a-muted">Последние проверки (<%= it.attempts.length %>)</summary>
+                <ul class="a-timeline">
+                  <% it.attempts.forEach(function (a) { %><li><span class="a-muted a-nowrap"><%= view.formatDateTime(a.createdAt) %></span> тестов <%= a.passed %>/<%= a.total %><%= a.forbidden.length ? ' · ' + a.forbidden.join('; ') : '' %></li><% }) %>
+                </ul></details><% } %>
+            </td>
+            <td data-label="Состояние"><%- include('partials/status', { key: state }) %></td>
+            <td data-label="Проверок" class="a-num"><%= s ? s.attempts : 0 %></td>
+            <td data-label="Лучший результат" class="a-num"><%= s && s.total ? s.bestPassed + '/' + s.total : '—' %></td>
+            <td data-label="Вставок" class="a-num"><%= s ? s.pastes : 0 %></td>
+            <td data-label="Уходов" class="a-num"><%= s ? s.aways : 0 %><%= s && s.awayMs ? ' (' + Math.round(s.awayMs / 1000) + ' с)' : '' %></td>
+            <td data-label="Решено" class="a-nowrap a-muted"><%= it.item && it.item.solvedAt ? view.formatDateTime(it.item.solvedAt) : '—' %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</section>
+<% }) %>
+
+<%- include('partials/end') %>

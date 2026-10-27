@@ -1,0 +1,137 @@
+[
+  {
+    "id": "req-01",
+    "title": "Параметры словарём",
+    "statement": "Даны города по одному до «конец». Для каждого запросите /weather, передав город через params, с timeout=5, и выведите «город: влажность %» или «город: —», если ответ не ok.",
+    "openTests": 2,
+    "tests": [
+      {
+        "input": [
+          "Фергана",
+          "Андижан",
+          "Лондон",
+          "конец"
+        ],
+        "output": "Фергана: 81 %\nАндижан: 60 %\nЛондон: —"
+      },
+      {
+        "input": [
+          "конец"
+        ],
+        "output": ""
+      }
+    ],
+    "require": [
+      "import:requests"
+    ],
+    "modules": [
+      "requests"
+    ]
+  },
+  {
+    "id": "req-02",
+    "title": "raise_for_status",
+    "statement": "Даны номера студентов по одному до «конец». Для каждого запросите /students/<номер>, вызовите raise_for_status() и выведите имя; при requests.exceptions.HTTPError выведите «Ошибка <код>: студент <номер>».",
+    "openTests": 2,
+    "tests": [
+      {
+        "input": [
+          "2",
+          "7",
+          "abc",
+          "1",
+          "конец"
+        ],
+        "output": "Нигора\nОшибка 404: студент 7\nОшибка 400: студент abc\nАзиз"
+      }
+    ],
+    "require": [
+      "import:requests",
+      "try"
+    ],
+    "modules": [
+      "requests"
+    ]
+  },
+  {
+    "id": "req-03",
+    "title": "Нет связи",
+    "statement": "Даны полные адреса (URL) по одному до «конец». Сделайте GET каждого и выведите «URL: код» или «URL: нет связи» (requests.exceptions.ConnectionError).",
+    "openTests": 2,
+    "tests": [
+      {
+        "input": [
+          "http://api.edu/cities",
+          "https://google.com",
+          "http://api.edu/нет",
+          "http://example.org/api",
+          "конец"
+        ],
+        "output": "http://api.edu/cities: 200\nhttps://google.com: нет связи\nhttp://api.edu/нет: 404\nhttp://example.org/api: нет связи"
+      }
+    ],
+    "require": [
+      "import:requests",
+      "try"
+    ],
+    "modules": [
+      "requests"
+    ]
+  },
+  {
+    "id": "req-04",
+    "title": "Самый тёплый город",
+    "statement": "Запросите /cities, затем погоду каждого города. Выведите «Самый тёплый: город (t°)» и «Самый холодный: город (t°)» (при равенстве — первый в списке). Без max, min, sorted.",
+    "openTests": 1,
+    "tests": [
+      {
+        "input": [],
+        "output": "Самый тёплый: Бухара (21°)\nСамый холодный: Нукус (9°)"
+      }
+    ],
+    "forbid": [
+      "max",
+      "min",
+      "sorted",
+      ".sort"
+    ],
+    "require": [
+      "import:requests"
+    ],
+    "modules": [
+      "requests"
+    ]
+  },
+  {
+    "id": "req-05",
+    "title": "Сводка по условию",
+    "statement": "Дано состояние погоды (например «облачно»). Выведите по алфавиту города с таким состоянием в формате «город: t°, влажность h %» и затем «Средняя температура: …» по ним (округлить до одного знака), или «Таких городов нет».",
+    "openTests": 2,
+    "tests": [
+      {
+        "input": [
+          "облачно"
+        ],
+        "output": "Андижан: 14°, влажность 60 %\nСамарканд: 15°, влажность 48 %\nСредняя температура: 14.5"
+      },
+      {
+        "input": [
+          "солнечно"
+        ],
+        "output": "Бухара: 21°, влажность 22 %\nТашкент: 18°, влажность 35 %\nСредняя температура: 19.5"
+      },
+      {
+        "input": [
+          "снег"
+        ],
+        "output": "Таких городов нет"
+      }
+    ],
+    "require": [
+      "import:requests"
+    ],
+    "modules": [
+      "requests"
+    ]
+  }
+]

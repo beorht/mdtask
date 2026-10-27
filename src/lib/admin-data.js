@@ -17,13 +17,10 @@ const {
   getIbGuardEvents,
   getIbTaskDefenses,
   getIbTaskDefense,
-  getPythonBasicsProgress,
-  getPythonBasicsAttempts,
 } = require('../db');
 const { TOPICS } = require('./sql-topics');
 const { mistakesByExercise } = require('./sql-mistakes');
-const { TEST_GROUP } = require('./test-access');
-const pybasics = require('./python-basics');
+const { TEST_GROUP, seesSharedAssignments } = require('./test-access');
 const { findIbTask, IB_TASKS } = require('./ib-tasks');
 
 // Every status the admin UI can show. Status is never conveyed by colour alone —
@@ -61,7 +58,8 @@ function isPastDue(assignment, now = Date.now()) {
 
 function isAssignedTo(assignment, student) {
   if (assignment.targetType === 'individual') return assignment.targetStudentId === student.id;
-  return !assignment.targetGroup || assignment.targetGroup === student.group || student.group === TEST_GROUP;
+  if (student.group === TEST_GROUP) return true;
+  return assignment.targetGroup ? assignment.targetGroup === student.group : seesSharedAssignments(student.group);
 }
 
 function byNewest(a, b) {
@@ -154,6 +152,7 @@ function dashboard(ctx) {
       assignments: ctx.assignments.length,
       overdue: overdueItems(ctx).length,
     },
+    ib: ibDashboard(),
     queue,
   };
 }
@@ -329,7 +328,15 @@ function studentProfile(ctx, student) {
     })
     .filter((h) => h.assignment);
   const done = assignments.filter((a) => a.statusKey === 'done').length;
-  return { student, assignments, history, done, total: assignments.length, trainer: trainerProgressForStudent(student.id) };
+  return {
+    student,
+    assignments,
+    history,
+    done,
+    total: assignments.length,
+    trainer: trainerProgressForStudent(student.id),
+    ib: ibProgressForStudent(student.id),
+  };
 }
 
 function courseRows(ctx) {
@@ -770,6 +777,47 @@ function logsDetail(task, studentId, log) {
 
 const LAB_TASKS = IB_TASKS.filter((t) => t.lab);
 
+// IB tasks №3–№9 in one list: per student (profile) and for the dashboard summary.
+function ibTaskRows() {
+  const rows = [];
+  const push = (meta, list, total, href) =>
+    list.forEach((t) =>
+      rows.push({
+        meta,
+        studentId: t.student_id,
+        solved: !!t.solved,
+        solvedAt: t.solved_at || null,
+        passed: t.solved && total === 1 ? 1 : t.passed || 0,
+        total: total || t.total || 0,
+        href: href(t.student_id),
+      })
+    );
+  for (const meta of IB_TASKS) {
+    if (meta.key === 'caesar') push(meta, getCaesarSecrets(), 1, () => '/admin/ib');
+    else if (meta.key === 'configs') push(meta, getConfigTasks(), 0, () => '/admin/ib');
+    else if (meta.key === 'terminal') push(meta, getTerminalTasks(), meta.stages.length, (id) => `/admin/ib/terminal/${encodeURIComponent(id)}`);
+    else if (meta.lab) push(meta, getLabTasks(meta.key), meta.stages.length, (id) => `/admin/ib/lab/${meta.key}/${encodeURIComponent(id)}`);
+  }
+  return rows;
+}
+
+function ibProgressForStudent(studentId) {
+  const rows = ibTaskRows().filter((r) => r.studentId === studentId);
+  return { rows, solved: rows.filter((r) => r.solved).length };
+}
+
+function ibDashboard(now = Date.now()) {
+  const rows = ibTaskRows();
+  const dayStart = new Date(now);
+  dayStart.setHours(0, 0, 0, 0);
+  const solved = rows.filter((r) => r.solved);
+  return {
+    solved: solved.length,
+    today: solved.filter((r) => r.solvedAt && Date.parse(r.solvedAt) >= dayStart.getTime()).length,
+    started: rows.length,
+  };
+}
+
 // Tasks on the shared ib/server/lab_task.py engine (№6, №7), in course order.
 function ibLabResults(ctx, filters) {
   return LAB_TASKS.map((meta) => {
@@ -809,55 +857,8 @@ function ibLabDetail(ctx, key, studentId) {
   return detail;
 }
 
-// «Простое программирование на Python»: students who can see the subject (its groups + TEST)
-// or already have progress, with per-task state.
-function pythonBasicsResults(ctx, filters) {
-  const q = (filters.q || '').toLowerCase();
-  const progress = getPythonBasicsProgress();
-  const byStudent = new Map();
-  for (const p of progress) {
-    if (!byStudent.has(p.studentId)) byStudent.set(p.studentId, new Map());
-    byStudent.get(p.studentId).set(p.taskId, p);
-  }
-  const rows = ctx.students
-    .filter((s) => byStudent.has(s.id) || pybasics.canSeePythonBasics(s))
-    .filter((s) => !filters.group || s.group === filters.group)
-    .filter((s) => !q || s.name.toLowerCase().includes(q) || s.id.toLowerCase().includes(q))
-    .map((student) => {
-      const mine = byStudent.get(student.id) || new Map();
-      const cells = pybasics.TASKS.map((t) => {
-        const p = mine.get(t.id) || null;
-        return { task: t, progress: p, state: p && p.solvedAt ? 'done' : p && p.attempts ? 'started' : 'none' };
-      });
-      return {
-        student,
-        cells,
-        solved: cells.filter((c) => c.state === 'done').length,
-        attempts: cells.reduce((n, c) => n + (c.progress ? c.progress.attempts : 0), 0),
-      };
-    })
-    .sort((a, b) => b.solved - a.solved || a.student.name.localeCompare(b.student.name, 'ru'));
-  return {
-    rows,
-    tasks: pybasics.TASKS,
-    groups: pybasics.PYBASICS_GROUPS,
-    total: rows.length,
-    solvedAll: rows.filter((r) => r.solved === pybasics.TASKS.length).length,
-  };
-}
-
-function pythonBasicsDetail(ctx, studentId, taskId) {
-  const student = ctx.students.find((s) => s.id === studentId);
-  const task = pybasics.getTask(taskId);
-  if (!student || !task) return null;
-  const progress = getPythonBasicsProgress(studentId).find((p) => p.taskId === taskId) || null;
-  return { student, task, progress, attempts: getPythonBasicsAttempts(studentId, taskId) };
-}
-
 module.exports = {
   STATUS_META,
-  pythonBasicsResults,
-  pythonBasicsDetail,
   trainerMistakes,
   loadContext,
   submissionStatusKey,

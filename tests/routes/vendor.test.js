@@ -34,13 +34,40 @@ test('Python (Pyodide with sqlite3) and CodeMirror are served by the site', asyn
   }
 });
 
-test('no page or script loads code from a CDN', () => {
-  const files = [...filesUnder(path.join(ROOT, 'src', 'views'), '.ejs'), ...filesUnder(path.join(ROOT, 'public', 'js'), '.js')];
+test('no page, script or stylesheet loads anything from the internet (CDN, Google Fonts)', () => {
+  const files = [
+    ...filesUnder(path.join(ROOT, 'src', 'views'), '.ejs'),
+    ...filesUnder(path.join(ROOT, 'public', 'js'), '.js'),
+    ...filesUnder(path.join(ROOT, 'public', 'css'), '.css'),
+    path.join(ROOT, 'public', 'vendor', 'fonts', 'fonts.css'),
+    path.join(ROOT, 'ib', 'prototype', 'terminal-lab.html'),
+  ];
   for (const file of files) {
     const text = fs.readFileSync(file, 'utf8');
-    assert.ok(!/cdn\.jsdelivr\.net|cdnjs\.cloudflare\.com|unpkg\.com/.test(text), path.relative(ROOT, file));
+    assert.ok(
+      !/cdn\.jsdelivr\.net|cdnjs\.cloudflare\.com|unpkg\.com|fonts\.googleapis\.com|fonts\.gstatic\.com/.test(text),
+      path.relative(ROOT, file)
+    );
   }
   assert.match(fs.readFileSync(path.join(ROOT, 'public', 'js', 'python-worker.js'), 'utf8'), /PYODIDE_URL = '\/vendor\/pyodide\/0\.26\.4\/'/);
+});
+
+// Fonts too: Open Sans for pages and the admin, JetBrains Mono for the IB terminal.
+test('fonts are served by the site and every @font-face file exists', async () => {
+  const app = createApp();
+  const css = await request(app).get('/vendor/fonts/fonts.css');
+  assert.strictEqual(css.status, 200);
+  const urls = [...css.text.matchAll(/url\(\.\/([^)]+)\)/g)].map((m) => m[1]);
+  assert.ok(urls.some((u) => u.includes('open-sans-cyrillic-400')), 'Open Sans, кириллица');
+  assert.ok(urls.some((u) => u.includes('jetbrains-mono-cyrillic-400')), 'JetBrains Mono, кириллица');
+  for (const u of urls) {
+    const res = await request(app).head('/vendor/fonts/' + u);
+    assert.strictEqual(res.status, 200, u);
+    assert.match(res.headers['content-type'], /font\/woff2/, u);
+  }
+  for (const page of ['src/views/partials/head.ejs', 'src/views/admin/partials/start.ejs', 'ib/prototype/terminal-lab.html']) {
+    assert.match(fs.readFileSync(path.join(ROOT, page), 'utf8'), /href="\/vendor\/fonts\/fonts\.css"/, page);
+  }
 });
 
 // A bug program's run is asked for (and counted) only after Python has loaded.

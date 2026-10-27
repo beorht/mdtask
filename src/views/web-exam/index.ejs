@@ -1,0 +1,104 @@
+<!-- src/views/web-exam/index.ejs — итоговая контрольная группы WEB: техническое задание, редактор HTML/CSS/JS, предпросмотр -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <%- include('../partials/head', { pageTitle: pageTitle }) %>
+  <link rel="stylesheet" href="/vendor/codemirror/5.65.16/codemirror.min.css">
+  <link rel="stylesheet" href="/vendor/codemirror/5.65.16/theme/material-darker.min.css">
+</head>
+<body>
+  <%- include('../partials/header') %>
+  <div class="app-layout">
+    <main class="content web-exam-page">
+      <%- include('../exam/bar', { exam: exam, win: win, phase: phase, base: base, logStage: null, logTask: 'app' }) %>
+
+      <header class="sql-task-head">
+        <h1 class="sql-task-title"><%= exam.subtitle %>: «<%= v.app %>»</h1>
+        <div class="sql-task-meta">
+          <span class="sql-chip" data-saved-chip><%= savedAt ? 'Сохранено' : 'Ещё не сохранялось' %></span>
+          <span class="sql-chip">Проверяет преподаватель</span>
+          <span class="sql-chip">Ключ localStorage: <code><%= v.storageKey %></code></span>
+        </div>
+      </header>
+
+      <% if (result) { %>
+        <section class="task-panel web-exam-result">
+          <h2 class="task-panel-title">Результат: <%= result.total %> из <%= maxScore %>, оценка <%= result.grade %></h2>
+          <% if (result.comment) { %><p><%= result.comment %></p><% } %>
+        </section>
+      <% } %>
+
+      <details class="task-panel web-exam-spec" open>
+        <summary class="task-panel-title">📝 Техническое задание</summary>
+        <p>Сделайте одностраничное веб-приложение (SPA) «<%= v.app %>» в трёх файлах: <code>index.html</code>, <code>style.css</code>, <code>script.js</code>.
+          Подключите стили и скрипт в <code>index.html</code>, как в обычном проекте. Интернет не нужен и недоступен: никаких
+          библиотек и внешних ссылок, только свой код. Вставка в редактор отключена — код набирается вручную.
+          Код сохраняется сам каждые несколько секунд и по кнопке «Сохранить»; оценивает преподаватель по требованиям ниже
+          (за каждое — 0, 5 или 10 баллов, всего <%= maxScore %>). Над предпросмотром — кнопки «◀ ▶» и адрес после «#»:
+          так проверяются переходы между разделами; Enter в адресе открывает приложение заново с этим адресом.</p>
+        <ol class="web-exam-reqs">
+          <% requirements.forEach(function (r) { %>
+            <li><strong><%= r.title %>.</strong> <%= r.text %> <span class="web-exam-pts">10 баллов</span></li>
+          <% }) %>
+        </ol>
+        <h3>Исходные данные: <%= v.items %></h3>
+        <div class="sql-table-wrap">
+          <table class="sql-result-table">
+            <thead><tr><th><%= v.name %></th><th><%= v.category %></th><th><%= v.number %>, <%= v.unit %></th><th><%= v.extra %></th></tr></thead>
+            <tbody>
+              <% v.data.forEach(function (d) { %>
+                <tr><td><%= d.name %></td><td><%= d.category %></td><td><%= d.number %></td><td><%= d.extra %></td></tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </details>
+
+      <section class="web-exam-workspace" id="webExam"
+               data-base="<%= base %>" data-exam="<%= exam.id %>" data-locked="<%= phase === 'open' ? '' : '1' %>">
+        <div class="task-panel web-exam-editor">
+          <div class="sql-panel-head">
+            <div class="tabs web-exam-tabs" role="tablist">
+              <% ['index.html', 'style.css', 'script.js'].forEach(function (f, i) { %>
+                <button type="button" class="tab-btn<%= i === 0 ? ' active' : '' %>" role="tab" data-file-tab="<%= f %>"><%= f %></button>
+              <% }) %>
+            </div>
+            <span class="sql-hint" data-status><%= phase === 'open' ? 'Ctrl+Enter — запустить, Ctrl+S — сохранить' : 'Контрольная завершена — код только для чтения' %></span>
+          </div>
+          <% ['index.html', 'style.css', 'script.js'].forEach(function (f, i) { %>
+            <div class="code-file-pane web-exam-pane" data-file-pane="<%= f %>"<%= i === 0 ? '' : ' hidden' %>>
+              <textarea class="sql-console code-file-source" data-file="<%= f %>" spellcheck="false" autocomplete="off" aria-label="<%= f %>" <%= phase === 'open' ? '' : 'readonly' %>><%= files[f] %></textarea>
+            </div>
+          <% }) %>
+          <div class="code-editor-actions">
+            <button type="button" class="btn btn-primary" data-action="run">▶ Запустить</button>
+            <% if (phase === 'open') { %><button type="button" class="btn btn-secondary" data-action="save">💾 Сохранить</button><% } %>
+            <button type="button" class="btn btn-secondary" data-action="reset-storage" title="Очистить localStorage предпросмотра">↺ Очистить localStorage</button>
+          </div>
+        </div>
+        <div class="task-panel web-exam-preview">
+          <div class="sql-panel-head">
+            <h2 class="task-panel-title">Предпросмотр</h2>
+            <span class="sql-hint">Обновляется по «Запустить»</span>
+          </div>
+          <iframe class="web-exam-frame" title="Предпросмотр приложения" sandbox="allow-scripts allow-forms allow-modals" data-frame></iframe>
+          <div class="code-output-head">Консоль</div>
+          <pre class="code-output web-exam-console" data-console aria-live="polite">Здесь появятся console.log и ошибки вашего скрипта.</pre>
+        </div>
+      </section>
+    </main>
+  </div>
+  <%- include('../partials/scripts') %>
+  <script src="/vendor/codemirror/5.65.16/codemirror.min.js" defer></script>
+  <script src="/vendor/codemirror/5.65.16/mode/xml/xml.min.js" defer></script>
+  <script src="/vendor/codemirror/5.65.16/mode/javascript/javascript.min.js" defer></script>
+  <script src="/vendor/codemirror/5.65.16/mode/css/css.min.js" defer></script>
+  <script src="/vendor/codemirror/5.65.16/mode/htmlmixed/htmlmixed.min.js" defer></script>
+  <script src="/vendor/codemirror/5.65.16/addon/edit/matchbrackets.min.js" defer></script>
+  <script src="/vendor/codemirror/5.65.16/addon/edit/closebrackets.min.js" defer></script>
+  <script src="/vendor/codemirror/5.65.16/addon/edit/closetag.min.js" defer></script>
+  <script src="/js/exam.js" defer></script>
+  <script src="/js/web-runner.js" defer></script>
+  <script src="/js/web-exam.js" defer></script>
+</body>
+</html>

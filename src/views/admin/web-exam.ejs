@@ -1,0 +1,94 @@
+<%- include('partials/start') %>
+<% const phaseLabel = { before: 'ещё не началась', open: 'идёт сейчас', closed: 'завершена' }[o.phase]; %>
+
+<div class="a-page-head">
+  <div>
+    <h1><%= def.title %> WEB: <%= def.subtitle.toLowerCase() %></h1>
+    <p class="a-subtitle">Группа <strong><%= def.group %></strong> · контрольная <strong><%= phaseLabel %></strong> · <%= view.formatDateTime(o.win.startsAt) %> — <%= view.formatDateTime(o.win.endsAt) %>.
+      План: <code>docs/web-exam-plan.md</code>.</p>
+  </div>
+  <div class="a-page-actions">
+    <a class="a-btn a-btn-primary" href="/admin/web-exam/<%= def.id %>/all.zip"><%- icon('download') %><span>Все работы (zip)</span></a>
+  </div>
+</div>
+
+<div class="a-stats">
+  <div class="a-stat"><span class="a-stat-value"><%= o.issued %>/<%= o.total %></span><span class="a-stat-label">Вариантов выдано</span></div>
+  <div class="a-stat"><span class="a-stat-value"><%= o.list.filter(function (r) { return r.savedAt; }).length %></span><span class="a-stat-label">Сохраняли код</span></div>
+  <div class="a-stat"><span class="a-stat-value"><%= o.list.filter(function (r) { return r.grade.graded; }).length %></span><span class="a-stat-label">Оценено</span></div>
+  <div class="a-stat <%= o.win.publishedAt ? 'a-stat-accent' : '' %>"><span class="a-stat-value"><%= o.win.publishedAt ? 'да' : 'нет' %></span><span class="a-stat-label">Результаты опубликованы</span></div>
+</div>
+
+<section class="a-card">
+  <div class="a-card-head"><h2>Проведение</h2></div>
+  <form class="a-exam-window" method="post" action="/admin/web-exam/<%= def.id %>/window">
+    <label>Начало (время UTC+5) <input type="datetime-local" name="startsAt" value="<%= startsLocal %>" required></label>
+    <label>Конец <input type="datetime-local" name="endsAt" value="<%= endsLocal %>" required></label>
+    <button type="submit" class="a-btn a-btn-secondary">Сохранить время</button>
+  </form>
+  <p class="a-muted">До начала студенты контрольную не видят. Пока она идёт, у группы <%= def.group %> закрыты задания и предметы.
+    Код сохраняется сам каждые несколько секунд; раз в минуту и по кнопке «Сохранить» — снимок кода. После конца изменить код нельзя.
+    Группа TEST видит контрольную всегда — для пробного прогона.</p>
+  <div class="a-exam-actions">
+    <form method="post" action="/admin/web-exam/<%= def.id %>/issue">
+      <button type="submit" class="a-btn a-btn-primary">Выдать варианты группе <%= def.group %></button>
+    </form>
+    <form method="post" action="/admin/web-exam/<%= def.id %>/publish" <% if (!o.win.publishedAt) { %>data-confirm="Опубликовать результаты?|Студенты увидят свои баллы, оценку и комментарий.|Опубликовать"<% } %>>
+      <input type="hidden" name="published" value="<%= o.win.publishedAt ? '0' : '1' %>">
+      <button type="submit" class="a-btn a-btn-secondary"><%= o.win.publishedAt ? 'Снять публикацию' : 'Опубликовать результаты' %></button>
+    </form>
+    <form method="post" action="/admin/web-exam/<%= def.id %>/lock-practice">
+      <input type="hidden" name="locked" value="<%= o.win.lockPractice ? '0' : '1' %>">
+      <button type="submit" class="a-btn a-btn-secondary"><%= o.win.lockPractice ? 'Открыть практические группы ' + def.group : 'Закрыть практические группы ' + def.group %></button>
+    </form>
+  </div>
+  <form class="a-exam-window" method="post" action="/admin/web-exam/<%= def.id %>/devices">
+    <label>Проверка устройства
+      <select name="mode">
+        <% Object.entries(deviceModes).forEach(function ([key, label]) { %><option value="<%= key %>" <%= o.win.deviceMode === key ? 'selected' : '' %>><%= label %></option><% }) %>
+      </select>
+    </label>
+    <button type="submit" class="a-btn a-btn-secondary">Сохранить</button>
+  </form>
+  <p class="a-muted">Список компьютеров — общий с контрольной IB (<a href="/admin/exam/ib-final-1/pcs">компьютеры аудитории</a>). Если WEB пишет в другом кабинете, добавьте его компьютеры туда или оставьте режим «Отмечать».</p>
+</section>
+
+<section class="a-card a-card-flush">
+  <div class="a-card-head a-card-head-pad"><h2>Работы</h2><p class="a-muted">Размеры файлов — в символах: index.html / style.css / script.js. События: вставок заблокировано, уходов со страницы.</p></div>
+  <% if (!o.list.length) { %>
+    <%- include('partials/empty', { emptyIcon: 'students', emptyTitle: 'В группе нет студентов', emptyText: '' }) %>
+  <% } else { %>
+    <div class="a-table-wrap">
+      <table class="a-table">
+        <thead><tr><th>Студент</th><th>Тема</th><th>Сохранено</th><th>Файлы</th><th class="a-num">Снимков</th><th>События</th><th class="a-num">Баллы</th><th class="a-num">Оценка</th><th></th></tr></thead>
+        <tbody>
+          <% o.list.forEach(function (r) { %>
+            <tr>
+              <td><a href="/admin/web-exam/<%= def.id %>/students/<%= r.student.id %>"><%= view.shortName(r.student.name) %></a><div class="a-muted"><%= r.student.id %></div></td>
+              <% if (!r.variant) { %>
+                <td colspan="8" class="a-muted">вариант не выдан</td>
+              <% } else { %>
+                <td class="a-muted"><%= r.app %></td>
+                <td class="a-nowrap a-muted"><%= r.savedAt ? view.formatDateTime(r.savedAt) : '—' %></td>
+                <td class="a-nowrap a-muted"><%= r.sizes.join(' / ') %></td>
+                <td class="a-num"><%= r.snapshots %></td>
+                <td class="a-nowrap">
+                  <% const pastes = (r.counts.paste_blocked || 0); const leaves = (r.counts.page_leave || 0) + (r.counts.visibility || 0); %>
+                  <% if (pastes) { %><span class="a-tag a-tag-warn" title="Попытки вставки в редактор">вставка ×<%= pastes %></span><% } %>
+                  <% if (leaves) { %><span class="a-tag" title="Уходы со страницы / переключение вкладок">ушёл ×<%= leaves %></span><% } %>
+                  <% if (r.counts.device_blocked) { %><span class="a-tag a-tag-warn">не ПК аудитории</span><% } %>
+                  <% if (!pastes && !leaves && !r.counts.device_blocked) { %><span class="a-muted">—</span><% } %>
+                </td>
+                <td class="a-num"><strong><%= r.grade.graded ? r.grade.total : '—' %></strong></td>
+                <td class="a-num"><%= r.grade.grade || '—' %></td>
+                <td class="a-nowrap"><a class="a-link-btn" href="/admin/web-exam/<%= def.id %>/students/<%= r.student.id %>/files.zip">zip</a></td>
+              <% } %>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</section>
+
+<%- include('partials/end') %>

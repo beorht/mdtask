@@ -17,12 +17,13 @@ const {
 const { parseCodeFiles, storeCodeSubmission, initialCode } = require('../lib/code-submission');
 const { renderMarkdown, extractHeadings } = require('../lib/markdown');
 const { UPLOAD_DIR } = require('../lib/submission-files');
-const { hasFullAccess } = require('../lib/test-access');
+const { hasFullAccess, seesSharedAssignments } = require('../lib/test-access');
 const { blockDuringExam } = require('../middleware/exam-lock');
 const { LANGUAGE_SUBJECTS, COURSE_SUBJECTS, uploadTypesOf } = require('../lib/subjects');
 const {
   buildStudentHome,
   buildLanguageSubject,
+  pythonAssignmentsByLesson,
   buildCourseSubject,
   sqlSummary,
   SQL_SUBJECT_KEY,
@@ -71,7 +72,8 @@ function handleUpload(req, res, next) {
 
 function canAccessAssignment(assignment, user) {
   if (assignment.targetType === 'individual') return assignment.targetStudentId === user.id;
-  return !assignment.targetGroup || assignment.targetGroup === user.group || hasFullAccess(user);
+  if (hasFullAccess(user)) return true;
+  return assignment.targetGroup ? assignment.targetGroup === user.group : seesSharedAssignments(user.group);
 }
 
 function canSubmit(assignment, latestSubmission) {
@@ -125,7 +127,12 @@ router.get('/subjects/:key', requireRole('student'), (req, res) => {
   const subject = buildLanguageSubject(user, key);
   if (!subject) return res.status(404).render('404');
   req.session.lastSubject = key;
-  res.render('subject-language', { ...common, subject });
+  // Курс «Начальный Python» (src/lib/python-course) — блок вверху страницы Python, пока только TEST.
+  const pythonCourse = require('../lib/python-course');
+  const course = key === 'python' && pythonCourse.canSeeCourse(user)
+    ? { ...pythonCourse.summaryForStudent(user), base: pythonCourse.COURSE_BASE, title: pythonCourse.COURSE_TITLE, assignments: pythonAssignmentsByLesson(user) }
+    : null;
+  res.render('subject-language', { ...common, subject, course });
 });
 
 // Theory page of a course subject (visible once the student has an assignment in it).

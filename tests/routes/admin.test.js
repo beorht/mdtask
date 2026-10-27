@@ -491,3 +491,19 @@ test('old /teacher URLs redirect to their admin-panel equivalents', async () => 
   const student = await loginAs(app, 'student-1');
   assert.strictEqual((await student.get('/teacher')).status, 403);
 });
+
+test('student profile shows IB tasks and the dashboard counts IB solved today', async () => {
+  db.seedCaesarSecretForTests('student-1', { solved: true });
+  db.seedConfigTaskForTests('student-1', { passed: 3 });
+  const teacher = await loginAs(createApp(), 'teacher-1');
+
+  const profile = await teacher.get('/admin/students/student-1');
+  assert.strictEqual(profile.status, 200);
+  assert.match(profile.text, /Информационная безопасность/);
+  assert.match(profile.text, /Выполнено 1 из 2 начатых/);
+  assert.match(profile.text, /3 \/ 8/);
+
+  const dash = await teacher.get('/admin');
+  assert.match(dash.text, /ИБ: сегодня \/ всего/);
+  assert.match(dash.text, /<span class="a-stat-value">1 \/ 1<\/span>/);
+});

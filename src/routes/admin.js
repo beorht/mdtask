@@ -62,10 +62,11 @@ function notFound(res, text = 'Такой страницы нет или она 
 
 router.get('/admin', (req, res) => {
   const ctx = data.loadContext();
-  const { stats, queue } = data.dashboard(ctx);
+  const { stats, ib, queue } = data.dashboard(ctx);
   render(res, 'dashboard', 'dashboard', {
     pageTitle: 'Dashboard',
     stats,
+    ib,
     queue: queue.slice(0, 8),
     queueTotal: queue.length,
   });
@@ -493,32 +494,14 @@ router.get('/admin/ib/lab/:task/:id', (req, res) => {
   render(res, 'ib-terminal', 'ib', { pageTitle: `${detail.student.name} · задание №${detail.meta.number}`, detail });
 });
 
-// --- «Простое программирование на Python» ---
-
-router.get('/admin/python-basics', (req, res) => {
-  const ctx = data.loadContext();
-  const filters = { q: (req.query.q || '').trim(), group: req.query.group || '' };
-  render(res, 'python-basics', 'pybasics', {
-    pageTitle: 'Python: первые шаги',
-    filters,
-    results: data.pythonBasicsResults(ctx, filters),
-    groups: getDistinctStudentGroups(),
-  });
-});
-
-router.get('/admin/python-basics/:student/:task', (req, res) => {
-  const detail = data.pythonBasicsDetail(data.loadContext(), req.params.student, req.params.task);
-  if (!detail) return notFound(res, 'Нет такого студента или задания.');
-  render(res, 'python-basics-attempts', 'pybasics', {
-    pageTitle: `${detail.student.name} · ${detail.task.title}`,
-    detail,
-    taskHtml: renderMarkdown(detail.task.taskMd),
-  });
-});
-
 // --- Итоговая контрольная (src/routes/admin-exam.js) ---
 
 require('./admin-exam').register(router, { render, notFound, flash });
+require('./admin-web-exam').register(router, { render, notFound, flash });
+require('./admin-emmet').register(router, { render, notFound, flash });
+require('./admin-html').register(router, { render, notFound, flash });
+require('./admin-css').register(router, { render, notFound, flash });
+require('./admin-python-course').register(router, { render, notFound, flash });
 
 // --- Settings ---
 

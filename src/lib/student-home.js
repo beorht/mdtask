@@ -9,7 +9,6 @@ const { withProgress, topicProgress } = require('./sql-progress');
 const { hasFullAccess } = require('./test-access');
 const { LANGUAGE_SUBJECTS, COURSE_SUBJECTS } = require('./subjects');
 const { IB_SUBJECT_KEY, IB_SUBJECT_TITLE, ibSummary } = require('./ib-tasks');
-const pybasics = require('./python-basics');
 const exam = require('./exam');
 const { getExamVariant } = require('../db');
 const {
@@ -125,14 +124,30 @@ function buildStudentHome(user, now = Date.now()) {
 
   const shared = assignments.filter((a) => !a.subject);
   const sharedOpen = open.filter((a) => !a.subject);
-  const languageSubjects = Object.entries(LANGUAGE_SUBJECTS).map(([key, title]) => ({
-    key,
-    kind: 'language',
-    title,
-    bankCount: getLanguageExercises(key).length,
-    counts: countByStatus(shared),
-    nextDue: sharedOpen.length ? sharedOpen[0].dueDate : null,
-  }));
+  // У Python для тех, кому открыт курс «Начальный Python» (src/lib/python-course), карточка показывает курс.
+  const pythonCourse = require('./python-course');
+  const languageSubjects = Object.entries(LANGUAGE_SUBJECTS).map(([key, title]) => {
+    const keep = languageFilter(key);
+    const mine = shared.filter(keep);
+    const mineOpen = sharedOpen.filter(keep);
+    const card = {
+      key,
+      kind: 'language',
+      title,
+      bankCount: getLanguageExercises(key).length,
+      counts: countByStatus(mine),
+      nextDue: mineOpen.length ? mineOpen[0].dueDate : null,
+    };
+    if (key === 'python' && pythonCourse.canSeeCourse(user)) {
+      const pc = pythonCourse.summaryForStudent(user);
+      card.kind = 'python-course';
+      card.solved = pc.solved;
+      card.total = pc.total;
+      card.lessonsCount = pc.lessons.length;
+      card.current = pc.current && { number: pc.current.number, title: pc.current.title };
+    }
+    return card;
+  });
 
   // Shown only once the student has an assignment in it.
   const courseSubjects = Object.values(COURSE_SUBJECTS)
@@ -169,33 +184,61 @@ function buildStudentHome(user, now = Date.now()) {
     ? [{ key: IB_SUBJECT_KEY, kind: 'ib', title: IB_SUBJECT_TITLE, solved: ib.solved, total: ib.total, next: ib.next }]
     : [];
 
-  // Only for the groups it's opened to (src/lib/python-basics.js PYBASICS_GROUPS) and TEST.
-  const pybasicsSubjects = [];
-  if (pybasics.canSeePythonBasics(user)) {
-    const pb = pybasics.summaryForStudent(user);
-    pybasicsSubjects.push({
-      key: pybasics.PYBASICS_KEY,
-      kind: 'pybasics',
-      title: pybasics.PYBASICS_TITLE,
-      icon: pybasics.PYBASICS_ICON,
-      topic: pybasics.PYBASICS_TOPIC,
-      solved: pb.solved,
-      total: pb.total,
-      next: pb.next,
+  // «Emmet · Тетрадь» — всем студентам (src/lib/emmet).
+  const emmet = require('./emmet');
+  const emmetSubjects = [];
+  if (emmet.canSeeEmmet(user)) {
+    const em = emmet.summaryForStudent(user);
+    emmetSubjects.push({ key: emmet.EMMET_KEY, kind: 'emmet', title: emmet.EMMET_TITLE, icon: '✍️', solved: em.solved, total: em.total });
+  }
+
+  // «Web-разработка: HTML» — группы из HTML_GROUPS и TEST (src/lib/html-course).
+  const htmlCourse = require('./html-course');
+  const htmlSubjects = [];
+  if (htmlCourse.canSeeHtml(user)) {
+    const hc = htmlCourse.summaryForStudent(user);
+    htmlSubjects.push({
+      key: htmlCourse.HTML_KEY,
+      kind: 'html',
+      title: htmlCourse.HTML_TITLE,
+      icon: htmlCourse.HTML_ICON,
+      solved: hc.solved,
+      total: hc.total,
+      topicsCount: hc.topics.length,
+      current: hc.current && { number: hc.current.number, title: hc.current.title },
+    });
+  }
+
+  // «Web-разработка: CSS» — группы из CSS_GROUPS и TEST (src/lib/css-course).
+  const cssCourse = require('./css-course');
+  if (cssCourse.canSeeCss(user)) {
+    const cc = cssCourse.summaryForStudent(user);
+    htmlSubjects.push({
+      key: cssCourse.CSS_KEY,
+      kind: 'html',
+      title: cssCourse.CSS_TITLE,
+      icon: cssCourse.CSS_ICON,
+      solved: cc.solved,
+      total: cc.total,
+      topicsCount: cc.topics.length,
+      current: cc.current && { number: cc.current.number, title: cc.current.title },
     });
   }
 
   // The final exam: a card while it runs and after it; the IB tasks and the trainer are closed while it runs.
-  const exams = Object.values(exam.EXAMS)
-    .map((def) => {
+  const webExam = require('./web-exam');
+  const exams = [...Object.values(exam.EXAMS).map((def) => [def, exam]), ...Object.values(webExam.EXAMS).map((def) => [def, webExam])]
+    .map(([def, lib]) => {
       if (!getExamVariant(def.id, user.id)) return null;
-      const win = exam.examWindow(def);
-      const phase = exam.phaseFor(def, user, win);
+      const win = lib.examWindow(def);
+      const phase = lib.phaseFor(def, user, win);
       return phase === 'before' ? null : { id: def.id, title: def.title, subtitle: def.subtitle, phase, endsAt: win.endsAt, published: !!win.publishedAt };
     })
     .filter(Boolean);
   const lock = exam.examLockFor(user);
-  const subjects = [sqlSubject, ...pybasicsSubjects, ...languageSubjects, ...ibSubjects, ...courseSubjects];
+  const { subjectAllowed } = require('./test-access');
+  const subjects = [sqlSubject, ...emmetSubjects, ...htmlSubjects, ...languageSubjects, ...ibSubjects, ...courseSubjects]
+    .filter((s) => subjectAllowed(user, s.key));
   if (lock) subjects.forEach((s) => (s.examLocked = true));
 
   return {
@@ -212,9 +255,10 @@ function buildStudentHome(user, now = Date.now()) {
 // File-submission assignments grouped by the SUMMARY.md section they live in, in SUMMARY
 // order; assignments outside any section (e.g. individual ones) go last. Shared by the
 // Python and JavaScript subjects — the same tasks are solved in either language.
-function buildAssignmentSections(user, now = Date.now(), subject = null) {
+// keep(a) — дополнительный отбор заданий (у Python — только задания по Python, src/lib/python-course).
+function buildAssignmentSections(user, now = Date.now(), subject = null, keep = () => true) {
   const tree = readSummaryTree();
-  const list = studentAssignments(user, now, tree, subject);
+  const list = studentAssignments(user, now, tree, subject).filter(keep);
 
   const placed = new Set();
   const sections = [];
@@ -245,14 +289,32 @@ function buildAssignmentSections(user, now = Date.now(), subject = null) {
   return { sections, counts: countByStatus(list) };
 }
 
+// В Python — только задания по Python (content/python-course/assignments.json), остальные (DOM и т. п.) — в JavaScript.
+const languageFilter = (language) => {
+  if (language !== 'python') return () => true;
+  const { lessonForAssignment } = require('./python-course');
+  return (a) => lessonForAssignment(a.mdPath) !== null;
+};
+
 function buildLanguageSubject(user, language, now = Date.now()) {
   if (!LANGUAGE_SUBJECTS[language]) return null;
   return {
     key: language,
     title: LANGUAGE_SUBJECTS[language],
-    ...buildAssignmentSections(user, now),
+    ...buildAssignmentSections(user, now, null, languageFilter(language)),
     bank: languageBank(language),
   };
+}
+
+/** Задания со сдачей по Python, разложенные по урокам курса: { ключ урока: [задание со статусом] }. */
+function pythonAssignmentsByLesson(user, now = Date.now()) {
+  const { lessonForAssignment, replacedByCourse } = require('./python-course');
+  const byLesson = {};
+  for (const a of studentAssignments(user, now, readSummaryTree(), null).sort((x, y) => x.summaryIndex - y.summaryIndex)) {
+    const lesson = replacedByCourse(a.mdPath) ? null : lessonForAssignment(a.mdPath);
+    if (lesson) (byLesson[lesson] = byLesson[lesson] || []).push(a);
+  }
+  return byLesson;
 }
 
 // A course subject page: theory pages and its own assignments (null if unknown or nothing assigned).
@@ -267,6 +329,7 @@ function buildCourseSubject(user, key, now = Date.now()) {
 module.exports = {
   buildStudentHome,
   buildLanguageSubject,
+  pythonAssignmentsByLesson,
   buildCourseSubject,
   languageBank,
   sqlSummary,

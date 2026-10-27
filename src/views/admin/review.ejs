@@ -5,7 +5,7 @@ const currentVerdict = submission.status === 'done' ? 'done' : submission.status
 %>
 
 <div class="a-review-bar">
-  <a class="a-btn a-btn-ghost" href="/admin/submissions<%= statusKey === 'pending' || statusKey === 'resubmitted' ? '?tab=review' : '' %>"><%- icon('arrowLeft') %> Назад</a>
+  <a class="a-btn a-btn-ghost a-btn-back" href="/admin/submissions<%= statusKey === 'pending' || statusKey === 'resubmitted' ? '?tab=review' : '' %>"><%- icon('arrowLeft') %> Назад</a>
   <div class="a-review-bar-title">
     <h1>Проверка работы</h1>
     <% if (queuePosition) { %><span class="a-muted">Работа <%= queuePosition %> из <%= queueLength %> в очереди</span><% } else if (queueLength) { %><span class="a-muted">В очереди: <%= queueLength %></span><% } %>

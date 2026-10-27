@@ -1,0 +1,49 @@
+<%- include('partials/start') %>
+
+<div class="a-page-head">
+  <div>
+    <h1>Начальный Python</h1>
+    <p class="a-subtitle">Курс в предмете Python, пока открыт только группе <strong>TEST</strong>. Готово уроков: <%= o.lessons.length %>, задач: <%= o.total %>. Программа выполняется в браузере студента, сервер сверяет вывод по открытым и закрытым тестам и проверяет правила кода.</p>
+  </div>
+</div>
+
+<form class="a-filters" method="get" action="/admin/python-course" data-autosubmit>
+  <label class="a-input-search">
+    <%- icon('search') %>
+    <input type="search" name="q" value="<%= filters.q %>" placeholder="Поиск по имени или ID" aria-label="Поиск студента">
+  </label>
+  <button type="submit" class="a-btn a-btn-secondary a-noscript-only">Применить</button>
+</form>
+
+<section class="a-card a-card-flush">
+  <% if (!o.rows.length) { %>
+    <%- include('partials/empty', { emptyIcon: 'students', emptyTitle: 'Студентов нет', emptyText: 'Здесь появятся студенты, которым открыт курс.' }) %>
+  <% } else { %>
+    <div class="a-table-wrap">
+      <table class="a-table a-emmet-matrix">
+        <thead>
+          <tr>
+            <th>Студент</th>
+            <% o.lessons.forEach(function (l) { %><th class="a-num" title="<%= l.number %>. <%= l.title %>"><%= l.number %></th><% }) %>
+            <th class="a-num">Решено</th><th>Сигналы</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% o.rows.forEach(function (r) { %>
+            <tr>
+              <td><a class="a-person" href="/admin/python-course/students/<%= r.student.id %>"><span class="a-avatar a-avatar-sm"><%= view.initials(r.student.name) %></span><%= r.student.name %></a></td>
+              <% r.lessons.forEach(function (rl) { const st = rl.solved === rl.total ? 'solved' : rl.solved ? 'partial' : rl.theoryRead ? 'opened' : 'none'; %>
+                <td class="a-num a-emmet-cell is-<%= st %>" title="<%= rl.theoryRead ? 'теория прочитана' : 'теория не открыта' %>, решено <%= rl.solved %> из <%= rl.total %>"><%= rl.solved %>/<%= rl.total %></td>
+              <% }) %>
+              <td class="a-num a-nowrap"><%= r.solved %> / <%= o.total %></td>
+              <td class="a-muted"><%= r.signals.join(', ') || '—' %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <div class="a-card-foot a-muted">В ячейке — решено задач урока; цвет: всё решено · часть · только теория · не открывал.</div>
+  <% } %>
+</section>
+
+<%- include('partials/end') %>

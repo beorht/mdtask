@@ -1,0 +1,65 @@
+<!-- src/views/css-course/practice.ejs — N.2. Практическая работа предмета «Web-разработка: CSS».
+     СЛЕВА: «Ваш результат» и «Как должно получиться» (одна и та же разметка с вашим CSS и с образцом, переключатель
+     ширины у адаптивных заданий); СПРАВА: условие, редактор CSS (вставка запрещена), разметка задания только для
+     чтения, «Проверить». Клиент — public/js/css-course.js, проверка — public/js/css-check.js. -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <%- include('../partials/head', { pageTitle: pageTitle }) %>
+  <link rel="stylesheet" href="/vendor/codemirror/5.65.16/codemirror.min.css">
+  <link rel="stylesheet" href="/vendor/codemirror/5.65.16/theme/material-darker.min.css">
+  <link rel="stylesheet" href="/css/css-course.css">
+</head>
+<body class="cssc-body">
+  <%- include('../partials/header') %>
+  <main class="cssc" id="cssc" data-topic="<%= topic.key %>" data-base="<%= base %>">
+    <div class="cssc-bar">
+      <%- include('../partials/back-btn', { href: base, label: 'К темам' }) %>
+      <span class="cssc-topic">Тема <%= topic.number %>. <%= topic.title %></span>
+      <nav class="cssc-nav" id="csscNav" aria-label="Задания"></nav>
+    </div>
+    <div class="cssc-work">
+      <section class="cssc-views" aria-label="Вид страницы">
+        <div class="cssc-widths" id="csscWidths" hidden></div>
+        <figure class="cssc-view">
+          <figcaption>Ваш результат</figcaption>
+          <div class="cssc-stage" id="csscStudent"></div>
+        </figure>
+        <figure class="cssc-view cssc-view-expected">
+          <figcaption>Как должно получиться</figcaption>
+          <div class="cssc-stage" id="csscExpected"></div>
+        </figure>
+      </section>
+      <section class="cssc-side">
+        <header class="cssc-task">
+          <h1 id="csscTitle">Загрузка…</h1>
+          <p id="csscText"></p>
+          <ul class="cssc-rules" id="csscRules" hidden></ul>
+          <p class="cssc-hint" id="csscStates" hidden></p>
+        </header>
+        <div class="cssc-tabs" role="tablist">
+          <button type="button" role="tab" class="cssc-tab is-active" data-tab="css" aria-selected="true">Ваш CSS</button>
+          <button type="button" role="tab" class="cssc-tab" data-tab="html" aria-selected="false">Разметка (HTML)</button>
+        </div>
+        <div class="cssc-editor" id="csscEditor"></div>
+        <div class="cssc-editor" id="csscHtml" hidden></div>
+        <div class="cssc-actions">
+          <button type="button" class="btn btn-primary" id="csscCheck">✓ Проверить</button>
+          <span class="cssc-saved" id="csscSaved"></span>
+        </div>
+        <div class="cssc-result" id="csscResult" role="status" aria-live="polite" hidden></div>
+        <p class="cssc-note">Вставка в редактор отключена: CSS пишется руками. Вид сверху слева обновляется, пока вы печатаете; «Проверить» сравнивает ваш результат с образцом на каждой ширине<span id="csscStatesNote"> и в каждом состоянии</span>.</p>
+      </section>
+    </div>
+  </main>
+  <noscript>Для практической работы нужен JavaScript.</noscript>
+  <script src="/vendor/codemirror/5.65.16/codemirror.min.js" defer></script>
+  <script src="/vendor/codemirror/5.65.16/mode/css/css.min.js" defer></script>
+  <script src="/vendor/codemirror/5.65.16/mode/xml/xml.min.js" defer></script>
+  <script src="/vendor/codemirror/5.65.16/mode/htmlmixed/htmlmixed.min.js" defer></script>
+  <script src="/vendor/codemirror/5.65.16/addon/edit/closebrackets.min.js" defer></script>
+  <script src="/vendor/codemirror/5.65.16/addon/edit/matchbrackets.min.js" defer></script>
+  <script src="/js/css-check.js" defer></script>
+  <script src="/js/css-course.js" defer></script>
+</body>
+</html>

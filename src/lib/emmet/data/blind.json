@@ -1,0 +1,212 @@
+[
+  {
+    "id": "blind-01",
+    "title": "Цитата",
+    "emmetExpression": "blockquote.quote{Учиться никогда не поздно}",
+    "mode": "emmet",
+    "difficulty": 1
+  },
+  {
+    "id": "blind-02",
+    "title": "Строка поиска",
+    "emmetExpression": "input#search[type=search placeholder=Найти]",
+    "mode": "emmet",
+    "difficulty": 1
+  },
+  {
+    "id": "blind-03",
+    "title": "Ссылка на почту",
+    "emmetExpression": "a.mail[href=mailto:info@site.uz]{Написать нам}",
+    "mode": "emmet",
+    "difficulty": 1
+  },
+  {
+    "id": "blind-04",
+    "title": "Важное сообщение",
+    "emmetExpression": "p>strong{Внимание:}+span{сайт обновлён}",
+    "mode": "emmet",
+    "difficulty": 1
+  },
+  {
+    "id": "blind-05",
+    "title": "Заголовок раздела",
+    "emmetExpression": "h2#about.section-title{О нас}",
+    "mode": "emmet",
+    "difficulty": 1
+  },
+  {
+    "id": "blind-06",
+    "title": "Согласие",
+    "emmetExpression": "label[for=agree]{Согласен}+input#agree[type=checkbox]",
+    "mode": "emmet",
+    "difficulty": 1
+  },
+  {
+    "id": "blind-07",
+    "title": "Оценка звёздами",
+    "emmetExpression": "ol.rating>li.star*5",
+    "mode": "emmet",
+    "difficulty": 1
+  },
+  {
+    "id": "blind-08",
+    "title": "Видео",
+    "emmetExpression": "video.intro[src=intro.mp4 controls]",
+    "mode": "emmet",
+    "difficulty": 1
+  },
+  {
+    "id": "blind-09",
+    "title": "Главы книги",
+    "emmetExpression": "ol.chapters>li{Глава $}*4",
+    "mode": "emmet",
+    "difficulty": 2
+  },
+  {
+    "id": "blind-10",
+    "title": "Миниатюры",
+    "emmetExpression": "div.thumbs>img[src=thumb$.png alt]*3",
+    "mode": "emmet",
+    "difficulty": 2
+  },
+  {
+    "id": "blind-11",
+    "title": "Всплывающее уведомление",
+    "emmetExpression": "div.toast>p{Сохранено}+button.close{Закрыть}",
+    "mode": "emmet",
+    "difficulty": 2
+  },
+  {
+    "id": "blind-12",
+    "title": "Уровни",
+    "emmetExpression": "ul.levels>li.level-$$@3*3",
+    "mode": "emmet",
+    "difficulty": 2
+  },
+  {
+    "id": "blind-13",
+    "title": "Метки",
+    "emmetExpression": "div.tags>span.tag{тег $}*4",
+    "mode": "emmet",
+    "difficulty": 2
+  },
+  {
+    "id": "blind-14",
+    "title": "Контакты",
+    "emmetExpression": "address>p{Ташкент}+a[href=tel:+998901234567]{Позвонить}",
+    "mode": "emmet",
+    "difficulty": 2
+  },
+  {
+    "id": "blind-15",
+    "title": "Логотип-ссылка",
+    "emmetExpression": "header>a.logo[href=/]>img[src=logo.svg alt=Логотип]",
+    "mode": "emmet",
+    "difficulty": 2
+  },
+  {
+    "id": "blind-16",
+    "title": "Таблица оценок",
+    "emmetExpression": "table.grades>(thead>tr>th{Студент}+th{Оценка})+tbody>tr*4>td{Студент $}+td{5}",
+    "mode": "emmet",
+    "difficulty": 3
+  },
+  {
+    "id": "blind-17",
+    "title": "Витрина",
+    "emmetExpression": "ul.products>li.product*3>a[href=product$.html]>img[src=p$.jpg alt=\"Товар $\"]+span{Товар $}",
+    "mode": "emmet",
+    "difficulty": 3
+  },
+  {
+    "id": "blind-18",
+    "title": "Анкета",
+    "emmetExpression": "form.profile>fieldset>legend{Анкета}+(label{Имя}+input[type=text name=name])+(label{Возраст}+input[type=number name=age])^button[type=submit]{Сохранить}",
+    "mode": "emmet",
+    "difficulty": 3
+  },
+  {
+    "id": "blind-19",
+    "title": "Вкладки",
+    "emmetExpression": "div.tabs>(ul.tab-list>li.tab*3>a[href=#tab$]{Вкладка $})+div.tab-panel#tab$*3>p{Содержимое $}",
+    "mode": "emmet",
+    "difficulty": 3
+  },
+  {
+    "id": "blind-20",
+    "title": "Лента блога",
+    "emmetExpression": "div.blog>article.post*3>h3{Пост $}+p.meta{Автор $}+a.more[href=#post$]{Читать}",
+    "mode": "emmet",
+    "difficulty": 3
+  },
+  {
+    "id": "blind-21",
+    "title": "Подвал с колонками",
+    "emmetExpression": "footer>div.cols>div.col*3>h4{Раздел $}+ul>li*2>a[href=#]{Ссылка $}",
+    "mode": "emmet",
+    "difficulty": 3
+  },
+  {
+    "id": "blind-22",
+    "title": "Выбор языка",
+    "emmetExpression": "label[for=lang]{Язык}+select#lang[name=lang]>option[value=ru]{Русский}+option[value=uz]{Oʻzbekcha}+option[value=en]{English}",
+    "mode": "emmet",
+    "difficulty": 3
+  },
+  {
+    "id": "blind-23",
+    "title": "Чек-лист",
+    "emmetExpression": "ul.checklist>li*4>input#task$[type=checkbox]+label[for=task$]{Задача $}",
+    "mode": "emmet",
+    "difficulty": 3
+  },
+  {
+    "id": "blind-24",
+    "title": "Расписание автобусов",
+    "emmetExpression": "table.bus>tr*3>th{Рейс $}+td{0$:30}+td{Чиланзар}",
+    "mode": "emmet",
+    "difficulty": 3
+  },
+  {
+    "id": "blind-25",
+    "title": "Работы в портфолио",
+    "emmetExpression": "section.portfolio>h2{Работы}+ul.grid>li*4>figure>img[src=work$.jpg alt=\"Работа $\"]+figcaption{Работа $}",
+    "mode": "emmet",
+    "difficulty": 3
+  },
+  {
+    "id": "blind-26",
+    "title": "Меню кафе",
+    "emmetExpression": "div.menu>(h2{Завтраки}+ul>li{Блюдо $}*2)+(h2{Обеды}+ul>li{Блюдо $}*3)",
+    "mode": "emmet",
+    "difficulty": 3
+  },
+  {
+    "id": "blind-27",
+    "title": "Профиль",
+    "emmetExpression": "div.profile>img.avatar[src=avatar.png alt=Аватар]+h3.name{Иван Петров}+p.bio+ul.stats>li*3>b{$0}+span{подписчиков}",
+    "mode": "emmet",
+    "difficulty": 3
+  },
+  {
+    "id": "blind-28",
+    "title": "Комментарий",
+    "emmetExpression": "form.comment>textarea[name=text rows=4 placeholder=Комментарий]+(label>input[type=checkbox name=notify]+{Уведомлять})+button.send{Отправить}",
+    "mode": "emmet",
+    "difficulty": 3
+  },
+  {
+    "id": "blind-29",
+    "title": "Лендинг курсов",
+    "emmetExpression": "(header.hero>h1{Курсы вёрстки}+p.subtitle{С нуля до сайта}+a.btn[href=#signup]{Записаться})+(section.features>div.feature*3>h3{Преимущество $}+p)+footer>p{© 2026}",
+    "mode": "emmet",
+    "difficulty": 3
+  },
+  {
+    "id": "blind-30",
+    "title": "Статья с навигацией",
+    "emmetExpression": "main>nav.crumbs>a[href=/]{Главная}+a[href=/blog]{Блог}^article>h1{Как начать}+p*3",
+    "mode": "emmet",
+    "difficulty": 3
+  }
+]

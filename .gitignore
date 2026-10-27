@@ -5,3 +5,4 @@ node_modules/
 /uploads/
 __pycache__/
 /results_exam/
+/emmet/dist/

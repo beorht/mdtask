@@ -1,0 +1,48 @@
+<!-- src/views/html-course/index.ejs — «Web-разработка: HTML»: темы по порядку, у каждой N.1 теория и N.2 практика (src/lib/html-course) -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <%- include('../partials/head', { pageTitle: title }) %>
+</head>
+<body>
+  <%- include('../partials/header') %>
+  <div class="app-layout">
+    <%- include('../partials/sidebar') %>
+    <main class="content">
+      <nav class="breadcrumbs"><a href="/">Главная</a> / <%= title %></nav>
+      <h1><%= title %></h1>
+      <p class="subject-block-lead">Вёрстка веб-страниц на HTML с нуля. В каждой теме сначала теория с живыми примерами, затем практическая работа: слева — как выглядит ваш код и как должно получиться, справа — редактор. Темы открываются по порядку.</p>
+
+      <% const pct = summary.total ? Math.round((summary.solved / summary.total) * 100) : 0; %>
+      <div class="subject-summary">
+        <span>Решено заданий: <strong><%= summary.solved %> / <%= summary.total %></strong></span>
+        <span class="progress subject-summary-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<%= pct %>" aria-label="Прогресс">
+          <span class="progress-fill" style="width: <%= pct %>%"></span>
+        </span>
+      </div>
+
+      <ol class="html-topic-list">
+        <% summary.topics.forEach(function (t) { %>
+          <li class="html-topic<%= t.done ? ' is-done' : '' %><%= !t.ready || !t.theoryOpen ? ' is-locked' : '' %>">
+            <span class="ib-task-num" aria-hidden="true"><%= t.done ? '✓' : t.theoryOpen ? t.number : '🔒' %></span>
+            <span class="html-topic-body">
+              <span class="html-topic-title">Тема <%= t.number %>. <%= t.title %></span>
+              <span class="html-topic-lead"><%= t.lead %></span>
+            </span>
+            <span class="html-topic-steps">
+              <% if (!t.ready) { %>
+                <span class="topic-btn topic-btn-none">Готовится</span>
+              <% } else { %>
+                <%# Кнопки «Теория» / «Практика» — общий вид предметов (.topic-btn, как на странице SQL). %>
+                <% if (t.theoryOpen) { %><a class="topic-btn topic-btn-theory" href="<%= base %>/<%= t.key %>/theory"><span aria-hidden="true">📖</span> Теория</a><% } else { %><span class="topic-btn topic-btn-practice is-locked" title="Откроется после практической работы предыдущей темы"><span aria-hidden="true">🔒</span> Теория</span><% } %>
+                <% if (t.practiceOpen) { %><a class="topic-btn topic-btn-practice<%= t.done ? ' is-done' : '' %>" href="<%= base %>/<%= t.key %>/practice"><span aria-hidden="true"><%= t.done ? '✓' : '🧪' %></span> Практика <span class="topic-btn-count"><%= t.solved %>/<%= t.total %></span></a><% } else { %><span class="topic-btn topic-btn-practice is-locked" title="Откроется после теории темы"><span aria-hidden="true">🔒</span> Практика <span class="topic-btn-count"><%= t.solved %>/<%= t.total %></span></span><% } %>
+              <% } %>
+            </span>
+          </li>
+        <% }) %>
+      </ol>
+    </main>
+  </div>
+  <%- include('../partials/scripts') %>
+</body>
+</html>

@@ -55,6 +55,28 @@ const overdueCount = p.assignments.filter(function (a) { return a.statusKey === 
   <% } %>
 </section>
 
+<% if (p.ib.rows.length) { %>
+<section class="a-card a-card-flush">
+  <div class="a-card-head a-card-head-pad"><h2>Информационная безопасность</h2><p class="a-muted">Выполнено <%= p.ib.solved %> из <%= p.ib.rows.length %> начатых</p></div>
+  <div class="a-table-wrap">
+    <table class="a-table a-table-cards">
+      <thead><tr><th>Задание</th><th>Этапы</th><th>Выполнено</th><th>Статус</th><th class="a-col-action"><span class="a-sr">Действие</span></th></tr></thead>
+      <tbody>
+        <% p.ib.rows.forEach(function (row) { %>
+          <tr data-href="<%= row.href %>">
+            <td data-label="Задание">№<%= row.meta.number %>. <%= row.meta.title %></td>
+            <td data-label="Этапы" class="a-nowrap"><%= row.total ? row.passed + ' / ' + row.total : '—' %></td>
+            <td data-label="Выполнено" class="a-nowrap a-muted"><%= row.solvedAt ? view.formatDateTime(row.solvedAt) : '—' %></td>
+            <td data-label="Статус"><%- include('partials/status', { key: row.solved ? 'done' : 'in_progress' }) %></td>
+            <td class="a-col-action"><a class="a-btn a-btn-sm a-btn-secondary" href="<%= row.href %>"><%= row.href === '/admin/ib' ? 'Результаты' : 'Этапы и журнал' %></a></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</section>
+<% } %>
+
 <section class="a-card">
   <div class="a-card-head"><h2>История сдач</h2></div>
   <% if (p.history.length === 0) { %>

@@ -176,7 +176,7 @@ test('devices: a PC is recognised by IP, a different MAC behind its IP is not; t
   assert.deepStrictEqual([r.saved, r.total], [1, 2]);
   assert.deepStrictEqual(db.getExamPcs().map((p) => [p.name, p.ip, p.mac, p.room]), [['pc-414-01', '192.168.100.215', 'f4:b5:20:66:f6:60', '414']]);
 
-  const student = { role: 'student', group: 'IB' };
+  const student = { role: 'student', group: 'ib-2' };
   const win = { deviceMode: 'block' };
   assert.strictEqual(devices.checkDevice(win, {}, student, '::ffff:192.168.100.215').allowed, true);
   assert.strictEqual(devices.checkDevice(win, {}, student, '10.0.0.5').allowed, false);

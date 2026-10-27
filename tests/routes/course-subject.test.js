@@ -32,7 +32,7 @@ test.afterEach(() => cleanupContentFiles());
 
 test('a course-subject assignment gets its own subject card and page, not Python/JavaScript', async () => {
   const pis = seedPisAssignment();
-  const shared = seedAssignment({ title: 'Задача 1. Счётчик', mdPath: 'shared-1.md', markdown: '# Задача 1\n' });
+  const shared = seedAssignment({ title: 'Задача 1. Счётчик', mdPath: 'section-obekty-i-slovari/shared-1.md', markdown: '# Задача 1\n' });
   const app = createApp();
   const agent = await loginAs(app, 'student-1');
 

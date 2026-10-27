@@ -1,0 +1,6 @@
+words = input().split()
+a = input()
+b = input()
+words.insert(0, a)
+words.append(b)
+print(" ".join(words))

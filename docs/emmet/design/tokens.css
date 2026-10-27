@@ -1,0 +1,164 @@
+/*
+ * Дизайн-токены «Тетрадь» (Emmet · Тетрадь).
+ * Подключайте первым файлом. Значения совпадают с :root в src/styles/main.css,
+ * плюс палитра контейнеров из src/styles/boxes.css и теории.
+ * Шрифты: @fontsource/oswald/500, @fontsource/montserrat/400|500|600, @fontsource/jetbrains-mono/400|500.
+ */
+:root {
+  /* Поверхности и текст */
+  --bg: #FBF8F3;
+  --page: #F1EBE2;
+  --surface: #FFFDF9;
+  --text-primary: #3D3A36;
+  --text-secondary: #5A5651;
+  --text-muted: #776F65;
+  --ink: #3B3835;
+  --ink-hover: #2B2926;
+  --border: #E6E0D8;
+
+  /* Акценты */
+  --accent-sand: #C9B79C;
+  --accent-cream: #EDE4D3;
+  --accent-wood: #B88A5A;
+  --wood-text: #8A5F35;
+
+  /* Подсветка кода */
+  --code-tag: #8F5B2E;
+  --code-attr: #5A6E4B;
+  --code-string: #A14B33;
+  --code-punct: #9A9083;
+  --code-gutter: #B5AB9E;
+
+  /* Статусы */
+  --status-success: #55743F;
+  --status-success-bg: #ECF0E3;
+  --status-partial: #9A6A2C;
+  --status-partial-bg: #F6ECDA;
+  --status-error: #A9452F;
+  --status-error-bg: #F6E3DC;
+  --status-mismatch: #5A5651;
+  --status-mismatch-bg: #F0EBE3;
+
+  /* Контейнеры (схема коробок, теория, навигация раздела) */
+  --box-header-line: #8BAEE0;
+  --box-header-fill: #DCE7F7;
+  --box-header-ink: #2F5FA7;
+  --box-nav-line: #E5A56B;
+  --box-nav-fill: #FBE3CC;
+  --box-nav-ink: #A0571B;
+  --box-main-line: #8CC39E;
+  --box-main-fill: #DEEEE2;
+  --box-main-ink: #2F7A4A;
+  --box-footer-line: #A897D3;
+  --box-footer-fill: #E7E0F3;
+  --box-footer-ink: #6A4FA3;
+  --box-div-line: #6AA57E;
+  --box-div-fill: rgb(255 255 255 / 0.55);
+  --box-tag-ink: #6B7480;
+  --box-tag-bg: #ECEAE6;
+  --box-text: #1F2933;
+  --box-paragraph: #3E4A56;
+  --box-button-border: #C9C2B8;
+  --lesson-solved: #BFDCC8;
+
+  /* Шрифты */
+  --font-display: 'Oswald', 'Arial Narrow', sans-serif;
+  --font-ui: 'Montserrat', system-ui, sans-serif;
+  --font-code: 'JetBrains Mono', ui-monospace, 'Cascadia Code', monospace;
+
+  /* Размеры */
+  --gap: 12px;
+  --pad: 18px;
+  --grid-cell: 24px;
+  --radius-panel: 18px;
+  --radius-inner: 12px;
+  --radius-control: 10px;
+  --radius-pill: 999px;
+
+  /* Тени (тёплые, от --ink) */
+  --shadow-card: 0 18px 40px -24px rgb(59 56 53 / 0.35);
+  --shadow-toast: 0 18px 40px -20px rgb(59 56 53 / 0.6);
+  --shadow-dialog: 0 24px 60px -24px rgb(59 56 53 / 0.45);
+  --shadow-tab: 0 1px 3px rgb(59 56 53 / 0.15);
+  --ring-focus: 0 0 0 3px rgb(201 183 156 / 0.25);
+  --backdrop: rgb(59 56 53 / 0.38);
+
+  /* Тетрадная клетка */
+  --grid-line: rgb(184 138 90 / 0.13);
+  --margin-line: rgb(169 69 47 / 0.22);
+
+  /* Движение */
+  --ease-out: cubic-bezier(0.22, 0.8, 0.24, 1);
+  --ease-soft: cubic-bezier(0.16, 1, 0.3, 1);
+
+  color-scheme: light;
+}
+
+@media (max-width: 480px) {
+  :root { --pad: 14px; --gap: 10px; }
+}
+
+/* Базовые правила стиля */
+body {
+  background: var(--page);
+  color: var(--text-primary);
+  font: 14px/1.5 var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent-wood);
+  outline-offset: 2px;
+}
+
+/* Лист в клетку */
+.notebook-grid {
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+  background-size: var(--grid-cell) var(--grid-cell);
+  background-attachment: local;
+  line-height: var(--grid-cell);
+}
+
+/* Ярлык секции капсом */
+.eyebrow {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--wood-text);
+}
+
+@keyframes panel-rise {
+  0% { opacity: 0; transform: translateY(22px); }
+  45% { opacity: 1; }
+  100% { opacity: 1; transform: none; }
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes line-in {
+  from { opacity: 0; transform: translateY(3px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes settle {
+  from { transform: translateY(4px); opacity: 0.6; }
+  to { transform: none; opacity: 1; }
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translate(-50%, -10px); }
+  to { opacity: 1; transform: translateX(-50%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after { animation: none !important; transition-duration: 0.01ms !important; }
+}

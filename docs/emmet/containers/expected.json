@@ -1,0 +1,12 @@
+{
+  "containers-01": "<div class=\"card\">\n  <h2>Котик Барсик</h2>\n  <p>Любит спать и есть.</p>\n  <button>Погладить</button>\n</div>",
+  "containers-02": "<h1 id=\"logo\">Мой сайт</h1>\n<p>Привет!</p>",
+  "containers-03": "<p class=\"card\">Яблоко</p>\n<p class=\"card\">Груша</p>\n<p class=\"card\">Слива</p>",
+  "containers-04": "<button class=\"btn\">Назад</button>\n<button class=\"btn\" id=\"buy\">Купить</button>\n<button class=\"btn\">Далее</button>",
+  "containers-05": "<div class=\"page\">\n  <div class=\"card\">\n    <h2>Новости</h2>\n  </div>\n  <div class=\"card\">\n    <h2>Погода</h2>\n  </div>\n</div>",
+  "containers-06": "<header>\n  <h1>Мой блог</h1>\n  <nav><a href=\"#\">Главная</a><a href=\"#\">Статьи</a></nav>\n</header>",
+  "containers-07": "<main>\n  <h2>Новая статья</h2>\n  <p>Текст статьи</p>\n</main>",
+  "containers-08": "<footer>\n  <p>2026 Мой блог</p>\n  <a href=\"#\">Написать нам</a>\n</footer>",
+  "containers-09": "<header>\n  <h1>Мой блог</h1>\n  <nav><a href=\"#\">Главная</a><a href=\"#\">Статьи</a></nav>\n</header>\n<main>\n  <h2>Новая статья</h2>\n  <p>Текст статьи</p>\n</main>\n<footer>\n  <p>2026 Мой блог</p>\n</footer>",
+  "containers-10": "<div id=\"page\">\n  <header class=\"top\">\n    <h1>Кафе Уют</h1>\n    <nav class=\"menu\"><a href=\"#\">Меню</a><a href=\"#\">Контакты</a></nav>\n  </header>\n  <main>\n    <div class=\"card\">\n      <h2>Плов</h2>\n      <p>Фирменное блюдо</p>\n    </div>\n    <div class=\"card\">\n      <h2>Чай</h2>\n      <p>Зелёный и чёрный</p>\n    </div>\n  </main>\n  <footer>\n    <p>Ждём вас каждый день</p>\n  </footer>\n</div>"
+}

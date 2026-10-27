@@ -1,0 +1,63 @@
+<%- include('partials/start') %>
+<%
+const CELL = { none: ['·', 'не открывал'], opened: ['○', 'открыл'], tried: ['×', 'пробовал'], partial: ['◐', 'вид совпал, правило не выполнено'], solved: ['✓', 'решено'] };
+%>
+
+<div class="a-page-head">
+  <div>
+    <h1>Web-разработка: CSS</h1>
+    <p class="a-subtitle">Предмет пока открыт только группе <strong>TEST</strong>. Готово тем: <%= o.topics.length %> из <%= o.topics.length + o.soon.length %>, заданий: <%= o.total %>. В каждой теме — теория и практическая работа; задания общие для всех, каждую попытку перепроверяет сервер.</p>
+  </div>
+</div>
+
+<form class="a-filters" method="get" action="/admin/css" data-autosubmit>
+  <label class="a-input-search">
+    <%- icon('search') %>
+    <input type="search" name="q" value="<%= filters.q %>" placeholder="Поиск по имени или ID" aria-label="Поиск студента">
+  </label>
+  <button type="submit" class="a-btn a-btn-secondary a-noscript-only">Применить</button>
+</form>
+
+<section class="a-card a-card-flush">
+  <% if (!o.rows.length) { %>
+    <%- include('partials/empty', { emptyIcon: 'students', emptyTitle: 'Студентов нет', emptyText: 'Здесь появятся студенты, которым открыт предмет.' }) %>
+  <% } else { %>
+    <div class="a-table-wrap">
+      <table class="a-table a-emmet-matrix">
+        <thead>
+          <tr>
+            <th rowspan="2">Студент</th>
+            <% o.topics.forEach(function (t) { %><th colspan="<%= t.tasks.length + 1 %>" class="a-num">Тема <%= t.number %>. <%= t.title %></th><% }) %>
+            <th rowspan="2" class="a-num">Решено</th><th rowspan="2">Сигналы</th>
+          </tr>
+          <tr>
+            <% o.topics.forEach(function (t) { %><th class="a-num" title="Теория">Т</th><% t.tasks.forEach(function (task) { %><th class="a-num" title="<%= t.number %>.<%= task.number %>. <%= task.title %>"><%= task.number %></th><% }) %><% }) %>
+          </tr>
+        </thead>
+        <tbody>
+          <% o.rows.forEach(function (r) { %>
+            <tr>
+              <td><a class="a-person" href="/admin/css/students/<%= r.student.id %>"><span class="a-avatar a-avatar-sm"><%= view.initials(r.student.name) %></span><%= r.student.name %></a></td>
+              <% r.topics.forEach(function (rt, ti) { %>
+                <td class="a-num a-emmet-cell is-<%= rt.theoryRead ? 'solved' : 'none' %>" title="Теория: <%= rt.theoryRead ? 'прочитана' : 'не открывал' %>"><%= rt.theoryRead ? '✓' : '·' %></td>
+                <% rt.cells.forEach(function (c, i) { %><td class="a-num a-emmet-cell is-<%= c %>" title="<%= o.topics[ti].tasks[i].title %>: <%= CELL[c][1] %>"><%= CELL[c][0] %></td><% }) %>
+              <% }) %>
+              <td class="a-num a-nowrap"><%= r.solved %> / <%= o.total %></td>
+              <td class="a-muted"><%= r.signals.join(', ') || '—' %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <div class="a-card-foot a-muted">Т — теория · ✓ решено · ◐ почти · × пробовал · ○ открыл · · не открывал</div>
+  <% } %>
+</section>
+
+<% if (o.soon.length) { %>
+<section class="a-card">
+  <div class="a-card-head"><h2>Темы готовятся</h2></div>
+  <p class="a-muted"><%= o.soon.map(function (t) { return t.number + '. ' + t.title; }).join(' · ') %></p>
+</section>
+<% } %>
+
+<%- include('partials/end') %>

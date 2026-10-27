@@ -116,3 +116,49 @@
 .content th code {
   white-space: nowrap;
 }
+
+/* Светлая тема «Тетрадь» (docs/color-tetrad.md): блоки кода — светлый лист в клетку с полоской «дерево»,
+   подсветка тёплыми цветами «Тетради». Тёмная тема не меняется. */
+:root[data-theme="light"] .content pre {
+  background-color: var(--editor-bg);
+  background-image:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: var(--grid-size) var(--grid-size);
+  color: #3D3A36;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+}
+:root[data-theme="light"] .hljs-comment,
+:root[data-theme="light"] .hljs-quote { color: #776F65; }
+:root[data-theme="light"] .hljs-keyword,
+:root[data-theme="light"] .hljs-selector-tag,
+:root[data-theme="light"] .hljs-tag,
+:root[data-theme="light"] .hljs-name,
+:root[data-theme="light"] .hljs-doctag { color: #8F5B2E; }
+:root[data-theme="light"] .hljs-deletion { color: #A9452F; }
+:root[data-theme="light"] .hljs-number,
+:root[data-theme="light"] .hljs-literal,
+:root[data-theme="light"] .hljs-meta,
+:root[data-theme="light"] .hljs-link { color: #9A6A2C; }
+:root[data-theme="light"] .hljs-attr,
+:root[data-theme="light"] .hljs-attribute,
+:root[data-theme="light"] .hljs-symbol,
+:root[data-theme="light"] .hljs-bullet,
+:root[data-theme="light"] .hljs-class .hljs-title { color: #5A6E4B; }
+:root[data-theme="light"] .hljs-string,
+:root[data-theme="light"] .hljs-regexp,
+:root[data-theme="light"] .hljs-selector-attr,
+:root[data-theme="light"] .hljs-selector-pseudo { color: #A14B33; }
+:root[data-theme="light"] .hljs-addition { color: #55743F; }
+:root[data-theme="light"] .hljs-built_in,
+:root[data-theme="light"] .hljs-type,
+:root[data-theme="light"] .hljs-code,
+:root[data-theme="light"] .hljs-title,
+:root[data-theme="light"] .hljs-title.function_,
+:root[data-theme="light"] .hljs-section,
+:root[data-theme="light"] .hljs-selector-id { color: #2F5FA7; }
+:root[data-theme="light"] .hljs-variable,
+:root[data-theme="light"] .hljs-template-variable,
+:root[data-theme="light"] .hljs-params,
+:root[data-theme="light"] .hljs-subst { color: #6A4FA3; }

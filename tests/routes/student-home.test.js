@@ -33,7 +33,8 @@ test('student home is a standalone page with SQL, Python and JavaScript cards', 
 });
 
 test('Python and JavaScript pages list the shared assignments and their own task bank', async () => {
-  const mine = seedAssignment({ title: 'Групповое задание', mdPath: 'home-b.md' });
+  // Путь из content/python-course/assignments.json: задание по Python видно и в Python, и в JavaScript.
+  const mine = seedAssignment({ title: 'Групповое задание', mdPath: 'section-obekty-i-slovari/home-b.md' });
   db.createSubmission({ assignmentId: mine.id, studentId: 'student-1', files: ['s.zip'] });
   seedAssignment({ title: 'Чужое персональное', mdPath: 'individual/student-2/x.md', targetType: 'individual', targetStudentId: 'student-2' });
 
@@ -54,6 +55,23 @@ test('Python and JavaScript pages list the shared assignments and their own task
   // The Python page links only Python bank tasks.
   const py = mainOf((await agent.get('/subjects/python')).text);
   assert.doesNotMatch(py, /\/bank\/javascript-/);
+});
+
+test('the Python subject shows only Python assignments; the rest stay in JavaScript', async () => {
+  // Реальные пути из content/SUMMARY.md: меню строится по нему.
+  const dom = seedAssignment({ title: 'Задача про DOM', mdPath: 'section-dom-rabota-s-document/teoriya-dom-i-obekt-document.md' });
+  const py = seedAssignment({ title: 'Задача про словари', mdPath: 'section-obekty-i-slovari/zadacha-1-schetchik-povtorov.md' });
+  const app = createApp();
+  const agent = await loginAs(app, 'student-1');
+  const page = await agent.get('/subjects/python');
+  const sidebar = page.text.slice(page.text.indexOf('id="sidebar"'), page.text.indexOf('<main'));
+  for (const html of [mainOf(page.text), sidebar]) {
+    assert.match(html, new RegExp(`/assignment/${py.id}`));
+    assert.doesNotMatch(html, new RegExp(`/assignment/${dom.id}`));
+  }
+  const js = mainOf((await agent.get('/subjects/javascript')).text);
+  assert.match(js, new RegExp(`/assignment/${dom.id}`));
+  assert.match(js, new RegExp(`/assignment/${py.id}`));
 });
 
 test('each subject page has its own navigation', async () => {
@@ -102,7 +120,7 @@ test('an assignment page keeps the navigation of the language it was opened from
 });
 
 test('an unsubmitted assignment past its due date is marked overdue', async () => {
-  seedAssignment({ title: 'Старое задание', mdPath: 'home-c.md', dueDate: '2020-01-01' });
+  seedAssignment({ title: 'Старое задание', mdPath: 'section-obekty-i-slovari/home-c.md', dueDate: '2020-01-01' });
   const app = createApp();
   const agent = await loginAs(app, 'student-1');
   const res = await agent.get('/subjects/python');

@@ -13,9 +13,8 @@
       } catch (e) {}
     })();
   </script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&display=swap">
+  <link rel="icon" type="image/png" href="/img/favicon.png">
+  <link rel="stylesheet" href="/vendor/fonts/fonts.css">
   <link rel="stylesheet" href="/css/admin.css">
   <script src="/js/admin.js" defer></script>
 </head>
@@ -25,7 +24,7 @@
   <div class="a-topbar-left">
     <button class="a-icon-btn a-menu-btn" type="button" data-sidebar-toggle aria-label="Открыть меню" aria-controls="adminSidebar"><%- icon('menu') %></button>
     <a href="/admin" class="a-logo" aria-label="MDTASK — главная панели">
-      <span class="a-logo-mark">M</span><span class="a-logo-text">MDTASK</span>
+      <span class="a-logo-mark"><span class="a-logo-glyph" aria-hidden="true"></span></span><span class="a-logo-text">MDTASK</span>
     </a>
     <% if (pageTitle && nav !== 'dashboard') { %><span class="a-topbar-section"><%= pageTitle %></span><% } %>
   </div>

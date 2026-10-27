@@ -1,11 +1,14 @@
 // Runs a student's Python program in the browser (Pyodide = CPython in WebAssembly), off
 // the main thread so an endless loop can be stopped by terminating the worker. Pyodide is
 // served by the site itself (public/vendor, scripts/vendor/fetch.sh): classroom PCs have no internet.
-// Message in:  { files: { name: code }, main: 'main.py', stdin?: [lines], echo?: bool, eofMessage?: text }
+// Message in:  { files: { name: code }, main: 'main.py', stdin?: [lines], echo?: bool, eofMessage?: text,
+//                modules?: { name: source } }
 //   or { warmup: true } — only load Python, answered with { type: 'ready' } (or 'fail').
 //   stdin — input() returns these lines in order (EOFError when they run out); without it
 //   input() is disabled. echo — print the prompt and the entered line, like a terminal.
-//   eofMessage — the EOFError text (default: Uzbek, for the pybasics course).
+//   eofMessage — the EOFError text (default: Uzbek, from the former pybasics course; the exam passes its own).
+//   modules — modules put into sys.modules for this run only, replacing real ones of the same name (the
+//   «Начальный Python» course: its offline `requests`, `dotenv`, `socket` — content/python-course/shims/).
 // Messages out: { type: 'status' | 'ready' | 'running' | 'out' | 'err' | 'done' | 'fail', text }
 var PYODIDE_URL = '/vendor/pyodide/0.26.4/';
 
@@ -45,10 +48,17 @@ var RUNNER = [
   '            print(str(prompt) + value)',
   '        return value',
   '    return __input',
-  'def __run(files, main, workdir, stdin=None, echo=False, eof_message=None):',
+  'def __run(files, main, workdir, stdin=None, echo=False, eof_message=None, modules=None):',
   '    builtins.input = __no_input if stdin is None else __feeder(stdin, echo, eof_message)',
   '    os.makedirs(workdir)',
   '    os.chdir(workdir)',
+  '    saved = {}',
+  '    env = dict(os.environ)',
+  '    for name, source in (modules or {}).items():',
+  '        saved[name] = sys.modules.get(name)',
+  '        mod = type(sys)(name)',
+  '        exec(compile(source, name + ".py", "exec"), mod.__dict__)',
+  '        sys.modules[name] = mod',
   '    for name, code in files.items():',
   '        with open(name, "w", encoding="utf-8") as f:',
   '            f.write(code)',
@@ -69,6 +79,11 @@ var RUNNER = [
   '        return False',
   '    finally:',
   '        sys.stdout.flush()',
+  '        os.environ.clear()',
+  '        os.environ.update(env)',
+  '        for name, old in saved.items():',
+  '            if old is None: sys.modules.pop(name, None)',
+  '            else: sys.modules[name] = old',
 ].join('\n');
 
 self.onmessage = function (event) {
@@ -86,8 +101,10 @@ self.onmessage = function (event) {
       py.runPython(RUNNER);
       var files = py.toPy(msg.files);
       var stdin = Array.isArray(msg.stdin) ? py.toPy(msg.stdin) : null;
-      var ok = py.globals.get('__run')(files, msg.main, '/run/' + runCount, stdin, !!msg.echo, msg.eofMessage || null);
+      var modules = msg.modules ? py.toPy(msg.modules) : null;
+      var ok = py.globals.get('__run')(files, msg.main, '/run/' + runCount, stdin, !!msg.echo, msg.eofMessage || null, modules);
       files.destroy();
+      if (modules) modules.destroy();
       if (stdin) stdin.destroy();
       self.postMessage({ type: 'done', ok: ok });
     })

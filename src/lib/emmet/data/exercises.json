@@ -1,0 +1,272 @@
+[
+  {
+    "id": "practice-01",
+    "title": "Подпись к фото",
+    "description": "Под фотографией на странице нужна подпись. Сверстайте её точно как в образце.",
+    "emmetExpression": "p.caption{Фото дня}",
+    "mode": "emmet",
+    "validationMode": "structure",
+    "difficulty": 1
+  },
+  {
+    "id": "practice-02",
+    "title": "Кнопка отправки",
+    "description": "Форме обратной связи нужна кнопка, к которой скрипт будет обращаться по её идентификатору.",
+    "emmetExpression": "button#send{Отправить}",
+    "mode": "emmet",
+    "validationMode": "structure",
+    "difficulty": 1
+  },
+  {
+    "id": "practice-03",
+    "title": "Уведомление",
+    "description": "После сохранения настроек пользователь видит сообщение об успехе. Получите такой же элемент с двумя классами.",
+    "emmetExpression": "div.alert.alert-success{Готово!}",
+    "mode": "emmet",
+    "validationMode": "structure",
+    "difficulty": 1
+  },
+  {
+    "id": "practice-04",
+    "title": "Внешняя ссылка",
+    "description": "Ссылка на документацию должна открываться в новой вкладке.",
+    "emmetExpression": "a[href=https://emmet.io target=_blank]{Документация}",
+    "mode": "emmet",
+    "validationMode": "structure",
+    "difficulty": 1
+  },
+  {
+    "id": "practice-05",
+    "title": "Фотография",
+    "description": "Вставьте на страницу фотографию с альтернативным текстом для тех, у кого она не загрузится.",
+    "emmetExpression": "img[src=cat.jpg alt=Кот]",
+    "mode": "emmet",
+    "validationMode": "structure",
+    "difficulty": 1
+  },
+  {
+    "id": "practice-06",
+    "title": "Список дел",
+    "description": "Подготовьте пустой список дел на четыре пункта — текст в него потом добавит скрипт.",
+    "emmetExpression": "ul.todo>li*4",
+    "mode": "emmet",
+    "validationMode": "structure",
+    "difficulty": 1
+  },
+  {
+    "id": "practice-07",
+    "title": "Новость",
+    "description": "Сверстайте карточку новости: заголовок и место под текст.",
+    "emmetExpression": "article.card>h2{Новости}+p",
+    "mode": "emmet",
+    "validationMode": "structure",
+    "difficulty": 1
+  },
+  {
+    "id": "practice-08",
+    "title": "Инструкция",
+    "description": "Сверстайте пошаговую инструкцию. Номера шагов в тексте должны получиться сами, без ручного набора.",
+    "emmetExpression": "ol.steps>li{Шаг $}*3",
+    "mode": "emmet",
+    "validationMode": "structure",
+    "difficulty": 2
+  },
+  {
+    "id": "practice-09",
+    "title": "Файлы",
+    "description": "Выведите список файлов. Обратите внимание, как записаны номера в именах.",
+    "emmetExpression": "ul.files>li{file-$$.txt}*3",
+    "mode": "emmet",
+    "validationMode": "structure",
+    "difficulty": 2
+  },
+  {
+    "id": "practice-10",
+    "title": "Обратный отсчёт",
+    "description": "Перед запуском ракеты идёт обратный отсчёт. Получите его одним сокращением.",
+    "emmetExpression": "ol.countdown>li{$@-}*5",
+    "mode": "emmet",
+    "validationMode": "structure",
+    "difficulty": 2
+  },
+  {
+    "id": "practice-11",
+    "title": "Модальное окно",
+    "description": "Сверстайте каркас всплывающего окна. Попробуйте обойтись без имён тегов.",
+    "emmetExpression": ".modal>.modal-title{Внимание}+.modal-text",
+    "mode": "emmet",
+    "validationMode": "structure",
+    "difficulty": 2
+  },
+  {
+    "id": "practice-12",
+    "title": "Пост и боковая колонка",
+    "description": "Рядом с постом блога стоит боковая колонка. Получите оба блока одним сокращением.",
+    "emmetExpression": "div.post>h2{Заголовок}+p^aside.sidebar",
+    "mode": "emmet",
+    "validationMode": "structure",
+    "difficulty": 3
+  },
+  {
+    "id": "practice-13",
+    "title": "Прайс-лист",
+    "description": "Сверстайте таблицу цен. И номера товаров, и цены должны получиться автоматически.",
+    "emmetExpression": "table.prices>tr*3>td{Товар $}+td{$00 руб.}",
+    "mode": "emmet",
+    "validationMode": "structure",
+    "difficulty": 3
+  },
+  {
+    "id": "practice-14",
+    "title": "Навигация",
+    "description": "Сверстайте главное меню сайта: каждая ссылка ведёт к своей странице.",
+    "emmetExpression": "nav.main-nav>ul>li*4>a[href=#page$]{Страница $}",
+    "mode": "emmet",
+    "validationMode": "structure",
+    "difficulty": 3
+  },
+  {
+    "id": "practice-15",
+    "title": "Поиск",
+    "description": "Сверстайте строку поиска по сайту с полем ввода и кнопкой.",
+    "emmetExpression": "form.search>input[type=search name=q placeholder=Поиск]+button[type=submit]{Найти}",
+    "mode": "emmet",
+    "validationMode": "structure",
+    "difficulty": 3
+  },
+  {
+    "id": "practice-16",
+    "title": "Портфолио",
+    "description": "Соберите страницу портфолио из трёх частей: шапка, проекты и подвал.",
+    "emmetExpression": "(header>h1{Портфолио})+(main>section.work*2>h2{Проект $})+footer{Контакты}",
+    "mode": "emmet",
+    "validationMode": "structure",
+    "difficulty": 3
+  },
+  {
+    "id": "practice-17",
+    "title": "Галерея",
+    "description": "Сверстайте галерею: у каждой фотографии свой файл, описание и подпись.",
+    "emmetExpression": "div.gallery>figure*3>img[src=photo$.jpg alt=\"Фото $\"]+figcaption{Подпись $}",
+    "mode": "emmet",
+    "validationMode": "structure",
+    "difficulty": 3
+  },
+  {
+    "id": "practice-18",
+    "title": "Подвал сайта",
+    "description": "Внизу сайта — копирайт и список ссылок на соцсети, у каждой свой якорь.",
+    "emmetExpression": "footer.footer>p.copy+ul.social>li*3>a[href=#social$]{Соцсеть $}",
+    "mode": "emmet",
+    "validationMode": "structure",
+    "difficulty": 3
+  },
+  {
+    "id": "practice-19",
+    "title": "Меню ресторана",
+    "description": "Сверстайте раздел меню: у каждого блюда название и цена, цены должны получиться сами.",
+    "emmetExpression": "section.menu>h2{Меню}+ul.dishes>li.dish*4>h3{Блюдо $}+span.price{$50 руб.}",
+    "mode": "emmet",
+    "validationMode": "structure",
+    "difficulty": 3
+  },
+  {
+    "id": "practice-20",
+    "title": "Отзывы",
+    "description": "Выведите блок отзывов: в каждом цитата и подпись автора.",
+    "emmetExpression": "div.reviews>blockquote.review*3>p{Отзыв $}+cite{Автор $}",
+    "mode": "emmet",
+    "validationMode": "structure",
+    "difficulty": 3
+  },
+  {
+    "id": "practice-21",
+    "title": "Расписание",
+    "description": "Сверстайте таблицу расписания с заголовочной строкой и строками уроков.",
+    "emmetExpression": "table.schedule>thead>tr>th{День}+th{Предмет}^^tbody>tr*3>td{День $}+td{Урок $}",
+    "mode": "emmet",
+    "validationMode": "structure",
+    "difficulty": 3
+  },
+  {
+    "id": "practice-22",
+    "title": "Регистрация",
+    "description": "Сверстайте форму регистрации: подписи должны быть связаны со своими полями.",
+    "emmetExpression": "form.signup>(label[for=name]{Имя}+input#name[type=text name=name])+(label[for=email]{Почта}+input#email[type=email name=email])+button[type=submit]{Создать аккаунт}",
+    "mode": "emmet",
+    "validationMode": "structure",
+    "difficulty": 3
+  },
+  {
+    "id": "practice-23",
+    "title": "Команда",
+    "description": "Раздел «Команда»: карточки сотрудников с фото, именем и должностью.",
+    "emmetExpression": "section.team>h2{Команда}+div.members>div.member*3>img[src=member$.jpg alt=\"Участник $\"]+h3{Имя $}+p.role{Должность}",
+    "mode": "emmet",
+    "validationMode": "structure",
+    "difficulty": 3
+  },
+  {
+    "id": "practice-24",
+    "title": "Вопросы и ответы",
+    "description": "Сверстайте раскрывающиеся вопросы: ответ виден по клику на вопрос.",
+    "emmetExpression": "div.faq>details*3>summary{Вопрос $}+p{Ответ $}",
+    "mode": "emmet",
+    "validationMode": "structure",
+    "difficulty": 3
+  },
+  {
+    "id": "practice-25",
+    "title": "Пагинация",
+    "description": "Сверстайте переключатель страниц: «Назад», номера страниц и «Вперёд».",
+    "emmetExpression": "nav.pagination>a.prev[href=#]{Назад}+ul>li*5>a[href=#page$]{$}^^a.next[href=#]{Вперёд}",
+    "mode": "emmet",
+    "validationMode": "structure",
+    "difficulty": 3
+  },
+  {
+    "id": "practice-26",
+    "title": "Опрос",
+    "description": "Сверстайте опрос с вариантами ответа, из которых можно выбрать только один.",
+    "emmetExpression": "form.poll>p{Ваш любимый язык?}+(label>input[type=radio name=lang value=lang$]+{Язык $})*3+button{Голосовать}",
+    "mode": "emmet",
+    "validationMode": "structure",
+    "difficulty": 3
+  },
+  {
+    "id": "practice-27",
+    "title": "Хронология",
+    "description": "Сверстайте ленту событий по годам. Годы и в тексте, и в атрибуте должны получиться сами.",
+    "emmetExpression": "ol.timeline>li.event$*4>time[datetime=202$]{202$}+p{Событие $}",
+    "mode": "emmet",
+    "validationMode": "structure",
+    "difficulty": 3
+  },
+  {
+    "id": "practice-28",
+    "title": "Корзина",
+    "description": "Сверстайте корзину магазина: товар, поле количества и цена в каждой строке.",
+    "emmetExpression": "table.cart>tr.item*3>td{Товар $}+td>input[type=number value=1]^td{$90 руб.}",
+    "mode": "emmet",
+    "validationMode": "structure",
+    "difficulty": 3
+  },
+  {
+    "id": "practice-29",
+    "title": "Статья",
+    "description": "Сверстайте статью блога целиком: шапка с датой, вступление, текст и теги.",
+    "emmetExpression": "article.post>(header>h1{Заголовок статьи}+time{23.10.2026})+p.lead{Вступление}+p*2+footer>a.tag[href=#tag$]{Тег $}*3",
+    "mode": "emmet",
+    "validationMode": "structure",
+    "difficulty": 3
+  },
+  {
+    "id": "practice-30",
+    "title": "Лендинг",
+    "description": "Финальная работа: каркас посадочной страницы целиком — одним сокращением.",
+    "emmetExpression": ".page>(header.top>.logo{Logo}+nav>a[href=#]{Пункт $}*3)+(main>section.hero>h1{Добро пожаловать}+p+button.btn{Начать})+footer.bottom>p",
+    "mode": "emmet",
+    "validationMode": "structure",
+    "difficulty": 3
+  }
+]

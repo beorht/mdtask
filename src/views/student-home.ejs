@@ -31,21 +31,25 @@
       <h2 id="subjectsTitle" class="home-section-title">Предметы</h2>
       <ul class="subject-grid">
         <% home.subjects.forEach(function (s) { %>
-          <% const isSql = s.kind === 'sql'; const isIb = s.kind === 'ib'; const isCourse = s.kind === 'course'; const isPyb = s.kind === 'pybasics'; %>
-          <% const done = isSql || isIb || isPyb ? s.solved : s.counts.done; %>
-          <% const total = isSql || isIb || isPyb ? s.total : s.counts.total; %>
+          <% const isSql = s.kind === 'sql'; const isIb = s.kind === 'ib'; const isCourse = s.kind === 'course'; const isEmmet = s.kind === 'emmet'; const isHtml = s.kind === 'html'; const isPyCourse = s.kind === 'python-course'; const counted = isSql || isIb || isEmmet || isHtml || isPyCourse; %>
+          <% const done = counted ? s.solved : s.counts.done; %>
+          <% const total = counted ? s.total : s.counts.total; %>
           <% const pct = total ? Math.round((done / total) * 100) : 0; %>
           <li>
             <a class="subject-card subject-card-<%= s.key %><%= s.examLocked ? ' is-exam-locked' : '' %>" href="/subjects/<%= s.key %>">
               <span class="subject-card-head">
                 <span class="subject-card-icon" aria-hidden="true"><%= s.icon || ICONS[s.key] %></span>
-                <span class="subject-card-kind"><%= isPyb ? 'Dasturlash' : isSql ? 'Тренажёр' : isIb ? 'Практикум' : isCourse ? s.kindLabel : 'Программирование' %></span>
+                <span class="subject-card-kind"><%= isSql || isEmmet ? 'Тренажёр' : isHtml ? 'Вёрстка' : isIb ? 'Практикум' : isCourse ? s.kindLabel : 'Программирование' %></span>
               </span>
               <span class="subject-card-title"><%= s.title %></span>
               <% if (s.examLocked) { %><span class="subject-card-lock">🔒 <%= home.lockLabel %></span><% } %>
               <span class="subject-card-meta">
-                <% if (isPyb) { %>
-                  <%= s.topic %> · <%= s.total %> ta topshiriq, avtomatik tekshiruv<% if (s.next) { %><br>Hozir: <%= s.next.number %>. <%= s.next.title %><% } %>
+                <% if (isPyCourse) { %>
+                  Курс «Начальный Python»: <%= plural(s.lessonsCount, 'урок', 'урока', 'уроков') %>, <%= plural(s.total, 'задача', 'задачи', 'задач') %> с автопроверкой<% if (s.current) { %><br>Сейчас: <%= s.current.number %>. <%= s.current.title %><% } %>
+                <% } else if (isHtml) { %>
+                  <%= plural(s.topicsCount, 'тема', 'темы', 'тем') %>: теория и практика · <%= plural(s.total, 'задание', 'задания', 'заданий') %> с автопроверкой<% if (s.current) { %><br>Сейчас: <%= s.current.number %>. <%= s.current.title %><% } %>
+                <% } else if (isEmmet) { %>
+                  Вёрстка сокращениями Emmet: обучение и практика · <%= plural(s.total, 'работа', 'работы', 'работ') %> с автопроверкой
                 <% } else if (isIb) { %>
                   <%= plural(s.total, 'задание', 'задания', 'заданий') %> в веб-терминале с автопроверкой<% if (s.next) { %><br>Сейчас: №<%= s.next.number %>. <%= s.next.title %><% } %>
                 <% } else if (isSql) { %>
@@ -60,8 +64,8 @@
                 <span class="progress-fill" style="width: <%= pct %>%"></span>
               </span>
               <span class="subject-card-foot">
-                <span><%= isPyb ? 'Bajarildi' : isSql ? 'Решено' : isIb ? 'Выполнено' : 'Сдано и принято' %> <%= done %> / <%= total %></span>
-                <span class="subject-card-go"><%= isPyb ? 'Ochish' : 'Открыть' %> →</span>
+                <span><%= isSql || isEmmet || isHtml || isPyCourse ? 'Решено' : isIb ? 'Выполнено' : 'Сдано и принято' %> <%= done %> / <%= total %></span>
+                <span class="subject-card-go">Открыть →</span>
               </span>
             </a>
           </li>

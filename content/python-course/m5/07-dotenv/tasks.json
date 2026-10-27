@@ -1,0 +1,179 @@
+[
+  {
+    "id": "env-01",
+    "title": "Прочитать настройки",
+    "statement": "Загрузите .env (load_dotenv) и выведите три строки: «Город: <DEFAULT_CITY или «не задан»>», «Отладка: да/нет» (DEBUG == \"true\") и «Ключ: <первые 3 символа API_KEY>***» или «Ключ: нет».",
+    "openTests": 2,
+    "tests": [
+      {
+        "input": [],
+        "output": "Город: Хива\nОтладка: нет\nКлюч: edu***",
+        "files": {
+          ".env": "API_KEY=edu-key-2026\nDEFAULT_CITY=Хива\nDEBUG=false\n"
+        }
+      },
+      {
+        "input": [],
+        "output": "Город: Нукус\nОтладка: нет\nКлюч: нет",
+        "files": {
+          ".env": "# пустой ключ\nDEFAULT_CITY=Нукус\nTIMEOUT=3\n"
+        }
+      },
+      {
+        "input": [],
+        "output": "Город: не задан\nОтладка: да\nКлюч: нет",
+        "files": {
+          ".env": "DEBUG=true\n"
+        }
+      }
+    ],
+    "require": [
+      "import:dotenv"
+    ],
+    "modules": [
+      "dotenv"
+    ]
+  },
+  {
+    "id": "env-02",
+    "title": "Ключ из .env",
+    "statement": "Загрузите .env. Если API_KEY не задан — выведите «Нет ключа в .env». Иначе запросите /rates?base=USD с этим ключом: при 200 выведите «1 USD = <UZS> UZS», иначе «Ключ не подошёл».",
+    "openTests": 2,
+    "tests": [
+      {
+        "input": [],
+        "output": "1 USD = 12750.0 UZS",
+        "files": {
+          ".env": "API_KEY=edu-key-2026\nDEFAULT_CITY=Хива\nDEBUG=false\n"
+        }
+      },
+      {
+        "input": [],
+        "output": "Нет ключа в .env",
+        "files": {
+          ".env": "# пустой ключ\nDEFAULT_CITY=Нукус\nTIMEOUT=3\n"
+        }
+      },
+      {
+        "input": [],
+        "output": "Ключ не подошёл",
+        "files": {
+          ".env": "API_KEY=wrong\n"
+        }
+      }
+    ],
+    "require": [
+      "import:dotenv",
+      "import:requests"
+    ],
+    "modules": [
+      "dotenv",
+      "requests"
+    ]
+  },
+  {
+    "id": "env-03",
+    "title": "Город по умолчанию",
+    "statement": "Загрузите .env. Даны города по одному до «конец»; пустая строка означает «город по умолчанию» (DEFAULT_CITY, а если его нет — Ташкент). Для каждого выведите «город: t°» по /weather или «город: нет данных».",
+    "openTests": 2,
+    "tests": [
+      {
+        "input": [
+          "",
+          "Бухара",
+          "конец"
+        ],
+        "output": "Нукус: 9°\nБухара: 21°",
+        "files": {
+          ".env": "# пустой ключ\nDEFAULT_CITY=Нукус\nTIMEOUT=3\n"
+        }
+      },
+      {
+        "input": [
+          "",
+          "Хива",
+          "конец"
+        ],
+        "output": "Ташкент: 18°\nХива: нет данных",
+        "files": {
+          ".env": "DEBUG=false\n"
+        }
+      }
+    ],
+    "require": [
+      "import:dotenv"
+    ],
+    "modules": [
+      "dotenv",
+      "requests"
+    ]
+  },
+  {
+    "id": "env-04",
+    "title": "Защищены ли секреты",
+    "statement": "Рядом лежат .gitignore и .env.example. Выведите «.env в .gitignore: да/нет» (строка «.env» среди строк .gitignore без пробелов по краям) и затем имена настроек из .env.example, у которых в нём заполнено значение (их нужно убрать), — «Убрать значение: ИМЯ», или «Пример без секретов».",
+    "openTests": 2,
+    "tests": [
+      {
+        "input": [],
+        "output": ".env в .gitignore: да\nПример без секретов",
+        "files": {
+          ".gitignore": "__pycache__/\n.env\n",
+          ".env.example": "API_KEY=\nDEFAULT_CITY=\n"
+        }
+      },
+      {
+        "input": [],
+        "output": ".env в .gitignore: нет\nУбрать значение: API_KEY\nУбрать значение: CITY",
+        "files": {
+          ".gitignore": "*.pyc\n",
+          ".env.example": "API_KEY=edu-key-2026\n# комментарий\nCITY=Хива\nTIMEOUT=\n"
+        }
+      }
+    ],
+    "require": [
+      "with"
+    ]
+  },
+  {
+    "id": "env-05",
+    "title": "Проверка конфигурации",
+    "statement": "Дана строка с именами обязательных настроек через пробел. Прочитайте .env через dotenv_values (без записи в окружение). Выведите «Не заданы: имена через запятую и пробел» (в порядке строки; пустое значение тоже считается незаданным) или «Конфигурация в порядке», а затем «Настроек в .env: k».",
+    "openTests": 2,
+    "tests": [
+      {
+        "input": [
+          "API_KEY DEFAULT_CITY DB_PATH"
+        ],
+        "output": "Не заданы: DB_PATH\nНастроек в .env: 3",
+        "files": {
+          ".env": "API_KEY=edu-key-2026\nDEFAULT_CITY=Хива\nDEBUG=false\n"
+        }
+      },
+      {
+        "input": [
+          "DEFAULT_CITY"
+        ],
+        "output": "Конфигурация в порядке\nНастроек в .env: 2",
+        "files": {
+          ".env": "# пустой ключ\nDEFAULT_CITY=Нукус\nTIMEOUT=3\n"
+        }
+      },
+      {
+        "input": [
+          "API_KEY"
+        ],
+        "output": "Не заданы: API_KEY\nНастроек в .env: 1",
+        "files": {
+          ".env": "API_KEY=\n"
+        }
+      }
+    ],
+    "require": [
+      "import:dotenv"
+    ],
+    "modules": [
+      "dotenv"
+    ]
+  }
+]

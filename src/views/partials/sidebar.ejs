@@ -36,7 +36,7 @@ const STATUS_TITLE = { done: 'Решено', current: 'Текущая тема',
 <% if (isSubjectNav) { %>
   <% function renderNav(node) { %>
     <% if (node.kind === 'back') { %>
-      <a class="nav-back" href="<%= node.href %>"><span aria-hidden="true">←</span> <%= node.title %></a>
+      <%- include('back-btn', { href: node.href, label: node.title, extraClass: 'nav-back back-btn-sm' }) %>
     <% } else if (node.kind === 'header') { %>
       <% const pct = node.total ? Math.round((node.done / node.total) * 100) : 0; %>
       <div class="nav-header">

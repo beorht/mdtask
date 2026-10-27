@@ -24,6 +24,10 @@ function makeExamDb(db, prepared) {
   }
 
   // A new window also clears finalized_at, so a moved end finalizes again.
+  function examExists(id) {
+    return !!prepared('SELECT 1 FROM exams WHERE id = ?').get(id);
+  }
+
   function setExamWindow(id, startsAt, endsAt) {
     prepared('UPDATE exams SET starts_at = ?, ends_at = ?, finalized_at = NULL, updated_at = ? WHERE id = ?').run(startsAt, endsAt, now(), id);
   }
@@ -250,6 +254,7 @@ function makeExamDb(db, prepared) {
 
   return {
     ensureExam,
+    examExists,
     setExamWindow,
     setExamPublished,
     setExamLockPractice,

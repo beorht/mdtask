@@ -5,8 +5,12 @@ const { seed } = require('./seed');
 const { seedSqlExercises } = require('./seed-sql-exercises');
 const { seedLanguageExercises } = require('./seed-language-exercises');
 const { DEFAULT_PASSWORD, hashPassword, verifyPassword } = require('../lib/password');
-const { TEST_GROUP } = require('../lib/test-access');
+const { TEST_GROUP, seesSharedAssignments } = require('../lib/test-access');
 const { makeExamDb } = require('./exam');
+const { makeEmmetDb } = require('./emmet');
+const { makeHtmlCourseDb } = require('./html-course');
+const { makeCssCourseDb } = require('./css-course');
+const { makePythonCourseDb } = require('./python-course');
 
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, '..', '..', 'data', 'mdtask.db');
 
@@ -102,6 +106,10 @@ function prepared(sql) {
 
 // Итоговая контрольная (src/db/exam.js).
 const examDb = makeExamDb(db, prepared);
+const emmetDb = makeEmmetDb(db, prepared);
+const htmlCourseDb = makeHtmlCourseDb(db, prepared);
+const cssCourseDb = makeCssCourseDb(db, prepared);
+const pythonCourseDb = makePythonCourseDb(db, prepared);
 
 function rowToUser(row) {
   return {
@@ -152,8 +160,11 @@ function getUsers() {
   return prepared('SELECT * FROM users').all().map(rowToUser);
 }
 
+// ID для входа — без учёта регистра и пробелов по краям («stweb-203 » = «stWeb-203»): точное совпадение важнее.
 function verifyUserCredentials(id, password) {
-  const row = prepared('SELECT * FROM users WHERE id = ?').get(id);
+  const login = String(id || '').trim();
+  const row = prepared('SELECT * FROM users WHERE id = ?').get(login)
+    || prepared('SELECT * FROM users WHERE id = ? COLLATE NOCASE').get(login);
   if (!row) return null;
   if (!verifyPassword(password, row.password_hash, row.password_salt)) return null;
   return rowToUser(row);
@@ -349,9 +360,9 @@ function getAssignmentsForStudent(studentId, studentGroup) {
   return prepared(
     `SELECT * FROM assignments
      WHERE (target_type = 'individual' AND target_student_id = ?)
-        OR (target_type = 'group' AND (target_group IS NULL OR target_group = ? OR ? = ?))`
+        OR (target_type = 'group' AND ((target_group IS NULL AND ? = 1) OR target_group = ? OR ? = ?))`
   )
-    .all(studentId, studentGroup || null, studentGroup || null, TEST_GROUP)
+    .all(studentId, seesSharedAssignments(studentGroup) ? 1 : 0, studentGroup || null, studentGroup || null, TEST_GROUP)
     .map(rowToAssignment);
 }
 
@@ -360,6 +371,10 @@ function createUser({ id, role, name, group = null, password = DEFAULT_PASSWORD,
   prepared(
     'INSERT INTO users (id, role, name, student_group, password_hash, password_salt, must_change_password) VALUES (?, ?, ?, ?, ?, ?, ?)'
   ).run(id, role, name, group, hash, salt, mustChangePassword ? 1 : 0);
+}
+
+function setStudentGroupForTests(id, group) {
+  prepared('UPDATE users SET student_group = ? WHERE id = ?').run(group, id);
 }
 
 function setMustChangePasswordForTests(id) {
@@ -667,70 +682,6 @@ function seedLabTaskForTests(task, studentId, { passed = 0, total = 8, solved = 
   }
 }
 
-function rowToPythonBasicsProgress(row) {
-  return {
-    studentId: row.student_id,
-    taskId: row.task_id,
-    draft: row.draft,
-    attempts: row.attempts,
-    bestPassed: row.best_passed,
-    total: row.total,
-    solvedAt: row.solved_at,
-    updatedAt: row.updated_at,
-  };
-}
-
-// studentId omitted: everyone's rows (admin results page).
-function getPythonBasicsProgress(studentId) {
-  const rows = studentId
-    ? prepared('SELECT * FROM python_basics_progress WHERE student_id = ?').all(studentId)
-    : prepared('SELECT * FROM python_basics_progress').all();
-  return rows.map(rowToPythonBasicsProgress);
-}
-
-function savePythonBasicsDraft(studentId, taskId, code) {
-  const now = new Date().toISOString();
-  prepared(
-    `INSERT INTO python_basics_progress (student_id, task_id, draft, updated_at) VALUES (?, ?, ?, ?)
-     ON CONFLICT (student_id, task_id) DO UPDATE SET draft = excluded.draft, updated_at = excluded.updated_at`
-  ).run(studentId, taskId, code, now);
-  return now;
-}
-
-// One check: stores the attempt and updates the totals; solved_at is set by the first full pass.
-const recordPythonBasicsAttempt = db.transaction((studentId, taskId, code, check) => {
-  const now = new Date().toISOString();
-  const results = check.tests.map((t) => ({ passed: t.passed, error: t.error }));
-  prepared(
-    `INSERT INTO python_basics_attempts (student_id, task_id, code, passed, total, results, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`
-  ).run(studentId, taskId, code, check.passed, check.total, JSON.stringify(results), now);
-  prepared(
-    `INSERT INTO python_basics_progress (student_id, task_id, draft, attempts, best_passed, total, solved_at, updated_at)
-     VALUES (?, ?, ?, 1, ?, ?, ?, ?)
-     ON CONFLICT (student_id, task_id) DO UPDATE SET
-       draft = excluded.draft,
-       attempts = attempts + 1,
-       best_passed = MAX(best_passed, excluded.best_passed),
-       total = excluded.total,
-       solved_at = COALESCE(solved_at, excluded.solved_at),
-       updated_at = excluded.updated_at`
-  ).run(studentId, taskId, code, check.passed, check.total, check.solved ? now : null, now);
-});
-
-function getPythonBasicsAttempts(studentId, taskId) {
-  return prepared('SELECT * FROM python_basics_attempts WHERE student_id = ? AND task_id = ? ORDER BY id DESC')
-    .all(studentId, taskId)
-    .map((row) => ({
-      id: row.id,
-      code: row.code,
-      passed: row.passed,
-      total: row.total,
-      results: JSON.parse(row.results),
-      createdAt: row.created_at,
-    }));
-}
-
 // Tests only: the row ib/ctf/caesar-secret/generate_challenge.py writes for a student.
 function seedCaesarSecretForTests(studentId, { solved = false } = {}) {
   prepared(
@@ -739,8 +690,32 @@ function seedCaesarSecretForTests(studentId, { solved = false } = {}) {
   ).run(`secret-${studentId}`, studentId, solved ? 1 : 0, solved ? new Date().toISOString() : null, new Date().toISOString());
 }
 
+// Login sessions (src/lib/session-store.js).
+function getSession(sid, now) {
+  const row = prepared('SELECT sess FROM sessions WHERE sid = ? AND expires_at > ?').get(sid, now);
+  return row ? row.sess : null;
+}
+
+function setSession(sid, sess, expiresAt) {
+  prepared(
+    'INSERT INTO sessions (sid, sess, expires_at) VALUES (?, ?, ?) ON CONFLICT(sid) DO UPDATE SET sess = excluded.sess, expires_at = excluded.expires_at'
+  ).run(sid, sess, expiresAt);
+}
+
+function touchSession(sid, expiresAt) {
+  prepared('UPDATE sessions SET expires_at = ? WHERE sid = ?').run(expiresAt, sid);
+}
+
+function destroySession(sid) {
+  prepared('DELETE FROM sessions WHERE sid = ?').run(sid);
+}
+
+function purgeExpiredSessions(now) {
+  return prepared('DELETE FROM sessions WHERE expires_at <= ?').run(now).changes;
+}
+
 function __resetForTests() {
-  db.exec('DELETE FROM exam_pcs; DELETE FROM exam_events; DELETE FROM exam_tasks; DELETE FROM exam_variants; DELETE FROM exams; DELETE FROM python_basics_attempts; DELETE FROM python_basics_progress; DELETE FROM code_drafts; DELETE FROM ib_guard_events; DELETE FROM ib_task_defense; DELETE FROM ib_logs_detector; DELETE FROM ib_lab_log; DELETE FROM ib_lab_tasks; DELETE FROM ib_terminal_log; DELETE FROM ib_terminal_tasks; DELETE FROM ib_config_tasks; DELETE FROM ctf_caesar_secrets; DELETE FROM sql_attempts; DELETE FROM submissions; DELETE FROM assignments; DELETE FROM courses; DELETE FROM users;');
+  db.exec('DELETE FROM sessions; DELETE FROM python_course_attempts; DELETE FROM python_course_progress; DELETE FROM css_events; DELETE FROM css_progress; DELETE FROM html_events; DELETE FROM html_progress; DELETE FROM emmet_events; DELETE FROM emmet_progress; DELETE FROM emmet_assignments; DELETE FROM emmet_sessions; DELETE FROM exam_pcs; DELETE FROM exam_events; DELETE FROM exam_tasks; DELETE FROM exam_variants; DELETE FROM exams; DELETE FROM python_basics_attempts; DELETE FROM python_basics_progress; DELETE FROM code_drafts; DELETE FROM ib_guard_events; DELETE FROM ib_task_defense; DELETE FROM ib_logs_detector; DELETE FROM ib_lab_log; DELETE FROM ib_lab_tasks; DELETE FROM ib_terminal_log; DELETE FROM ib_terminal_tasks; DELETE FROM ib_config_tasks; DELETE FROM ctf_caesar_secrets; DELETE FROM sql_attempts; DELETE FROM submissions; DELETE FROM assignments; DELETE FROM courses; DELETE FROM users;');
   seed(db);
 }
 
@@ -778,6 +753,7 @@ module.exports = {
   createUser,
   setMustChangePasswordForTests,
   getDistinctStudentGroups,
+  setStudentGroupForTests,
   getCourses,
   getAssignments,
   getAssignmentsForStudent,
@@ -795,10 +771,6 @@ module.exports = {
   setAssignmentSubject,
   getCodeDraft,
   saveCodeDraft,
-  getPythonBasicsProgress,
-  savePythonBasicsDraft,
-  recordPythonBasicsAttempt,
-  getPythonBasicsAttempts,
   updateAssignmentTitle,
   setAssignmentDueDateForTests,
   getLanguageExercises,
@@ -808,6 +780,15 @@ module.exports = {
   getSqlAttempts,
   getSolvedSqlExerciseIds,
   getAllSqlAttempts,
+  getSession,
+  setSession,
+  touchSession,
+  destroySession,
+  purgeExpiredSessions,
   ...examDb,
+  ...emmetDb,
+  ...htmlCourseDb,
+  ...cssCourseDb,
+  ...pythonCourseDb,
   __resetForTests,
 };

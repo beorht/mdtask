@@ -1,0 +1,164 @@
+[
+  {
+    "id": "fb-01",
+    "title": "Классика",
+    "statement": "Дано N. Для чисел от 1 до N выведите по строке: «Fizz» (делится на 3), «Buzz» (на 5), «FizzBuzz» (на 3 и на 5) или само число.",
+    "openTests": 2,
+    "tests": [
+      {
+        "input": [
+          "15"
+        ],
+        "output": "1\n2\nFizz\n4\nBuzz\nFizz\n7\n8\nFizz\nBuzz\n11\nFizz\n13\n14\nFizzBuzz"
+      },
+      {
+        "input": [
+          "5"
+        ],
+        "output": "1\n2\nFizz\n4\nBuzz"
+      },
+      {
+        "input": [
+          "1"
+        ],
+        "output": "1"
+      },
+      {
+        "input": [
+          "31"
+        ],
+        "output": "1\n2\nFizz\n4\nBuzz\nFizz\n7\n8\nFizz\nBuzz\n11\nFizz\n13\n14\nFizzBuzz\n16\n17\nFizz\n19\nBuzz\nFizz\n22\n23\nFizz\nBuzz\n26\nFizz\n28\n29\nFizzBuzz\n31"
+      }
+    ],
+    "require": [
+      "for"
+    ]
+  },
+  {
+    "id": "fb-02",
+    "title": "Свои делители",
+    "statement": "Даны N, a и b. Для чисел от 1 до N выведите в одну строку через пробел: «Fizz» для кратных a, «Buzz» для кратных b, «FizzBuzz» для кратных обоим, иначе число.",
+    "openTests": 2,
+    "tests": [
+      {
+        "input": [
+          "10",
+          "2",
+          "3"
+        ],
+        "output": "1 Fizz Buzz Fizz 5 FizzBuzz 7 Fizz Buzz Fizz"
+      },
+      {
+        "input": [
+          "12",
+          "4",
+          "6"
+        ],
+        "output": "1 2 3 Fizz 5 Buzz 7 Fizz 9 10 11 FizzBuzz"
+      },
+      {
+        "input": [
+          "5",
+          "7",
+          "11"
+        ],
+        "output": "1 2 3 4 5"
+      }
+    ]
+  },
+  {
+    "id": "fb-03",
+    "title": "Правила из ввода",
+    "statement": "Дано N, затем k и k строк «делитель слово». Для каждого числа от 1 до N склейте слова всех правил, делителю которых оно кратно (в порядке ввода правил); если ни одно не подошло — число. Выведите результаты через пробел.",
+    "openTests": 2,
+    "tests": [
+      {
+        "input": [
+          "15",
+          "2",
+          "3 Fizz",
+          "5 Buzz"
+        ],
+        "output": "1 2 Fizz 4 Buzz Fizz 7 8 Fizz Buzz 11 Fizz 13 14 FizzBuzz"
+      },
+      {
+        "input": [
+          "14",
+          "3",
+          "2 Ко",
+          "7 Ла",
+          "3 Ми"
+        ],
+        "output": "1 Ко Ми Ко 5 КоМи Ла Ко Ми Ко 11 КоМи 13 КоЛа"
+      },
+      {
+        "input": [
+          "3",
+          "0"
+        ],
+        "output": "1 2 3"
+      }
+    ]
+  },
+  {
+    "id": "fb-04",
+    "title": "Функция fizzbuzz",
+    "statement": "Напишите функцию fizzbuzz(n), которая возвращает список строк классического FizzBuzz от 1 до n. Дано N — выведите результат через запятую и пробел.",
+    "openTests": 2,
+    "tests": [
+      {
+        "input": [
+          "15"
+        ],
+        "output": "1, 2, Fizz, 4, Buzz, Fizz, 7, 8, Fizz, Buzz, 11, Fizz, 13, 14, FizzBuzz"
+      },
+      {
+        "input": [
+          "3"
+        ],
+        "output": "1, 2, Fizz"
+      },
+      {
+        "input": [
+          "20"
+        ],
+        "output": "1, 2, Fizz, 4, Buzz, Fizz, 7, 8, Fizz, Buzz, 11, Fizz, 13, 14, FizzBuzz, 16, 17, Fizz, 19, Buzz"
+      }
+    ],
+    "require": [
+      "def:fizzbuzz"
+    ]
+  },
+  {
+    "id": "fb-05",
+    "title": "Подсчёт",
+    "statement": "Используя функцию fizzbuzz(n) из прошлой задачи, для данного N выведите, сколько раз встретились «Fizz», «Buzz», «FizzBuzz» и сколько чисел осталось, — четыре строки вида «Fizz: 4». Без метода count.",
+    "openTests": 2,
+    "tests": [
+      {
+        "input": [
+          "15"
+        ],
+        "output": "Fizz: 4\nBuzz: 2\nFizzBuzz: 1\nЧисел: 8"
+      },
+      {
+        "input": [
+          "100"
+        ],
+        "output": "Fizz: 27\nBuzz: 14\nFizzBuzz: 6\nЧисел: 53"
+      },
+      {
+        "input": [
+          "2"
+        ],
+        "output": "Fizz: 0\nBuzz: 0\nFizzBuzz: 0\nЧисел: 2"
+      }
+    ],
+    "forbid": [
+      ".count"
+    ],
+    "require": [
+      "def:fizzbuzz"
+    ]
+  }
+]

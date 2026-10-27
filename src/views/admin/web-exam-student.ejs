@@ -1,0 +1,95 @@
+<%- include('partials/start') %>
+
+<nav class="a-breadcrumbs" aria-label="Навигация">
+  <a href="/admin/web-exam/<%= def.id %>">Контрольная WEB</a><span>/</span><span><%= student.name %></span>
+</nav>
+
+<div class="a-page-head">
+  <div>
+    <h1><%= student.name %></h1>
+    <p class="a-subtitle"><a href="/admin/students/<%= student.id %>"><%= student.id %></a> · «<%= v.app %>» · ключ localStorage <code><%= v.storageKey %></code> ·
+      последнее сохранение: <%= savedAt ? view.formatDateTime(savedAt) : 'не сохранял' %></p>
+  </div>
+  <div class="a-page-actions">
+    <a class="a-btn a-btn-primary" href="/admin/web-exam/<%= def.id %>/students/<%= student.id %>/files.zip"><%- icon('download') %><span>Файлы студента (zip)</span></a>
+  </div>
+</div>
+
+<div class="a-stats">
+  <div class="a-stat"><span class="a-stat-value"><%= grade.graded ? grade.total + '/' + maxScore : '—' %></span><span class="a-stat-label">Баллы</span></div>
+  <div class="a-stat"><span class="a-stat-value"><%= grade.grade || '—' %></span><span class="a-stat-label">Оценка</span></div>
+  <div class="a-stat"><span class="a-stat-value"><%= snapshots.length %></span><span class="a-stat-label">Снимков кода</span></div>
+  <div class="a-stat"><span class="a-stat-value"><%= counts.paste_blocked || 0 %></span><span class="a-stat-label">Попыток вставки</span></div>
+  <div class="a-stat"><span class="a-stat-value"><%= (counts.page_leave || 0) + (counts.visibility || 0) %></span><span class="a-stat-label">Уходов со страницы</span></div>
+</div>
+
+<section class="a-card" id="preview">
+  <div class="a-card-head"><h2>Приложение студента</h2>
+    <div class="a-exam-actions">
+      <select data-snapshot class="a-input" aria-label="Версия кода">
+        <option value="">последнее сохранение</option>
+        <% snapshots.slice().reverse().forEach(function (n) { %><option value="<%= n %>">снимок <%= n.replace('-app.json', '') %></option><% }) %>
+      </select>
+      <button type="button" class="a-btn a-btn-secondary" data-run>▶ Запустить</button>
+      <button type="button" class="a-btn a-btn-secondary" data-reset>↺ Очистить localStorage</button>
+    </div>
+  </div>
+  <p class="a-muted">Код студента выполняется в изолированном окне: он не видит админку и ваш вход. localStorage окна — своё хранилище, «Запустить» ещё раз — как перезагрузка страницы.</p>
+  <iframe class="a-web-frame" title="Приложение студента" sandbox="allow-scripts allow-forms allow-modals" data-frame></iframe>
+  <pre class="a-code a-web-console" data-console>(консоль пуста)</pre>
+  <div class="a-web-files">
+    <% Object.keys(files).forEach(function (f) { %>
+      <details><summary><code><%= f %></code> — <%= files[f].length %> симв., <%= files[f] ? files[f].split('\n').length : 0 %> строк</summary><pre class="a-code" data-file-view="<%= f %>"><%= files[f] || '(пусто)' %></pre></details>
+    <% }) %>
+  </div>
+  <script type="application/json" id="webFiles"><%- JSON.stringify(files).replace(/</g, '\\u003c') %></script>
+  <div data-snapshot-url="/admin/web-exam/<%= def.id %>/students/<%= student.id %>/snapshot/" hidden></div>
+</section>
+
+<section class="a-card">
+  <div class="a-card-head"><h2>Оценка по требованиям</h2></div>
+  <form method="post" action="/admin/web-exam/<%= def.id %>/students/<%= student.id %>/grade" class="a-web-grade">
+    <ol>
+      <% requirements.forEach(function (r) { const m = grade.marks[r.id]; %>
+        <li>
+          <div><strong><%= r.title %>.</strong> <span class="a-muted"><%= r.text %></span></div>
+          <div class="a-segmented" role="radiogroup" aria-label="<%= r.title %>">
+            <% marks.forEach(function (p) { %>
+              <label><input type="radio" name="m<%= r.id %>" value="<%= p %>" <%= m === p ? 'checked' : '' %>> <%= p === 0 ? 'нет — 0' : p === 5 ? 'частично — 5' : 'да — 10' %></label>
+            <% }) %>
+          </div>
+        </li>
+      <% }) %>
+    </ol>
+    <label class="a-web-comment">Комментарий студенту (виден после публикации результатов)
+      <textarea name="comment" rows="3" maxlength="4000"><%= grade.comment %></textarea></label>
+    <button type="submit" class="a-btn a-btn-primary">Сохранить оценку</button>
+    <span class="a-muted">Сумма и оценка считаются сами: 86+ — 5, 71+ — 4, 56+ — 3. Если не отметить ни одного требования — работа не оценена.</span>
+  </form>
+  <details><summary>Исходные данные студента</summary>
+    <table class="a-table"><thead><tr><th><%= v.name %></th><th><%= v.category %></th><th><%= v.number %></th><th><%= v.extra %></th></tr></thead>
+      <tbody><% v.data.forEach(function (d) { %><tr><td><%= d.name %></td><td><%= d.category %></td><td><%= d.number %></td><td><%= d.extra %></td></tr><% }) %></tbody></table>
+  </details>
+</section>
+
+<section class="a-card a-card-flush">
+  <div class="a-card-head a-card-head-pad"><h2>Журнал действий (последние <%= events.length %>)</h2></div>
+  <div class="a-table-wrap">
+    <table class="a-table">
+      <thead><tr><th>Время</th><th>Событие</th><th>Подробности</th></tr></thead>
+      <tbody>
+        <% events.forEach(function (e) { %>
+          <tr class="<%= suspicious.includes(e.type) ? 'a-exam-warn-row' : '' %>">
+            <td class="a-nowrap a-muted"><%= view.formatDateTime(e.ts) %></td>
+            <td><code><%= e.type %></code></td>
+            <td class="a-muted"><%= e.summary %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<script src="/js/web-runner.js" defer></script>
+<script src="/js/admin-web-exam.js" defer></script>
+<%- include('partials/end') %>

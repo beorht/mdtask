@@ -1,0 +1,98 @@
+<%- include('partials/start') %>
+<%
+const CELL = { off: ['', ''], none: ['·', 'не открывал'], opened: ['○', 'открыл'], tried: ['×', 'пробовал'], partial: ['◐', 'почти'], solved: ['✓', 'решено'] };
+const sec = o.sections.find(function (x) { return x.key === tab; });
+const cols = sec.bank;
+const qs = function (extra) { const p = new URLSearchParams(Object.assign({ q: filters.q, group: filters.group, tab: tab }, extra)); return '?' + p.toString(); };
+%>
+
+<div class="a-page-head">
+  <div>
+    <h1>Emmet · Тетрадь</h1>
+    <p class="a-subtitle">Тренажёр вёрстки группы <strong><%= groups.join(', ') %></strong> (и TEST): <%= o.sections[0].size %> общих обучающих шагов с анимацией и подсказками, затем у каждого свои <%= o.sections[1].size %> работ с условием (из <%= o.sections[1].bank.length %>) и <%= o.sections[2].size %> работ без подсказок — только образец HTML (из <%= o.sections[2].bank.length %>). Каждую попытку перепроверяет сервер; HTML, набранный руками, не засчитывается.</p>
+  </div>
+  <div class="a-page-actions">
+    <a class="a-btn a-btn-secondary" href="/admin/emmet.csv"><%- icon('download') %><span>CSV</span></a>
+    <a class="a-btn a-btn-primary" href="/admin/emmet<%= qs({ pick: '1' }) %>">Выбрать 4 студентов</a>
+  </div>
+</div>
+
+<div class="a-stats">
+  <div class="a-stat"><span class="a-stat-value"><%= o.started %></span><span class="a-stat-label">Начали</span></div>
+  <% o.sections.forEach(function (x) { %><div class="a-stat"><span class="a-stat-value"><%= x.finished %></span><span class="a-stat-label">Прошли: <%= x.label.toLowerCase() %></span></div><% }) %>
+  <div class="a-stat"><span class="a-stat-value"><%= o.rows.filter(function (r) { return r.signals.length; }).length %></span><span class="a-stat-label">С сигналами</span></div>
+</div>
+
+<section class="a-card">
+  <div class="a-card-head"><h2>Занятие</h2></div>
+  <div class="a-exam-actions">
+    <% o.sessions.forEach(function (s) { %>
+      <form method="post" action="/admin/emmet/session" <% if (!s.closedAt) { %>data-confirm="Завершить занятие группы <%= s.group %>?|Студенты увидят «Занятие окончено», новые попытки не принимаются. Открыть снова можно в любой момент.|Завершить"<% } %>>
+        <input type="hidden" name="group" value="<%= s.group %>">
+        <input type="hidden" name="closed" value="<%= s.closedAt ? '0' : '1' %>">
+        <button type="submit" class="a-btn <%= s.closedAt ? 'a-btn-primary' : 'a-btn-secondary' %>"><%= s.closedAt ? 'Открыть занятие ' + s.group : 'Завершить занятие ' + s.group %></button>
+        <span class="a-muted"><%= s.closedAt ? 'завершено ' + view.formatDateTime(s.closedAt) : 'идёт' %></span>
+      </form>
+    <% }) %>
+  </div>
+  <p class="a-muted">Сигналы для устной проверки: HTML набран вручную, заблокированные вставки, решение сразу после долгого ухода со страницы, браузер прислал другой результат, чем у сервера, много времени вне страницы, открытый ответ в обучении.</p>
+</section>
+
+<% if (o.picked) { %>
+<section class="a-card">
+  <div class="a-card-head"><h2>На устную проверку</h2><p class="a-muted">Сначала — студенты с сигналами, остальные случайно.</p></div>
+  <ul class="a-timeline">
+    <% o.picked.forEach(function (r) { %>
+      <li><a href="/admin/emmet/students/<%= r.student.id %>"><%= r.student.name %></a> <span class="a-muted"><%= o.sections.map(function (x) { return x.label + ' ' + r.solved[x.key] + '/' + r.total[x.key]; }).join(' · ') %><%= r.signals.length ? ' · ' + r.signals.join(', ') : '' %></span></li>
+    <% }) %>
+  </ul>
+</section>
+<% } %>
+
+<form class="a-filters" method="get" action="/admin/emmet" data-autosubmit>
+  <input type="hidden" name="tab" value="<%= tab %>">
+  <label class="a-input-search">
+    <%- icon('search') %>
+    <input type="search" name="q" value="<%= filters.q %>" placeholder="Поиск по имени или ID" aria-label="Поиск студента">
+  </label>
+  <select name="group" aria-label="Группа">
+    <option value="">Все группы</option>
+    <% groups.forEach(function (g) { %><option value="<%= g %>" <%= filters.group === g ? 'selected' : '' %>><%= g %></option><% }) %>
+  </select>
+  <button type="submit" class="a-btn a-btn-secondary a-noscript-only">Применить</button>
+</form>
+
+<div class="a-tabs" role="tablist">
+  <% o.sections.forEach(function (x) { %><a class="a-tab<%= tab === x.key ? ' is-active' : '' %>" href="/admin/emmet<%= qs({ tab: x.key }) %>"><%= x.label %></a><% }) %>
+</div>
+
+<section class="a-card a-card-flush">
+  <% if (!o.rows.length) { %>
+    <%- include('partials/empty', { emptyIcon: 'students', emptyTitle: 'Студентов нет', emptyText: 'Здесь появятся студенты группы WEB и их работы.' }) %>
+  <% } else { %>
+    <div class="a-table-wrap">
+      <table class="a-table a-emmet-matrix">
+        <thead>
+          <tr>
+            <th>Студент</th>
+            <% cols.forEach(function (e, i) { %><th class="a-num" title="<%= i + 1 %>. <%= e.title %>"><%= i + 1 %></th><% }) %>
+            <th class="a-num">Решено</th><th>Сигналы</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% o.rows.forEach(function (r) { const cells = r.cells[tab]; %>
+            <tr>
+              <td><a class="a-person" href="/admin/emmet/students/<%= r.student.id %>"><span class="a-avatar a-avatar-sm"><%= view.initials(r.student.name) %></span><%= r.student.name %></a></td>
+              <% cells.forEach(function (c, i) { %><td class="a-num a-emmet-cell is-<%= c %>" title="<%= cols[i].title %><%= CELL[c][1] ? ': ' + CELL[c][1] : '' %>"><%= CELL[c][0] %></td><% }) %>
+              <td class="a-num a-nowrap"><%= r.solved[tab] + ' / ' + r.total[tab] %></td>
+              <td class="a-muted"><%= r.signals.join(', ') || '—' %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <div class="a-card-foot a-muted">✓ решено · ◐ почти · × пробовал · ○ открыл · · не открывал<%= tab !== 'lesson' ? ' · пусто — работы нет в наборе студента' : '' %></div>
+  <% } %>
+</section>
+
+<%- include('partials/end') %>

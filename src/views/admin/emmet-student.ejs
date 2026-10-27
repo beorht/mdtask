@@ -1,0 +1,70 @@
+<%- include('partials/start') %>
+<%
+const d = detail; const r = d.row;
+const STATE = { none: 'не открывал', opened: 'открыл', tried: 'пробовал', partial: 'почти', solved: 'решено' };
+const TYPE = { open: 'открыл', attempt: 'попытка', paste: 'вставка заблокирована', away: 'уходил со страницы', hint: 'открыл подсказку' };
+const SECTION = { lesson: 'обучение', emmet: 'с условием', blind: 'без подсказок' };
+%>
+<nav class="a-breadcrumbs" aria-label="Навигация"><a href="/admin/emmet">Emmet · Тетрадь</a><span>/</span><span><%= d.student.name %></span></nav>
+
+<div class="a-page-head">
+  <div>
+    <h1><%= d.student.name %></h1>
+    <p class="a-subtitle">ID <code><%= d.student.id %></code> · группа <%= d.student.group || '—' %> · обучение <strong><%= r.solved.lesson %>/<%= r.total.lesson %></strong> · с условием <strong><%= r.solved.emmet %>/<%= r.total.emmet %></strong> · без подсказок <strong><%= r.solved.blind %>/<%= r.total.blind %></strong> · попыток <%= r.sum.attempts %><%= r.lastAt ? ' · последнее действие ' + view.formatDateTime(r.lastAt) : '' %></p>
+    <% if (r.signals.length) { %><p class="a-muted">Сигналы: <strong><%= r.signals.join(', ') %></strong></p><% } %>
+  </div>
+  <div class="a-page-actions">
+    <form method="post" action="/admin/emmet/students/<%= d.student.id %>/reassign" data-confirm="Выдать новый набор?|Студент получит другие работы с условием и без подсказок. Статистика решённых сохранится.|Выдать">
+      <button type="submit" class="a-btn a-btn-secondary">Новый набор</button>
+    </form>
+    <form method="post" action="/admin/emmet/students/<%= d.student.id %>/reset" data-confirm="Сбросить статистику?|Попытки, решения и журнал студента в тренажёре будут удалены. Набор работ останется.|Сбросить">
+      <button type="submit" class="a-btn a-btn-secondary">Сбросить</button>
+    </form>
+  </div>
+</div>
+
+<section class="a-card a-card-flush">
+  <div class="a-table-wrap">
+    <table class="a-table a-table-cards">
+      <thead><tr><th>№</th><th>Работа</th><th>Состояние</th><th class="a-num">Попыток</th><th class="a-num">Вручную</th><th class="a-num">Вставок</th><th class="a-num">Уходов</th><th>Решено</th></tr></thead>
+      <tbody>
+        <% d.items.forEach(function (it) { const s = it.stats; %>
+          <tr>
+            <td data-label="№"><%= it.number %></td>
+            <td data-label="Работа"><%= it.exercise.title %> <span class="a-muted"><%= SECTION[it.exercise.section] %></span>
+              <% if (s && (s.solvedCode || s.lastCode)) { %>
+                <details><summary class="a-muted"><%= s.solvedCode ? 'Код решения' : 'Последний код' %></summary><pre class="a-code"><%= s.solvedCode || s.lastCode %></pre></details>
+              <% } %>
+            </td>
+            <td data-label="Состояние"><%- include('partials/status', { key: it.state === 'solved' ? 'done' : it.state === 'none' ? 'not_submitted' : 'in_progress' }) %> <span class="a-muted"><%= STATE[it.state] %></span><% if (s && s.solvedAfterAway) { %> <span class="a-muted">· сразу после ухода</span><% } %><% if (s && s.hints) { %> <span class="a-muted">· подсказок: <%= s.hints %><%= s.solutionShown ? ', открыл ответ' : '' %></span><% } %><% if (s && s.clientMismatch) { %> <span class="a-muted">· браузер ≠ сервер: <%= s.clientMismatch %></span><% } %></td>
+            <td data-label="Попыток" class="a-num"><%= s ? s.attempts : 0 %><%= s && s.attemptsToSolve ? ' (до решения ' + s.attemptsToSolve + ')' : '' %></td>
+            <td data-label="Вручную" class="a-num"><%= s ? s.handwritten : 0 %></td>
+            <td data-label="Вставок" class="a-num"><%= s ? s.pastes : 0 %></td>
+            <td data-label="Уходов" class="a-num"><%= s ? s.aways : 0 %><%= s && s.awayMs ? ' (' + Math.round(s.awayMs / 1000) + ' с)' : '' %></td>
+            <td data-label="Решено" class="a-nowrap a-muted"><%= s && s.solvedAt ? view.formatDateTime(s.solvedAt) : '—' %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="a-card">
+  <div class="a-card-head"><h2>Журнал</h2><p class="a-muted">Последние <%= d.events.length %> событий, новые сверху.</p></div>
+  <% if (!d.events.length) { %><p class="a-muted">Студент ещё не открывал тренажёр.</p><% } else { %>
+    <ul class="a-timeline">
+      <% d.events.forEach(function (e) { const ex = (d.items.find(function (it) { return it.exercise.id === e.exercise_id; }) || {}).exercise; %>
+        <li>
+          <span class="a-muted a-nowrap"><%= view.formatDateTime(e.created_at) %></span>
+          <%= TYPE[e.type] || e.type %> · <%= ex ? ex.title : e.exercise_id %>
+          <% if (e.type === 'attempt') { %><span class="a-muted">— <%= e.status %><%= e.client_status !== e.status ? ' (браузер: ' + e.client_status + ')' : '' %><%= e.handwritten ? ', HTML вручную' : '' %></span><% } %>
+          <% if (e.type === 'paste') { %><span class="a-muted">— <%= e.kind %></span><% } %>
+          <% if (e.type === 'hint') { %><span class="a-muted">— <%= e.kind === 'solution' ? 'ответ' : String(e.kind).replace('hint-', '№') %></span><% } %>
+          <% if (e.type === 'away') { %><span class="a-muted">— <%= Math.round(e.ms / 1000) %> с</span><% } %>
+        </li>
+      <% }) %>
+    </ul>
+  <% } %>
+</section>
+
+<%- include('partials/end') %>

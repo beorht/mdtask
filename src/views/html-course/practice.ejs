@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#F3EEE6">
+    <title><%= pageTitle %></title>
+    <link rel="icon" type="image/png" href="/img/favicon.png">
+    <%# N.2. Практическая работа предмета «Web-разработка: HTML»: клиент собран из emmet/src/html/ (scripts/vendor/emmet.sh). %>
+    <link rel="stylesheet" href="/vendor/fonts/fonts.css">
+    <link rel="stylesheet" href="/vendor/html-course/html-course.css">
+  </head>
+  <body>
+    <div class="login-screen" id="login" hidden></div>
+    <div class="app" id="app" hidden data-topic="<%= topic.key %>" data-base="<%= base %>">
+      <header class="topbar">
+        <div class="topbar-start">
+          <a class="btn btn-ghost home-link" href="<%= base %>" title="Вернуться на страницу предмета">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+            <span>К темам</span>
+          </a>
+          <div class="brand">
+            <span class="brand-mark" aria-hidden="true">&lt;/&gt;</span>
+            <span class="brand-name">HTML</span>
+            <span class="brand-sub">тема <%= topic.number %>. <%= topic.title %></span>
+          </div>
+        </div>
+        <nav class="lesson-nav" id="lesson-nav" aria-label="Задания"></nav>
+        <div class="user-chip" id="user-chip"></div>
+      </header>
+      <main class="workspace">
+        <section class="panel target" id="target" aria-labelledby="target-title"></section>
+        <section class="panel practice" id="practice" aria-labelledby="practice-title"></section>
+      </main>
+    </div>
+    <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+    <noscript>Для работы практической нужен JavaScript.</noscript>
+    <script type="module" src="/vendor/html-course/html-course.js"></script>
+  </body>
+</html>

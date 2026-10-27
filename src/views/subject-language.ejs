@@ -13,13 +13,34 @@
       <h1><%= subject.title %></h1>
 
       <nav class="subject-tabs" aria-label="Разделы предмета">
-        <a href="#assignments">Задания со сдачей</a>
-        <a href="#bank">Банк задач</a>
+        <% if (course) { %><a href="#course">Курс</a><% } %>
+        <% if (!course) { %><a href="#assignments">Задания со сдачей</a><% } %>
+        <% if (!course) { %><a href="#bank">Банк задач</a><% } %>
       </nav>
 
+      <% if (course) { %>
+        <%# Курс «Начальный Python» — основное содержимое предмета (src/lib/python-course); задания со сдачей и банк — ниже. %>
+        <% const cpct = course.total ? Math.round((course.solved / course.total) * 100) : 0; %>
+        <section id="course" class="subject-block">
+          <h2 class="subject-block-title">Курс «<%= course.title %>»</h2>
+          <% const nAssign = Object.values(course.assignments).reduce(function (n, list) { return n + list.length; }, 0); %>
+          <p class="subject-block-lead">Python с нуля: в каждом уроке сначала теория с примерами, которые можно запустить прямо на странице, затем практика — задачи на алгоритмы с автопроверкой в браузере. Уроки открываются по порядку.<% if (nAssign) { %> Задания со сдачей (📎) стоят в уроках своей темы.<% } %></p>
+          <div class="subject-summary">
+            <span>Решено задач: <strong><%= course.solved %> / <%= course.total %></strong></span>
+            <% if (course.current) { %><span>Сейчас: <strong><%= course.current.number %>. <%= course.current.title %></strong></span><% } %>
+            <span class="progress subject-summary-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<%= cpct %>" aria-label="Прогресс курса">
+              <span class="progress-fill" style="width: <%= cpct %>%"></span>
+            </span>
+          </div>
+        </section>
+        <%- include('python-course/_modules', { summary: course, base: course.base }) %>
+      <% } %>
+
+      <%# С курсом задания со сдачей стоят в своих уроках (_modules.ejs), отдельного раздела нет. %>
+      <% if (!course) { %>
       <section id="assignments" class="subject-block">
         <h2 class="subject-block-title">Задания со сдачей</h2>
-        <p class="subject-block-lead">Решение загружается архивом (.zip / .rar), преподаватель проверяет его и ставит статус. Задания общие для Python и JavaScript — решайте на языке своей группы.</p>
+        <p class="subject-block-lead">Решение загружается архивом (.zip / .rar), преподаватель проверяет его и ставит статус. <%= subject.key === 'python' ? 'Здесь только задания по Python.' : 'Задания общие для Python и JavaScript — решайте на языке своей группы.' %></p>
         <% const c = subject.counts; const pct = c.total ? Math.round((c.done / c.total) * 100) : 0; %>
         <div class="subject-summary">
           <span>Выполнено <strong><%= c.done %> / <%= c.total %></strong></span>
@@ -52,7 +73,10 @@
           </div>
         <% }) %>
       </section>
+      <% } %>
 
+      <%# С курсом банка нет: его задачи стали задачами практики уроков (pyb-*). %>
+      <% if (!course) { %>
       <section id="bank" class="subject-block">
         <h2 class="subject-block-title">Банк задач <%= subject.title %></h2>
         <p class="subject-block-lead">Задачи для самостоятельной практики по темам — сдавать их не нужно.</p>
@@ -72,6 +96,7 @@
           </div>
         <% }) %>
       </section>
+      <% } %>
     </main>
   </div>
   <%- include('partials/scripts') %>
