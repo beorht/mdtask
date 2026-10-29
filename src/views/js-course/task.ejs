@@ -1,0 +1,105 @@
+<!-- src/views/js-course/task.ejs — задача урока курса «JavaScript: от синтаксиса до DOM».
+     СЛЕВА: условие, примеры, правила; СПРАВА (липко): редактор, ввод для «Запустить», вывод, результаты «Проверить»
+     (public/js/js-course.js). Узкий экран — одна колонка. -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <%- include('../partials/head', { pageTitle: lesson.number + '.' + task.number + '. ' + task.title }) %>
+  <link rel="stylesheet" href="/vendor/codemirror/5.65.16/codemirror.min.css">
+  <link rel="stylesheet" href="/vendor/codemirror/5.65.16/theme/material-darker.min.css">
+</head>
+<body>
+  <%- include('../partials/header') %>
+  <div class="app-layout">
+    <%- include('../partials/sidebar') %>
+    <main class="content pyb-page">
+      <nav class="breadcrumbs"><a href="/">Главная</a> / <a href="/subjects/javascript">JavaScript</a> / <a href="<%= base %>"><%= courseTitle %></a> / <a href="<%= base %>/<%= lesson.key %>/theory">Урок <%= lesson.number %></a> / <%= task.title %></nav>
+
+      <header class="sql-task-head">
+        <h1 class="sql-task-title"><%= lesson.number %>.<%= task.number %>. <%= task.title %></h1>
+        <div class="sql-task-meta">
+          <span class="sql-chip sql-chip-<%= task.solved ? 'done' : 'open' %>" data-pyc-chip><%= task.solved ? '✓ Решено' : '○ Не решено' %></span>
+          <span class="sql-chip">Задача <%= task.number %> / <%= lesson.total %></span>
+          <a class="sql-chip sql-chip-link" href="<%= base %>/<%= lesson.key %>/theory">📖 Теория урока</a>
+        </div>
+      </header>
+
+      <div class="pyb-workspace">
+        <div class="pyb-left">
+          <section class="task-panel pyb-statement">
+            <h2 class="task-panel-title">📝 Условие</h2>
+            <%- statementHtml %>
+            <% if (task.examples.length) { %>
+              <h3>Примеры</h3>
+              <div class="sql-table-wrap">
+                <table class="pyb-examples">
+                  <% const withFiles = task.examples.some(function (ex) { return ex.files; }); %>
+                  <thead><tr><% if (withFiles) { %><th>Файлы</th><% } %><th>Ввод</th><th>Вывод</th></tr></thead>
+                  <tbody>
+                    <% task.examples.forEach(function (ex) { %>
+                      <tr>
+                        <% if (withFiles) { %><td><% Object.keys(ex.files || {}).forEach(function (name) { %><div class="pyc-file-name"><%= name %></div><pre><%= ex.files[name] %></pre><% }) %></td><% } %>
+                        <td><pre><%= ex.input.length ? ex.input.join('\n') : '(нет ввода)' %></pre></td><td><pre><%= ex.output %></pre></td>
+                      </tr>
+                    <% }) %>
+                  </tbody>
+                </table>
+              </div>
+            <% } %>
+            <% if (task.forbidLabels.length || task.requireLabels.length) { %>
+              <%# Подписи правил кода — src/lib/js-course/rules.js (ruleLabel). %>
+              <h3>Правила</h3>
+              <ul class="pyc-rules">
+                <% if (task.requireLabels.length) { %><li>Обязательно: <%= task.requireLabels.join(', ') %>.</li><% } %>
+                <% if (task.forbidLabels.length) { %><li>Нельзя: <%= task.forbidLabels.join(', ') %> — этот шаг нужно написать самому.</li><% } %>
+              </ul>
+            <% } %>
+            <p class="pyb-note">Каждая строка ввода читается отдельным вызовом <code>input()</code> — в учебных задачах это функция сайта (на настоящей странице вместо неё — <code>prompt()</code> или поле формы), вывод — <code>console.log</code>. При проверке программа запускается на <%= task.tests.length %> тестах: на примерах и на других данных.</p>
+          </section>
+          <nav class="pyc-task-nav" aria-label="Задачи урока">
+            <% if (prev) { %><a class="topic-btn topic-btn-theory" href="<%= base %>/<%= lesson.key %>/<%= prev.id %>">← <%= prev.number %>. <%= prev.title %></a><% } %>
+            <% if (next) { %><a class="topic-btn topic-btn-theory" href="<%= base %>/<%= lesson.key %>/<%= next.id %>"><%= next.number %>. <%= next.title %> →</a><% } %>
+          </nav>
+        </div>
+
+        <section class="task-panel pyb-editor-panel" id="pycEditor"
+                 data-draft-url="<%= base %>/<%= lesson.key %>/<%= task.id %>/draft"
+                 data-check-url="<%= base %>/<%= lesson.key %>/<%= task.id %>/check"
+                 data-event-url="<%= base %>/<%= lesson.key %>/<%= task.id %>/event">
+          <div class="sql-panel-head">
+            <h2 class="task-panel-title">Ваш код</h2>
+            <span class="sql-hint">Ctrl+Enter — запустить</span>
+          </div>
+          <div class="code-file-pane">
+            <textarea class="sql-console code-file-source" data-pyc-code rows="14" spellcheck="false" autocomplete="off" aria-label="Код программы на JavaScript"><%= task.draft %></textarea>
+          </div>
+
+          <label class="pyb-stdin-label" for="pycStdin">Ввод для «Запустить» — каждое значение с новой строки</label>
+          <textarea id="pycStdin" class="pyb-stdin" rows="2" spellcheck="false" data-pyc-stdin><%= task.examples.length ? task.examples[0].input.join('\n') : '' %></textarea>
+
+          <div class="code-editor-actions">
+            <button type="button" class="topic-btn topic-btn-theory" data-pyc-action="run">▶ Запустить</button>
+            <button type="button" class="topic-btn topic-btn-practice" data-pyc-action="check">✓ Проверить</button>
+            <button type="button" class="topic-btn topic-btn-theory" data-pyc-action="stop" hidden>■ Остановить</button>
+            <span class="code-editor-status" data-pyc-status aria-live="polite"></span>
+          </div>
+
+          <div class="code-output-head">Вывод</div>
+          <pre class="code-output pyb-output" data-pyc-output aria-live="polite">Напишите программу и нажмите «Запустить» или «Проверить».</pre>
+
+          <div class="pyb-results" data-pyc-results hidden></div>
+          <p class="pyb-next" data-pyc-next <%= task.solved ? '' : 'hidden' %>>
+            <% if (next) { %><a class="topic-btn topic-btn-practice" href="<%= base %>/<%= lesson.key %>/<%= next.id %>">Следующая задача: <%= next.title %> →</a><% } else { %><a class="topic-btn topic-btn-practice" href="<%= base %>">Все уроки курса →</a><% } %>
+          </p>
+        </section>
+      </div>
+      <script type="application/json" id="pycTests"><%- JSON.stringify(task.tests).replace(/</g, '\\u003c') %></script>
+    </main>
+  </div>
+  <%- include('../partials/scripts') %>
+  <script src="/vendor/codemirror/5.65.16/codemirror.min.js" defer></script>
+  <script src="/vendor/codemirror/5.65.16/mode/javascript/javascript.min.js" defer></script>
+  <script src="/vendor/codemirror/5.65.16/addon/edit/matchbrackets.min.js" defer></script>
+  <script src="/js/js-course.js" defer></script>
+</body>
+</html>

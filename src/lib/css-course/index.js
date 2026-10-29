@@ -3,14 +3,18 @@
 // HTML-разметка (её студент видит и не меняет), эталонный CSS, ширины окна и состояния (:hover…) для проверки,
 // правила require / forbid. Студент пишет только CSS.
 // Проверка — в браузере (public/js/css-check.js): разметка рисуется с CSS студента и с эталоном, сравниваются
-// положение и размер каждого элемента и его видимые стили на каждой ширине и в каждом состоянии. Сервер сам
-// проверяет правила по тексту CSS (checkRules) и записывает попытку; вердикт сравнения приходит из браузера.
+// положение и размер каждого элемента и его видимые стили на каждой ширине и в каждом состоянии. Сервер проверяет
+// правила по тексту CSS (checkRules) и сам перепроверяет видимые стили (./cascade.js): «решено» засчитывается, только
+// если совпали и браузер, и сервер. Раскладку сервер без браузера не посчитает — её расхождение с эталоном
+// записывается сигналом (layoutDiff), а не отказом.
 // Темы открываются по порядку: теория — после практики предыдущей темы, практика — после прочтения теории.
 // Виден группам из CSS_GROUPS и TEST (hasFullAccess).
 const fs = require('fs');
 const path = require('path');
 const db = require('../../db');
 const { hasFullAccess } = require('../test-access');
+const { checkCss } = require('./cascade');
+const typing = require('../typing-check');
 
 const CSS_KEY = 'css';
 const CSS_TITLE = 'Web-разработка: CSS';
@@ -43,6 +47,7 @@ const TASK_BY_ID = new Map(TOPICS.flatMap((t) => t.tasks.map((task) => [task.id,
 const theoryId = (topicKey) => `${topicKey}:theory`;
 
 const STATUSES = new Set(['success', 'mismatch']);
+const MAX_HINTS = 3;
 const BLOCKED_KINDS = new Set(['paste', 'drop', 'bulk']);
 const MAX_CODE = 20000;
 const MAX_AWAY = 12 * 60 * 60 * 1000;
@@ -87,6 +92,8 @@ const emptyStats = () => ({
   success: 0,
   mismatch: 0,
   rules: 0,
+  server: 0,
+  layoutDiff: 0,
   pastes: 0,
   aways: 0,
   awayMs: 0,
@@ -202,7 +209,7 @@ function parseEvent(body, topic) {
   if (type === 'paste' && BLOCKED_KINDS.has(body.kind)) return { type, itemId: exerciseId, kind: body.kind };
   if (type === 'away' && Number.isFinite(body.ms) && body.ms > 0) return { type, itemId: exerciseId, ms: Math.min(Math.round(body.ms), MAX_AWAY) };
   if (type === 'attempt' && STATUSES.has(body.status)) {
-    return { type, itemId: exerciseId, clientStatus: body.status, code: String(body.code ?? '').slice(0, MAX_CODE) };
+    return { type, itemId: exerciseId, clientStatus: body.status, code: String(body.code ?? '').slice(0, MAX_CODE), summary: typing.sanitize(body.typing) };
   }
   throw new CssCourseError(400, 'Некорректное событие.');
 }
@@ -222,9 +229,27 @@ function recordEvent(user, topicKey, body, now = new Date().toISOString()) {
     stats.lastAwayMs = event.ms;
     stats.lastReturnAt = now;
   }
+  let hints = [];
   if (event.type === 'attempt') {
-    message = checkRules(event.code, TASK_BY_ID.get(event.itemId));
+    const task = TASK_BY_ID.get(event.itemId);
+    // Как набирался код: признаки «не руками» (и копия эталона) — сигналы для преподавателя (src/lib/typing-check.js).
+    const flags = typing.typingFlags(event.summary, event.code, { reference: task.css });
+    typing.addToStats(stats, flags);
+    event.typing = event.summary || flags.length ? { summary: event.summary, flags } : null;
+    message = checkRules(event.code, task);
     event.status = event.clientStatus === 'success' && message ? 'rules' : event.clientStatus;
+    if (event.status === 'success') {
+      // Перепроверка видимых стилей на сервере: подделанное «решено» без нужного CSS не пройдёт.
+      const server = checkCss(task, event.code);
+      if (!server.ok) {
+        event.status = 'server';
+        hints = server.diffs.slice(0, MAX_HINTS).map((d) => [d.where, d.el, `${d.prop} — не как в образце`].filter(Boolean).join(' · '));
+        message = 'Сервер перепроверил стили и нашёл отличие от образца.';
+      } else if (server.layoutDiffs.length) {
+        stats.layoutDiff += 1;
+        event.kind = 'layout';
+      }
+    }
     stats.attempts += 1;
     stats[event.status] += 1;
     stats.lastStatus = event.status;
@@ -238,8 +263,9 @@ function recordEvent(user, topicKey, body, now = new Date().toISOString()) {
     }
   }
   db.saveCssProgress(user.id, event.itemId, stats);
-  db.addCssEvent({ studentId: user.id, ...event, at: now });
-  return { ok: true, status: event.status || null, message: event.status === 'rules' ? message : null };
+  const { summary, ...logged } = event;
+  db.addCssEvent({ studentId: user.id, ...logged, at: now });
+  return { ok: true, status: event.status || null, message: ['rules', 'server'].includes(event.status) ? message : null, hints };
 }
 
 module.exports = {

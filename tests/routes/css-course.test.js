@@ -169,3 +169,29 @@ test('admin: matrix, student card with CSS and log, reset', async () => {
   await teacher.post('/admin/css/students/test-1/reset');
   assert.strictEqual(course.progressMap('test-1').size, 0);
 });
+
+test('server recheck: a faked «success» with the wrong CSS is not counted; typing flags are recorded', async () => {
+  const app = createApp();
+  const t = await loginAs(app, 'test-1');
+  const post = (body) => t.post(`${BASE}/api/connect/events`).send(body);
+  // браузер «сказал» success, но цвет другой — сервер не засчитывает
+  const fake = await post({ type: 'attempt', exerciseId: 'connect-01', status: 'success', code: 'h1 { color: blue; }' });
+  assert.strictEqual(fake.body.status, 'server');
+  assert.match(fake.body.hints[0], /цвет текста/);
+  assert.ok(!course.progressMap('test-1').get('connect-01').solvedAt);
+  // равнозначная запись засчитывается
+  assert.strictEqual((await post({ type: 'attempt', exerciseId: 'connect-01', status: 'success', code: 'h1 { color: rgb(202, 40, 81); }' })).body.status, 'success');
+  // копия эталона и готовый кусок — сигналы, решение засчитывается
+  const ref = course.TASK_BY_ID.get('connect-10').css;
+  const typed = { final: ref.length, restored: 0, typed: 5, emmet: 0, auto: 0, other: ref.length, deletes: 0, undos: 0, bigInserts: 1, biggest: ref.length, keys: 3, meanMs: 100, cv: 0.5, activeMs: 2000 };
+  const copied = await post({ type: 'attempt', exerciseId: 'connect-10', status: 'success', code: ref, typing: typed });
+  assert.strictEqual(copied.body.status, 'success');
+  const stats = course.progressMap('test-1').get('connect-10');
+  assert.deepStrictEqual(stats.typing, { refCopy: 1, chunk: 1, untyped: 1 });
+  const teacher = await loginAs(app, 'teacher-x');
+  const page = await teacher.get('/admin/css?pick=1');
+  assert.match(page.text, /код не руками: копия эталона, готовый кусок кода, кода больше, чем набрано/);
+  assert.match(page.text, /На устную проверку/);
+  assert.match((await teacher.get('/admin/css/students/test-1')).text, /копия эталона/);
+});
+

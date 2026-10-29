@@ -17,6 +17,7 @@ const { publicTests, checkRuns } = require('../python-basics-check');
 const COURSE_TITLE = 'Начальный Python';
 const COURSE_BASE = '/subjects/python/course';
 const PYTHON_COURSE_GROUPS = [];
+const COURSE_LEAD = 'Python с нуля: в каждом уроке сначала теория с примерами, которые можно запустить прямо на странице, затем практика — задачи на алгоритмы с автопроверкой в браузере. Уроки открываются по порядку.';
 
 const DIR = path.join(__dirname, '..', '..', '..', 'content', 'python-course');
 const RULES_PY = path.join(__dirname, 'rules.py');
@@ -235,6 +236,7 @@ module.exports = {
   SHIMS,
   COURSE_TITLE,
   COURSE_BASE,
+  COURSE_LEAD,
   PYTHON_COURSE_GROUPS,
   MODULES,
   LESSONS,

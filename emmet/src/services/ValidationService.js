@@ -104,40 +104,59 @@ const label = (node) => `<${node.tag}>`;
 const ordinal = (index) => `${index + 1}-й`;
 
 /** Первое структурное расхождение: не тот тег, не то количество, не та вложенность. */
-function findStructureIssue(expected, actual, parent) {
+/**
+ * Сопоставление детей по тегам (наибольшая общая подпоследовательность): пары, пропущенные и лишние —
+ * так видно, какой именно элемент пропущен, лишний или стоит не на своём месте (то же в src/lib/emmet/validate.js).
+ */
+function alignChildren(expected, actual) {
+  const n = expected.length;
+  const m = actual.length;
+  const dp = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
+  for (let i = n - 1; i >= 0; i -= 1) {
+    for (let j = m - 1; j >= 0; j -= 1) {
+      dp[i][j] = expected[i].tag === actual[j].tag ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
+    }
+  }
+  const pairs = [];
+  const missing = [];
+  const extra = [];
+  let i = 0;
+  let j = 0;
+  while (i < n && j < m) {
+    if (expected[i].tag === actual[j].tag) { pairs.push([expected[i], actual[j]]); i += 1; j += 1; }
+    else if (dp[i + 1][j] >= dp[i][j + 1]) { missing.push({ node: expected[i], index: i }); i += 1; }
+    else { extra.push({ node: actual[j], index: j }); j += 1; }
+  }
+  for (; i < n; i += 1) missing.push({ node: expected[i], index: i });
+  for (; j < m; j += 1) extra.push({ node: actual[j], index: j });
+  return { pairs, missing, extra };
+}
+
+/** Отличия структуры — до трёх строк: что пропущено, что лишнее, что стоит вместо нужного (и где). */
+function findStructureIssues(expected, actual, parent, out = []) {
   const where = parent ? `Внутри ${label(parent)}` : 'На верхнем уровне';
-
-  if (expected.length !== actual.length) {
-    const tags = new Set([...expected, ...actual].map((node) => node.tag));
-    for (const tag of tags) {
-      const need = expected.filter((node) => node.tag === tag).length;
-      const have = actual.filter((node) => node.tag === tag).length;
-      if (need > have) {
-        return need === 1
-          ? `${where} не хватает элемента <${tag}>.`
-          : `${where} должно быть ${need} × <${tag}>, сейчас ${have}.`;
-      }
-      if (have > need) {
-        return need === 0
-          ? `${where} лишний элемент <${tag}>.`
-          : `${where} должно быть ${need} × <${tag}>, сейчас ${have}.`;
-      }
-    }
-    return `${where} другое количество элементов.`;
+  const { pairs, missing, extra } = alignChildren(expected, actual);
+  const sameTag = (list) => list.length > 0 && list.every((x) => x.node.tag === list[0].node.tag);
+  const count = (list, tag) => list.filter((node) => node.tag === tag).length;
+  if (missing.length === 1 && extra.length === 1 && missing[0].index === extra[0].index) {
+    const position = expected.length > 1 ? `${ordinal(missing[0].index)} элемент` : 'Элемент';
+    const scope = parent ? ` внутри ${label(parent)}` : '';
+    out.push(`${position}${scope} должен быть <${missing[0].node.tag}>, а сейчас <${extra[0].node.tag}>.`);
+  } else if (!extra.length && sameTag(missing) && count(expected, missing[0].node.tag) > 1) {
+    const tag = missing[0].node.tag;
+    out.push(`${where} должно быть ${count(expected, tag)} × <${tag}>, сейчас ${count(actual, tag)}.`);
+  } else if (!missing.length && sameTag(extra) && count(expected, extra[0].node.tag) > 0) {
+    const tag = extra[0].node.tag;
+    out.push(`${where} должно быть ${count(expected, tag)} × <${tag}>, сейчас ${count(actual, tag)}.`);
+  } else {
+    for (const { node, index } of missing) out.push(`${where} не хватает элемента <${node.tag}> (${ordinal(index)} по счёту).`);
+    for (const { node } of extra) out.push(`${where} лишний элемент <${node.tag}>.`);
   }
-
-  for (let i = 0; i < expected.length; i += 1) {
-    const need = expected[i];
-    const have = actual[i];
-    if (need.tag !== have.tag) {
-      const position = expected.length > 1 ? `${ordinal(i)} элемент` : 'Элемент';
-      const scope = parent ? ` внутри ${label(parent)}` : '';
-      return `${position}${scope} должен быть <${need.tag}>, а сейчас <${have.tag}>.`;
-    }
-    const nested = findStructureIssue(need.children, have.children, have);
-    if (nested) return nested;
+  for (const [need, have] of pairs) {
+    if (out.length >= 3) break;
+    findStructureIssues(need.children, have.children, have, out);
   }
-  return null;
+  return out.slice(0, 3);
 }
 
 /**
@@ -298,7 +317,7 @@ export function validate(source, exercise, { handwritten = [] } = {}) {
       status: Status.error,
       title: 'Ошибка в разметке',
       message: markupErrors[0],
-      extra: markupErrors.length > 1 ? `Ещё ошибок: ${markupErrors.length - 1}.` : '',
+      details: markupErrors.slice(0, 3),
     };
   }
 
@@ -306,10 +325,12 @@ export function validate(source, exercise, { handwritten = [] } = {}) {
   const actual = parseTree(code);
 
   if (skeleton(expected) !== skeleton(actual)) {
+    const details = findStructureIssues(expected, actual, null);
     return {
       status: Status.mismatch,
       title: 'Структура пока другая',
-      message: findStructureIssue(expected, actual, null),
+      message: details[0] || 'Другое количество элементов.',
+      details,
     };
   }
 
@@ -319,7 +340,8 @@ export function validate(source, exercise, { handwritten = [] } = {}) {
       status: Status.partial,
       title: 'Почти получилось',
       message: issues[0],
-      extra: issues.length > 1 ? `Осталось поправить ещё: ${issues.length - 1}.` : '',
+      details: issues.slice(0, 3),
+      extra: issues.length > 3 ? `И ещё: ${issues.length - 3}.` : '',
     };
   }
 

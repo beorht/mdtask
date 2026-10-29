@@ -602,6 +602,7 @@ def get(key):
         import ssh_task  # noqa: F401
         import logs_task  # noqa: F401
         import grep_task  # noqa: F401
+        import perms_task  # noqa: F401
     return LABS.get(key)
 
 

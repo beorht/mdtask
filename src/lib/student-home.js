@@ -124,8 +124,8 @@ function buildStudentHome(user, now = Date.now()) {
 
   const shared = assignments.filter((a) => !a.subject);
   const sharedOpen = open.filter((a) => !a.subject);
-  // У Python для тех, кому открыт курс «Начальный Python» (src/lib/python-course), карточка показывает курс.
-  const pythonCourse = require('./python-course');
+  // У Python и JavaScript для тех, кому открыт курс предмета (src/lib/python-course, src/lib/js-course), карточка
+  // показывает курс.
   const languageSubjects = Object.entries(LANGUAGE_SUBJECTS).map(([key, title]) => {
     const keep = languageFilter(key);
     const mine = shared.filter(keep);
@@ -138,9 +138,11 @@ function buildStudentHome(user, now = Date.now()) {
       counts: countByStatus(mine),
       nextDue: mineOpen.length ? mineOpen[0].dueDate : null,
     };
-    if (key === 'python' && pythonCourse.canSeeCourse(user)) {
-      const pc = pythonCourse.summaryForStudent(user);
+    const lc = languageCourse(key);
+    if (lc && lc.canSeeCourse(user)) {
+      const pc = lc.summaryForStudent(user);
       card.kind = 'python-course';
+      card.courseTitle = lc.COURSE_TITLE;
       card.solved = pc.solved;
       card.total = pc.total;
       card.lessonsCount = pc.lessons.length;
@@ -306,9 +308,12 @@ function buildLanguageSubject(user, language, now = Date.now()) {
   };
 }
 
-/** Задания со сдачей по Python, разложенные по урокам курса: { ключ урока: [задание со статусом] }. */
-function pythonAssignmentsByLesson(user, now = Date.now()) {
-  const { lessonForAssignment, replacedByCourse } = require('./python-course');
+// Курсы предметов-языков: Python — «Начальный Python», JavaScript — «JavaScript: от синтаксиса до DOM».
+const languageCourse = (language) => ({ python: require('./python-course'), javascript: require('./js-course') })[language] || null;
+
+/** Задания со сдачей предмета, разложенные по урокам его курса: { ключ урока: [задание со статусом] }. */
+function pythonAssignmentsByLesson(user, now = Date.now(), language = 'python') {
+  const { lessonForAssignment, replacedByCourse } = languageCourse(language);
   const byLesson = {};
   for (const a of studentAssignments(user, now, readSummaryTree(), null).sort((x, y) => x.summaryIndex - y.summaryIndex)) {
     const lesson = replacedByCourse(a.mdPath) ? null : lessonForAssignment(a.mdPath);

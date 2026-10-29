@@ -15,6 +15,8 @@ import { FeedbackMessage } from './FeedbackMessage.js';
 import { ExerciseInstructions } from './ExerciseInstructions.js';
 import { SECTION_LABEL } from '../services/ExerciseStore.js';
 import { icons } from './icons.js';
+// Учёт набора (общий с практикой CSS): как появлялся код — сводка уходит с попыткой (src/lib/typing-check.js).
+import '../../../public/js/typing-monitor.js';
 
 const warmHighlight = HighlightStyle.define([
   { tag: [t.tagName, t.angleBracket], color: 'var(--code-tag)' },
@@ -88,6 +90,7 @@ export function blockedInput(tr) {
 export class CodeEditorPanel {
   constructor(root, { store, validate, onResult, onBlocked, onHint, onPreview = () => {} }) {
     this.root = root;
+    this.monitor = new window.TypingMonitor();
     this.store = store;
     this.validate = validate;
     this.onResult = onResult;
@@ -208,7 +211,9 @@ export class CodeEditorPanel {
             },
           }),
           EditorView.updateListener.of((update) => {
-            if (update.docChanged) this.schedulePreview();
+            if (!update.docChanged) return;
+            for (const tr of update.transactions) this.recordTyping(tr);
+            this.schedulePreview();
           }),
         ],
       }),
@@ -292,7 +297,22 @@ export class CodeEditorPanel {
 
   report(result) {
     this.feedback.show(result, { canAdvance: this.store.index < this.store.count - 1 });
-    this.onResult(result, this.view.state.doc.toString());
+    const code = this.view.state.doc.toString();
+    this.onResult(result, code, this.monitor.summary(code.replace(/\s/g, '').length));
+  }
+
+  /** Откуда появились символы правки: клавиатура, развёртывание Emmet, отмена, удаление или иное (готовый кусок). */
+  recordTyping(tr) {
+    if (!tr.docChanged || tr.annotation(Transaction.addToHistory) === false) return;
+    let inserted = 0;
+    tr.changes.iterChanges((_fromA, _toA, _fromB, _toB, text) => { inserted += text.toString().replace(/\s/g, '').length; });
+    let kind = 'other';
+    if (tr.isUserEvent('input.complete')) kind = 'emmet';
+    else if (tr.isUserEvent('input.type')) kind = inserted <= 2 ? 'type' : 'other';
+    else if (tr.isUserEvent('delete')) kind = 'delete';
+    else if (tr.isUserEvent('undo') || tr.isUserEvent('redo')) kind = 'undo';
+    else if (tr.isUserEvent('input.indent') || tr.isUserEvent('input')) kind = inserted <= 2 ? 'auto' : 'other';
+    this.monitor.record(kind, inserted);
   }
 
   schedulePreview() {
@@ -321,6 +341,7 @@ export class CodeEditorPanel {
       // Новое задание — без истории правок прошлого.
       annotations: Transaction.addToHistory.of(false),
     });
+    this.monitor.reset(0);
     this.renderPreview();
   }
 

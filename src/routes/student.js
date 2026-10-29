@@ -127,10 +127,18 @@ router.get('/subjects/:key', requireRole('student'), (req, res) => {
   const subject = buildLanguageSubject(user, key);
   if (!subject) return res.status(404).render('404');
   req.session.lastSubject = key;
-  // Курс «Начальный Python» (src/lib/python-course) — блок вверху страницы Python, пока только TEST.
-  const pythonCourse = require('../lib/python-course');
-  const course = key === 'python' && pythonCourse.canSeeCourse(user)
-    ? { ...pythonCourse.summaryForStudent(user), base: pythonCourse.COURSE_BASE, title: pythonCourse.COURSE_TITLE, assignments: pythonAssignmentsByLesson(user) }
+  // Курс предмета — основное содержимое страницы: Python — «Начальный Python» (src/lib/python-course), JavaScript —
+  // «JavaScript: от синтаксиса до DOM» (src/lib/js-course). Пока только TEST.
+  const lib = { python: require('../lib/python-course'), javascript: require('../lib/js-course') }[key];
+  const course = lib && lib.canSeeCourse(user)
+    ? {
+      ...lib.summaryForStudent(user),
+      base: lib.COURSE_BASE,
+      title: lib.COURSE_TITLE,
+      lead: lib.COURSE_LEAD,
+      partial: key === 'python' ? 'python-course/_modules' : 'js-course/_modules',
+      assignments: pythonAssignmentsByLesson(user, Date.now(), key),
+    }
     : null;
   res.render('subject-language', { ...common, subject, course });
 });

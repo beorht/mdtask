@@ -608,6 +608,110 @@ def cmd_chmod(ctx, argv, io):
     return status
 
 
+# ========================================================= chown, chgrp ===
+
+def _owner_change(ctx, argv, io, name):
+    """chown [-R] [-v] ВЛАДЕЛЕЦ[:ГРУППА] ФАЙЛ… и chgrp [-R] [-v] ГРУППА ФАЙЛ… (только root, как в Linux)."""
+    flags, rest, spec = {}, [], None
+    for a in argv[1:]:
+        if spec is None and re.fullmatch(r"-[Rvcfh]+", a):
+            for ch in a[1:]:
+                flags[ch] = True
+        elif spec is None and a in ("--recursive", "--verbose", "--changes", "--silent", "--quiet"):
+            flags[LONG[a]] = True
+        elif spec is None:
+            spec = a
+        else:
+            rest.append(a)
+    if spec is None:
+        io.err(f"{name}: пропущен операнд\nПо команде «man {name}» можно получить справку.")
+        return 1
+    if not rest:
+        io.err(f"{name}: после '{spec}' пропущен операнд")
+        return 1
+    sb = ctx.sb
+    if name == "chgrp":
+        user, group = None, spec
+    else:
+        user, sep, group = spec.partition(":")
+        user = user or None
+        # «user:» — группа = основная группа пользователя (в Debian она называется так же, как пользователь)
+        group = group or (user if sep else None)
+    if user is not None and not (user.isdigit() or sb.known_user(user)):
+        io.err(f"{name}: неверный пользователь: «{user}»")
+        return 1
+    if group and not (group.isdigit() or sb.known_group(group)):
+        io.err(f"{name}: неверная группа: «{group}»")
+        return 1
+    if not sb.per_file_owners:
+        io.err(f"{name}: в этом задании владельцев файлов менять не нужно")
+        return 1
+    status = 0
+
+    def change(vrel, shown):
+        nonlocal status
+        try:
+            if not sb.lexists(vrel):
+                raise FsError(vfs.ENOENT)
+            sb.check_traverse(vrel, ctx.priv)
+            if not ctx.priv:
+                raise FsError(vfs.EPERM)
+            if not sb.writable:
+                raise FsError(vfs.EROFS)
+            old_u, old_g = sb.owner(vrel), sb.group(vrel)
+            new_u, new_g = user or old_u, group or old_g
+            sb.set_owner(vrel, new_u, new_g)
+            # Как в Linux: смена владельца или группы обычного файла снимает SUID/SGID.
+            if sb.isfile(vrel) and not sb.islink(vrel) and (new_u, new_g) != (old_u, old_g):
+                mode = st.S_IMODE(sb.stat(vrel).st_mode)
+                if mode & 0o6000:
+                    os.chmod(sb.real(vrel), mode & ~0o6000)
+            ctx.wrote = True
+            if "v" in flags or ("c" in flags and (new_u, new_g) != (old_u, old_g)):
+                if (new_u, new_g) == (old_u, old_g):
+                    io.out(f"владелец '{shown}' сохранён как {old_u}:{old_g}\n")
+                else:
+                    io.out(f"владелец '{shown}' изменён с {old_u}:{old_g} на {new_u}:{new_g}\n")
+        except FsError as e:
+            if "f" not in flags:
+                verb = "изменение владельца для" if str(e) == vfs.EPERM else "невозможно получить доступ к"
+                io.err(f"{name}: {verb} '{shown}': {e}")
+            status = 1
+
+    for arg in rest:
+        try:
+            vrel = ctx.resolve(arg)
+        except FsError as e:
+            io.err(f"{name}: '{arg}': {e}")
+            status = 1
+            continue
+        change(vrel, arg)
+        if "R" in flags and _is_real_dir(sb, vrel):
+            stack = [(vrel, arg)]
+            while stack:
+                dv, ds = stack.pop()
+                try:
+                    names = sb.listdir(dv, ctx.priv)
+                except FsError as e:
+                    io.err(f"{name}: невозможно прочитать каталог '{ds}': {e}")
+                    status = 1
+                    continue
+                for child in names:
+                    cv, cs = _join(dv, child), _shown_join(ds, child)
+                    change(cv, cs)
+                    if _is_real_dir(sb, cv) and not sb.islink(cv):
+                        stack.append((cv, cs))
+    return status
+
+
+def cmd_chown(ctx, argv, io):
+    return _owner_change(ctx, argv, io, "chown")
+
+
+def cmd_chgrp(ctx, argv, io):
+    return _owner_change(ctx, argv, io, "chgrp")
+
+
 # =================================================================== ln ===
 
 def cmd_ln(ctx, argv, io):

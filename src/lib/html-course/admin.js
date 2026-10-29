@@ -2,6 +2,7 @@
 // по темам, сигналы для устной проверки и карточка студента с кодом решений и журналом.
 const db = require('../../db');
 const course = require('./index');
+const typing = require('../typing-check');
 
 function students(group) {
   return db
@@ -35,6 +36,8 @@ function rowFor(student, topics) {
   if (sum.afterAway) signals.push(`решено сразу после ухода: ${sum.afterAway}`);
   if (sum.clientMismatch) signals.push(`браузер ≠ сервер: ${sum.clientMismatch}`);
   if (sum.awayMs >= 5 * 60000) signals.push(`вне страницы ${Math.round(sum.awayMs / 60000)} мин`);
+  const typed = typing.typingSignal(progress);
+  if (typed) signals.push(typed);
   return {
     student,
     topics: topics.map((t) => ({
@@ -47,16 +50,32 @@ function rowFor(student, topics) {
     sum,
     lastAt,
     signals,
+    progress,
   };
 }
 
 function overview(filters = {}) {
   const topics = course.TOPICS.filter((t) => t.ready);
   const q = (filters.q || '').toLowerCase();
-  const rows = students(filters.group)
-    .filter((s) => !q || s.name.toLowerCase().includes(q) || s.id.toLowerCase().includes(q))
-    .map((s) => rowFor(s, topics));
-  return { topics, rows, total: topics.reduce((n, t) => n + t.tasks.length, 0), soon: course.TOPICS.filter((t) => !t.ready) };
+  const all = students(filters.group).map((s) => rowFor(s, topics));
+  // Одинаковые (длинные) решения у разных студентов — сигнал списывания.
+  const same = typing.sameSolutions(all.map((r) => ({ studentId: r.student.id, progress: r.progress })), [...course.TASK_BY_ID.keys()]);
+  const names = new Map(all.map((r) => [r.student.id, r.student.name]));
+  for (const r of all) {
+    const list = same[r.student.id];
+    if (!list) continue;
+    const others = [...new Set(list.flatMap((x) => x.others))].map((id) => names.get(id) || id);
+    r.signals.push(`одинаковые решения (${list.length}) с: ${others.slice(0, 3).join(', ')}${others.length > 3 ? '…' : ''}`);
+  }
+  const rows = all.filter((r) => !q || r.student.name.toLowerCase().includes(q) || r.student.id.toLowerCase().includes(q));
+  // «Выбрать 4 студентов» на устную проверку: сначала с сигналами, остальные случайно (как в тренажёре Emmet).
+  let picked = null;
+  if (filters.pick) {
+    const pool = rows.filter((r) => r.solved > 0);
+    const shuffle = (list) => list.map((r) => [Math.random(), r]).sort((a, b) => a[0] - b[0]).map((x) => x[1]);
+    picked = [...shuffle(pool.filter((r) => r.signals.length)), ...shuffle(pool.filter((r) => !r.signals.length))].slice(0, 4);
+  }
+  return { topics, rows, picked, total: topics.reduce((n, t) => n + t.tasks.length, 0), soon: course.TOPICS.filter((t) => !t.ready) };
 }
 
 function studentDetail(studentId) {

@@ -369,11 +369,82 @@
           seen.add(key);
           return true;
         }).slice(0, 3).map(({ where, el, text }) => ({ where, el: el || '', text }));
-        return { ok: false, problems: top, total: problems.length };
+        return { ok: false, problems: top, total: problems.length, styleProblems: problems.filter((p) => !p.rect).length };
       }
     }
     return { ok: true, problems: [], total: 0 };
   }
 
-  root.CssCheck = { check, documentHtml, FRAME_HEIGHT };
+  // ─── Ошибки в самом CSS ────────────────────────────────────────────────────────────────────────────
+  // Браузер молча пропускает то, что не понял: неизвестное свойство, неверное значение, сломанный селектор.
+  // lint() находит такие места и селекторы, которые не нашли в разметке задания ни одного элемента.
+  const STATE_RE = /::?(hover|focus|focus-within|focus-visible|active|visited|checked|before|after|first-letter|first-line|placeholder|selection|marker)\b/g;
+
+  function splitTop(text, sep) {
+    const out = []; let depth = 0; let quote = null; let cur = '';
+    for (const ch of text) {
+      if (quote) { cur += ch; if (ch === quote) quote = null; continue; }
+      if (ch === '"' || ch === "'") { quote = ch; cur += ch; continue; }
+      if (ch === '(' || ch === '[') depth += 1;
+      if (ch === ')' || ch === ']') depth -= 1;
+      if (ch === sep && depth === 0) { out.push(cur); cur = ''; continue; }
+      cur += ch;
+    }
+    out.push(cur);
+    return out;
+  }
+
+  function lint(task, css) {
+    const issues = [];
+    const text = String(css || '').replace(/\/\*[\s\S]*?\*\//g, ' ');
+    const open = (text.match(/\{/g) || []).length;
+    const close = (text.match(/\}/g) || []).length;
+    if (open > close) issues.push('Не хватает закрывающей скобки «}»: ' + (open - close) + ' шт.');
+    if (close > open) issues.push('Лишняя закрывающая скобка «}»: ' + (close - open) + ' шт.');
+    const doc = new DOMParser().parseFromString('<!doctype html><html><body>' + (task.html || '') + '</body></html>', 'text/html');
+    const supports = window.CSS && CSS.supports ? (p, v) => CSS.supports(p, v) : () => true;
+    (function block(src) {
+      let i = 0;
+      while (i < src.length) {
+        const openAt = src.indexOf('{', i);
+        if (openAt < 0) {
+          if (src.slice(i).trim()) issues.push('Строка вне правила (без селектора и скобок): «' + src.slice(i).trim().slice(0, 40) + '».');
+          break;
+        }
+        let depth = 0; let closeAt = -1;
+        for (let k = openAt; k < src.length; k += 1) {
+          if (src[k] === '{') depth += 1;
+          if (src[k] === '}') { depth -= 1; if (depth === 0) { closeAt = k; break; } }
+        }
+        const prelude = src.slice(i, openAt).trim();
+        const body = src.slice(openAt + 1, closeAt < 0 ? src.length : closeAt);
+        i = closeAt < 0 ? src.length : closeAt + 1;
+        if (prelude.startsWith('@')) {
+          if (/^@(media|supports)\b/i.test(prelude)) block(body);
+          continue;
+        }
+        for (const sel of splitTop(prelude, ',').map((s) => s.trim()).filter(Boolean)) {
+          const plain = sel.replace(STATE_RE, '').replace(/::?[\w-]+\(\s*\)/g, '').trim() || '*';
+          try {
+            if (!doc.querySelector(plain)) issues.push('Селектор «' + sel + '» не нашёл в разметке ни одного элемента — проверьте имя класса, id или тега.');
+          } catch (e) {
+            issues.push('Селектор «' + sel + '» записан с ошибкой.');
+          }
+        }
+        for (const part of splitTop(body, ';').map((d) => d.trim()).filter(Boolean)) {
+          const colon = part.indexOf(':');
+          if (colon < 0) { issues.push('В правиле «' + prelude + '» непонятная строка «' + part.slice(0, 40) + '» — нет двоеточия.'); continue; }
+          const prop = part.slice(0, colon).trim();
+          const value = part.slice(colon + 1).replace(/!\s*important\s*$/i, '').trim();
+          if (prop.startsWith('--')) continue;
+          if (!supports(prop, 'initial')) issues.push('Свойства «' + prop + '» нет в CSS (правило «' + prelude + '»).');
+          else if (!value) issues.push('У свойства «' + prop + '» нет значения (правило «' + prelude + '»).');
+          else if (!/var\(/i.test(value) && !supports(prop, value)) issues.push('Значение «' + value + '» не подходит для «' + prop + '» (правило «' + prelude + '»).');
+        }
+      }
+    })(text);
+    return issues;
+  }
+
+  root.CssCheck = { check, lint, documentHtml, FRAME_HEIGHT };
 })(window);

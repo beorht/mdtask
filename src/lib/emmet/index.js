@@ -8,7 +8,8 @@
 const crypto = require('crypto');
 const db = require('../../db');
 const { hasFullAccess } = require('../test-access');
-const { checkAttempt } = require('./validate');
+const { checkAttempt, explainAttempt } = require('./validate');
+const typing = require('../typing-check');
 
 const EMMET_KEY = 'emmet';
 const EMMET_TITLE = 'Emmet · Тетрадь';
@@ -171,7 +172,7 @@ function parseEvent(body, plan) {
   if (type === 'paste' && BLOCKED_KINDS.has(body.kind)) return { type, exerciseId, kind: body.kind };
   if (type === 'away' && Number.isFinite(body.ms) && body.ms > 0) return { type, exerciseId, ms: Math.min(Math.round(body.ms), MAX_AWAY) };
   if (type === 'attempt' && STATUSES.has(body.status)) {
-    return { type, exerciseId, clientStatus: body.status, handwritten: Boolean(body.handwritten), code: String(body.code ?? '').slice(0, MAX_CODE) };
+    return { type, exerciseId, clientStatus: body.status, handwritten: Boolean(body.handwritten), code: String(body.code ?? '').slice(0, MAX_CODE), summary: typing.sanitize(body.typing) };
   }
   throw new EmmetError(400, 'Некорректное событие.');
 }
@@ -194,8 +195,16 @@ function recordEvent(user, body, now = new Date().toISOString()) {
     stats.lastAwayMs = event.ms;
     stats.lastReturnAt = now;
   }
+  let hints = [];
   if (event.type === 'attempt') {
-    event.status = checkAttempt(event.code, BY_ID.get(event.exerciseId), { handwritten: event.handwritten });
+    const exercise = BY_ID.get(event.exerciseId);
+    event.status = checkAttempt(event.code, exercise, { handwritten: event.handwritten });
+    // Как набирался код: признаки «не руками» — сигналы для преподавателя (src/lib/typing-check.js).
+    const flags = typing.typingFlags(event.summary, event.code);
+    typing.addToStats(stats, flags);
+    event.typing = event.summary || flags.length ? { summary: event.summary, flags } : null;
+    // Разбор ошибок — кроме работ «без подсказок».
+    if (event.status !== 'success' && exercise.section !== 'blind') hints = explainAttempt(event.code, exercise, { handwritten: event.handwritten });
     stats.attempts += 1;
     stats[event.status] += 1;
     if (event.handwritten) stats.handwritten += 1;
@@ -211,8 +220,9 @@ function recordEvent(user, body, now = new Date().toISOString()) {
     }
   }
   db.saveEmmetProgress(user.id, event.exerciseId, stats);
-  db.addEmmetEvent({ studentId: user.id, ...event, at: now });
-  return { ok: true, status: event.status || null };
+  const { summary, ...logged } = event;
+  db.addEmmetEvent({ studentId: user.id, ...logged, at: now });
+  return { ok: true, status: event.status || null, hints };
 }
 
 function summaryForStudent(user) {

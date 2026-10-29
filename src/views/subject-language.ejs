@@ -19,12 +19,12 @@
       </nav>
 
       <% if (course) { %>
-        <%# Курс «Начальный Python» — основное содержимое предмета (src/lib/python-course); задания со сдачей и банк — ниже. %>
+        <%# Курс предмета — основное содержимое (src/lib/python-course, src/lib/js-course); задания со сдачей стоят в уроках. %>
         <% const cpct = course.total ? Math.round((course.solved / course.total) * 100) : 0; %>
         <section id="course" class="subject-block">
           <h2 class="subject-block-title">Курс «<%= course.title %>»</h2>
           <% const nAssign = Object.values(course.assignments).reduce(function (n, list) { return n + list.length; }, 0); %>
-          <p class="subject-block-lead">Python с нуля: в каждом уроке сначала теория с примерами, которые можно запустить прямо на странице, затем практика — задачи на алгоритмы с автопроверкой в браузере. Уроки открываются по порядку.<% if (nAssign) { %> Задания со сдачей (📎) стоят в уроках своей темы.<% } %></p>
+          <p class="subject-block-lead"><%= course.lead %><% if (nAssign) { %> Задания со сдачей (📎) стоят в уроках своей темы.<% } %></p>
           <div class="subject-summary">
             <span>Решено задач: <strong><%= course.solved %> / <%= course.total %></strong></span>
             <% if (course.current) { %><span>Сейчас: <strong><%= course.current.number %>. <%= course.current.title %></strong></span><% } %>
@@ -33,7 +33,7 @@
             </span>
           </div>
         </section>
-        <%- include('python-course/_modules', { summary: course, base: course.base }) %>
+        <%- include(course.partial, { summary: course, base: course.base }) %>
       <% } %>
 
       <%# С курсом задания со сдачей стоят в своих уроках (_modules.ejs), отдельного раздела нет. %>

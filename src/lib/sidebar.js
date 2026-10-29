@@ -16,6 +16,7 @@ const { IB_SUBJECT_KEY, IB_SUBJECT_TITLE, ibTasksForUser } = require('./ib-tasks
 const htmlCourse = require('./html-course');
 const cssCourse = require('./css-course');
 const pythonCourse = require('./python-course');
+const jsCourse = require('./js-course');
 
 const SUMMARY_PATH = path.join(__dirname, '..', '..', 'content', 'SUMMARY.md');
 
@@ -144,6 +145,7 @@ function buildSidebarTree({ role, studentId, studentGroup, subject }) {
   //   link    — leaf link with an icon, optional counter / status badge / locked state.
   if (subject === 'sql') return sqlSubjectNav();
   if (subject === 'python' && role === 'student' && pythonCourse.canSeeCourse({ role, group: studentGroup })) return pythonWithCourseNav();
+  if (subject === 'javascript' && role === 'student' && jsCourse.canSeeCourse({ role, group: studentGroup })) return pythonWithCourseNav(jsCourse, 'javascript');
   if (LANGUAGE_SUBJECTS[subject]) return languageSubjectNav(subject);
   if (subject === IB_SUBJECT_KEY) return ibSubjectNav();
   if (subject === htmlCourse.HTML_KEY) return htmlCourseNav();
@@ -406,15 +408,16 @@ function buildSidebarTree({ role, studentId, studentGroup, subject }) {
 
   // Python с курсом: задания со сдачей по Python стоят в своих уроках (после задач урока). Банка нет — его задачи
   // и задания «Объекты и словари» стали задачами практики уроков (content/python-course/assignments.json).
-  function pythonWithCourseNav() {
-    const { allLeaves } = assignmentTreeNav(null, '?subject=python', (node) => pythonCourse.lessonForAssignment(node.path) !== null && !pythonCourse.replacedByCourse(node.path));
-    const nav = pythonCourseNav();
+  // То же для JavaScript (lib = js-course, subjectKey = 'javascript').
+  function pythonWithCourseNav(lib = pythonCourse, subjectKey = 'python') {
+    const { allLeaves } = assignmentTreeNav(null, `?subject=${subjectKey}`, (node) => lib.lessonForAssignment(node.path) !== null && !lib.replacedByCourse(node.path));
+    const nav = pythonCourseNav(lib, subjectKey);
     const leafPath = new Map();
     (function walk(nodes) {
       nodes.forEach((n) => (n.assignmentId ? leafPath.set(n.assignmentId, n.path) : walk(n.children || [])));
     })(attach(tree));
     for (const leaf of allLeaves) {
-      const lesson = pythonCourse.lessonForAssignment(leafPath.get(leaf.assignmentId));
+      const lesson = lib.lessonForAssignment(leafPath.get(leaf.assignmentId));
       const group = nav.flatMap((s) => s.children || []).find((g) => g.lessonKey === lesson);
       if (group) group.children.push({ ...leaf, icon: '📎', title: `Сдать: ${leaf.title}` });
     }
@@ -422,12 +425,12 @@ function buildSidebarTree({ role, studentId, studentGroup, subject }) {
   }
 
   // Курс «Начальный Python»: модуль — раздел, урок — раскрывающаяся группа «N.1. Теория» и «N.2. Практика».
-  function pythonCourseNav() {
-    const base = pythonCourse.COURSE_BASE;
-    const { modules, solved, total, current } = pythonCourse.summaryForStudent({ id: studentId, role, group: studentGroup });
+  function pythonCourseNav(lib = pythonCourse, subjectKey = 'python') {
+    const base = lib.COURSE_BASE;
+    const { modules, solved, total, current } = lib.summaryForStudent({ id: studentId, role, group: studentGroup });
     return [
       backLink(),
-      { kind: 'header', icon: '🐍', title: 'Python', href: '/subjects/python', sub: `Курс «${pythonCourse.COURSE_TITLE}»`, done: solved, total, label: 'задач решено', children: [] },
+      { kind: 'header', icon: subjectKey === 'python' ? '🐍' : '🟨', title: LANGUAGE_SUBJECTS[subjectKey], href: `/subjects/${subjectKey}`, sub: `Курс «${lib.COURSE_TITLE}»`, done: solved, total, label: 'задач решено', children: [] },
       ...modules.map((m) => ({
         kind: 'section',
         title: `Модуль ${m.number}. ${m.title}`,

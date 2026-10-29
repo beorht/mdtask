@@ -1,0 +1,10 @@
+const DAY = 24 * 60 * 60 * 1000;
+const [by, bm, bd] = input().split('-').map(Number);
+const [ty, tm, td] = input().split('-').map(Number);
+let age = ty - by;
+if (tm < bm || (tm === bm && td < bd)) age--;
+console.log(age);
+const today = Date.UTC(ty, tm - 1, td);
+let next = Date.UTC(ty, bm - 1, bd);
+if (next < today) next = Date.UTC(ty + 1, bm - 1, bd);
+console.log(next === today ? 'с днём рождения!' : (next - today) / DAY);

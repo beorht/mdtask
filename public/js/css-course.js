@@ -27,6 +27,8 @@
   let suppress = false;
   const solved = new Set();
   const drafts = {};
+  // Как набирается CSS (public/js/typing-monitor.js): сводка уходит с попыткой, признаки считает сервер.
+  const monitor = new window.TypingMonitor();
 
   const decode = (b64) => new TextDecoder().decode(Uint8Array.from(atob(b64), (c) => c.charCodeAt(0)));
 
@@ -64,14 +66,18 @@
 
   function fit(holder, frame) {
     const avail = holder.clientWidth || width;
-    const scale = Math.min(1, avail / width);
+    // Телефон: задание с одной шириной рисуется по ширине экрана (иначе образец 800px ужался бы до нечитаемого);
+    // у адаптивных заданий ширину выбирают переключателем, и окно уменьшается как обычно.
+    const phone = window.matchMedia('(max-width: 700px)').matches && task.widths.length === 1 && avail < width;
+    const w = phone ? avail : width;
+    const scale = Math.min(1, avail / w);
     let height = 300;
     try { height = Math.max(120, Math.min(1400, frame.contentDocument.documentElement.scrollHeight)); } catch (e) { /* нет доступа */ }
-    frame.style.width = width + 'px';
+    frame.style.width = w + 'px';
     frame.style.height = height + 'px';
     frame.style.transform = 'scale(' + scale + ')';
     // Узкое окно (телефон) — по центру колонки.
-    frame.style.left = Math.max(0, Math.floor((avail - width * scale) / 2)) + 'px';
+    frame.style.left = Math.max(0, Math.floor((avail - w * scale) / 2)) + 'px';
     holder.style.height = Math.ceil(height * scale) + 'px';
   }
 
@@ -120,7 +126,8 @@
   function open(id) {
     if (task && cm) saveDraft(task.id, cm.getValue());
     task = data.tasks.find((t) => t.id === id) || data.tasks[0];
-    width = task.widths[task.widths.length - 1];
+    // На телефоне сначала самая узкая ширина задания (ближе всего к экрану), на компьютере — самая широкая.
+    width = window.matchMedia('(max-width: 700px)').matches ? task.widths[0] : task.widths[task.widths.length - 1];
     try { history.replaceState(null, '', '#' + task.id); } catch (e) { /* без истории */ }
     els.title.textContent = task.number + '. ' + task.title;
     els.text.textContent = task.description;
@@ -135,8 +142,10 @@
     els.statesNote.hidden = !states.length;
     els.result.hidden = true;
     suppress = true;
-    cm.setValue(loadDraft(task.id));
+    const draft = loadDraft(task.id);
+    cm.setValue(draft);
     cm.clearHistory();
+    monitor.reset(draft.replace(/\s/g, '').length);
     suppress = false;
     htmlView.setValue(task.html);
     showWidths();
@@ -167,15 +176,20 @@
     els.check.textContent = 'Проверяю…';
     try {
       const verdict = await window.CssCheck.check(task, css, decode(task.ref));
-      const res = await post({ type: 'attempt', exerciseId: task.id, status: verdict.ok ? 'success' : 'mismatch', code: css });
+      const typing = monitor.summary(css.replace(/\s/g, '').length);
+      const res = await post({ type: 'attempt', exerciseId: task.id, status: verdict.ok ? 'success' : 'mismatch', code: css, typing });
       if (res.status === 'success') {
         solved.add(task.id);
         showNav();
         showResult('ok', '✓ Совпадает с образцом — задание решено!');
       } else if (res.status === 'rules') {
         showResult('warn', res.message || 'Вид совпал, но правила задания не выполнены.');
+      } else if (res.status === 'server') {
+        showResult('bad', res.message || 'Сервер нашёл отличие от образца.', (res.hints || []).map((text) => ({ text })));
       } else {
-        showResult('bad', 'Пока не как в образце. Что отличается:', verdict.problems);
+        // Сначала — ошибки в самом CSS (их браузер молча пропускает), потом — отличия вида; всего не больше пяти.
+        const lintIssues = window.CssCheck.lint(task, css).slice(0, 3).map((text) => ({ text: '⚠ ' + text }));
+        showResult('bad', 'Пока не как в образце. Что отличается:', [...lintIssues, ...verdict.problems].slice(0, 5));
       }
     } catch (err) {
       showResult('bad', err.message || 'Не удалось проверить — обновите страницу.');
@@ -199,8 +213,17 @@
         els.saved.textContent = 'Вставка отключена — пишите CSS сами.';
       }
     });
-    cm.on('change', () => {
+    cm.on('change', (instance, change) => {
       if (suppress) return;
+      // Сколько символов (без пробелов) появилось и откуда: клавиатура, редактор сам, отмена, удаление, иное.
+      const inserted = change.text.join('\n').replace(/\s/g, '').length;
+      const origin = change.origin || '';
+      let kind = 'other';
+      if (origin === '+input' || origin === '*compose') kind = inserted <= 2 ? 'type' : 'other';
+      else if (origin === '+delete' || origin === 'cut') kind = 'delete';
+      else if (origin === 'undo' || origin === 'redo') kind = 'undo';
+      else if (origin === '+indent' || origin === 'indent') kind = 'auto';
+      monitor.record(kind, inserted);
       els.saved.textContent = '';
       saveDraft(task.id, cm.getValue());
       scheduleStudent();
@@ -227,6 +250,11 @@
     }
   });
   window.addEventListener('resize', () => { clearTimeout(refit.t); refit.t = setTimeout(refit, 150); });
+  // Номер задания в адресе (#connect-05): смена вручную или ссылкой открывает это задание без перезагрузки.
+  window.addEventListener('hashchange', () => {
+    const id = location.hash.slice(1);
+    if (data && task && id !== task.id && data.tasks.some((t) => t.id === id)) open(id);
+  });
 
   fetch(api + '/me', { credentials: 'same-origin' })
     .then((r) => r.json().then((j) => (r.ok ? j : Promise.reject(new Error(j.error || 'Ошибка')))))

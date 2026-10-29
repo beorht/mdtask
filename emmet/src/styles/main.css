@@ -686,6 +686,8 @@ kbd {
 .feedback[data-status='idle'] .feedback-title { color: var(--text-primary); }
 .feedback-message { font-size: 12.5px; line-height: 1.45; color: var(--text-secondary); }
 .feedback-extra { color: var(--text-muted); }
+.feedback-list { margin: 2px 0 0; padding-left: 16px; }
+.feedback-list li { margin: 2px 0; }
 
 /* ───────────── CodeMirror ───────────── */
 .cm-editor { height: 100%; font-size: 14px; background: var(--surface); }

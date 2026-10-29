@@ -73,6 +73,20 @@
   .cssc-work { grid-template-columns: 1fr; }
   .cssc-side { position: static; }
 }
+/* Телефон: меньше полей, редактор ниже (на экране остаются и код, и кнопка «Проверить»), кнопки ширины — в строку
+   с прокруткой. */
+@media (max-width: 700px) {
+  .cssc { padding: 0.75rem 0.75rem 1.5rem; }
+  .cssc-bar { gap: 0.5rem 0.75rem; margin-bottom: 0.75rem; }
+  .cssc-topic { font-size: 0.95rem; }
+  .cssc-num { min-width: 2rem; height: 2rem; padding: 0 0.4rem; }
+  .cssc-view { padding: 0.5rem; border-radius: 14px; }
+  .cssc-widths { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 2px; }
+  .cssc-width { flex: none; padding: 0.3rem 0.75rem; font-size: 0.85rem; }
+  .cssc-task h1 { font-size: 1.15rem; }
+  .cssc-editor .CodeMirror { height: 340px; font-size: 13px; }
+  .cssc-editor .CodeMirror-lines { min-height: 332px; }
+}
 
 /* Теория: пример — код CSS и HTML слева, вид справа. */
 /* Вид справа — той же высоты, что код слева (строка сетки растягивает обе колонки, окно заполняет карточку). */

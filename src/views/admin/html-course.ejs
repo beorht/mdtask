@@ -6,9 +6,21 @@ const CELL = { none: ['·', 'не открывал'], opened: ['○', 'откр�
 <div class="a-page-head">
   <div>
     <h1>Web-разработка: HTML</h1>
-    <p class="a-subtitle">Предмет пока открыт только группе <strong>TEST</strong>. Готово тем: <%= o.topics.length %> из <%= o.topics.length + o.soon.length %>, заданий: <%= o.total %>. В каждой теме — теория и практическая работа; задания общие для всех, каждую попытку перепроверяет сервер.</p>
+    <p class="a-subtitle">Предмет открыт группам <strong><%= groups.join(', ') %></strong> (и TEST). Готово тем: <%= o.topics.length %> из <%= o.topics.length + o.soon.length %>, заданий: <%= o.total %>. В каждой теме — теория и практическая работа; задания общие для всех, каждую попытку перепроверяет сервер.</p>
   </div>
 </div>
+
+<div class="a-page-actions" style="margin-bottom:12px"><a class="a-btn a-btn-primary" href="/admin/html?pick=1">Выбрать 4 студентов</a></div>
+<% if (o.picked) { %>
+<section class="a-card">
+  <div class="a-card-head"><h2>На устную проверку</h2><p class="a-muted">Сначала — студенты с сигналами (вставки, код не руками, одинаковые решения…), остальные случайно.</p></div>
+  <ul class="a-timeline">
+    <% o.picked.forEach(function (r) { %>
+      <li><a href="/admin/html/students/<%= r.student.id %>"><%= r.student.name %></a> <span class="a-muted">решено <%= r.solved %><%= r.signals.length ? ' · ' + r.signals.join(', ') : '' %></span></li>
+    <% }) %>
+  </ul>
+</section>
+<% } %>
 
 <form class="a-filters" method="get" action="/admin/html" data-autosubmit>
   <label class="a-input-search">

@@ -43,7 +43,7 @@ function blockCopying() {
 function withoutHints(result, code) {
   const differs = result.status === Status.partial || (result.status === Status.mismatch && code.includes('<'));
   if (!differs) return result;
-  return { ...result, title: 'Не совпадает с образцом', message: 'Сравните свой результат с образцом слева.', extra: '' };
+  return { ...result, title: 'Не совпадает с образцом', message: 'Сравните свой результат с образцом слева.', extra: '', details: [] };
 }
 
 /**
@@ -85,7 +85,7 @@ function App({ student, exercises, progress }) {
     },
     onBlocked: (kind) => reporter.send({ type: 'paste', exerciseId: store.current.id, kind }),
     onHint: ({ level, solution = false }) => reporter.send({ type: 'hint', exerciseId: store.current.id, level, solution }),
-    onResult: (result, code) => {
+    onResult: (result, code, typing) => {
       if (result.status === Status.success) store.markSolved(store.current.id);
       // Нажатие Tab в пустом редакторе — не попытка решения.
       if (!code.trim()) return;
@@ -95,6 +95,7 @@ function App({ student, exercises, progress }) {
         status: result.status,
         handwritten: Boolean(result.handwritten),
         code,
+        typing,
       });
     },
   });

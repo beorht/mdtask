@@ -45,7 +45,7 @@
               <% if (s.examLocked) { %><span class="subject-card-lock">🔒 <%= home.lockLabel %></span><% } %>
               <span class="subject-card-meta">
                 <% if (isPyCourse) { %>
-                  Курс «Начальный Python»: <%= plural(s.lessonsCount, 'урок', 'урока', 'уроков') %>, <%= plural(s.total, 'задача', 'задачи', 'задач') %> с автопроверкой<% if (s.current) { %><br>Сейчас: <%= s.current.number %>. <%= s.current.title %><% } %>
+                  Курс «<%= s.courseTitle %>»: <%= plural(s.lessonsCount, 'урок', 'урока', 'уроков') %>, <%= plural(s.total, 'задача', 'задачи', 'задач') %> с автопроверкой<% if (s.current) { %><br>Сейчас: <%= s.current.number %>. <%= s.current.title %><% } %>
                 <% } else if (isHtml) { %>
                   <%= plural(s.topicsCount, 'тема', 'темы', 'тем') %>: теория и практика · <%= plural(s.total, 'задание', 'задания', 'заданий') %> с автопроверкой<% if (s.current) { %><br>Сейчас: <%= s.current.number %>. <%= s.current.title %><% } %>
                 <% } else if (isEmmet) { %>

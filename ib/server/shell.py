@@ -55,6 +55,7 @@ HELP_TEXT = """Доступные команды:
   xargs команда      - передать строки ввода как аргументы команде
   tee [-a] файл      - записать ввод в файл и вывести на экран
   cp, touch, diff, stat - копирование, создание, сравнение файлов, сведения о файле
+  chown, chgrp       - сменить владельца и группу файла (с sudo): sudo chown user:group файл
   sudo команда       - выполнить команду с правами root
   man <команда>      - краткая справка по команде (find, grep, sed, xargs, sudo ...)
   whoami, id, echo, which, hostname, uname, printenv
@@ -93,7 +94,7 @@ BIN_DIR = {
     "date": "/usr/bin/date", "man": "/usr/bin/man", "which": "/usr/bin/which", "sqlite3": "/usr/bin/sqlite3",
     "egrep": "/usr/bin/egrep", "fgrep": "/usr/bin/fgrep", "echo": "/usr/bin/echo", "pwd": "/usr/bin/pwd",
     "true": "/usr/bin/true", "false": "/usr/bin/false", "mkdir": "/usr/bin/mkdir", "rmdir": "/usr/bin/rmdir",
-    "rm": "/usr/bin/rm", "mv": "/usr/bin/mv", "chmod": "/usr/bin/chmod", "ln": "/usr/bin/ln",
+    "rm": "/usr/bin/rm", "mv": "/usr/bin/mv", "chmod": "/usr/bin/chmod", "chown": "/usr/bin/chown", "chgrp": "/usr/bin/chgrp", "ln": "/usr/bin/ln",
     "readlink": "/usr/bin/readlink", "file": "/usr/bin/file", "basename": "/usr/bin/basename",
     "dirname": "/usr/bin/dirname", "tree": "/usr/bin/tree", "less": "/usr/bin/less", "more": "/usr/bin/more",
     "hostname": "/usr/bin/hostname", "uname": "/usr/bin/uname", "env": "/usr/bin/env",
@@ -937,8 +938,8 @@ def _ls_long(ctx, vrel, name, human):
     s = ctx.sb.lstat(vrel)
     nbytes = len(ctx.sb.readlink(vrel).encode()) if ctx.sb.islink(vrel) else s.st_size
     size = _human(nbytes) if human else str(nbytes)
-    owner = ctx.sb.owner(vrel)
-    line = f"{vfs.mode_string(s.st_mode)} {s.st_nlink:>2} {owner} {owner} {size:>6} {_fmt_time(s.st_mtime)} {name}"
+    owner, group = ctx.sb.owner(vrel), ctx.sb.group(vrel)
+    line = f"{vfs.mode_string(s.st_mode)} {s.st_nlink:>2} {owner} {group} {size:>6} {_fmt_time(s.st_mtime)} {name}"
     if ctx.sb.islink(vrel):
         line += f" -> {ctx.sb.readlink(vrel)}"
     return line
@@ -1387,8 +1388,26 @@ def cmd_diff(ctx, argv, io):
 
 
 def cmd_stat(ctx, argv, io):
+    fmt = None
+    names = []
+    args = argv[1:]
+    i = 0
+    while i < len(args):
+        a = args[i]
+        if a in ("-c", "--format", "--printf") and i + 1 < len(args):
+            fmt = args[i + 1] + ("" if a == "--printf" else "\n")
+            i += 2
+            continue
+        if a.startswith("--format=") or a.startswith("-c") and len(a) > 2:
+            fmt = (a.split("=", 1)[1] if a.startswith("--format=") else a[2:]) + "\n"
+        elif not a.startswith("-"):
+            names.append(a)
+        i += 1
+    if not names:
+        io.err("stat: пропущен операнд")
+        return 1
     status = 0
-    for name in [a for a in argv[1:] if not a.startswith("-")] or []:
+    for name in names:
         try:
             vrel = ctx.resolve(name)
             if not ctx.sb.lexists(vrel):
@@ -1401,14 +1420,21 @@ def cmd_stat(ctx, argv, io):
         kind = "каталог" if ctx.sb.isdir(vrel) and not ctx.sb.islink(vrel) else \
             "символьная ссылка" if ctx.sb.islink(vrel) else \
             "обычный пустой файл" if s.st_size == 0 else "обычный файл"
-        owner = ctx.sb.owner(vrel)
-        uid = ctx.sb.uid(vrel)
+        owner, group = ctx.sb.owner(vrel), ctx.sb.group(vrel)
+        uid, gid = ctx.sb.uid(vrel), ctx.sb.gid(vrel)
         mode = vfs.mode_string(s.st_mode)
+        if fmt is not None:
+            fields = {"a": f"{s.st_mode & 0o7777:o}", "A": mode, "U": owner, "G": group, "u": str(uid),
+                      "g": str(gid), "n": name, "s": str(s.st_size), "F": kind, "h": str(s.st_nlink),
+                      "y": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(s.st_mtime)), "%": "%"}
+            text = re.sub(r"%(.)", lambda m: fields.get(m.group(1), m.group(0)), fmt)
+            io.out(text.replace("\\n", "\n").replace("\\t", "\t"))
+            continue
         shown = name + (f" -> {ctx.sb.readlink(vrel)}" if ctx.sb.islink(vrel) else "")
         io.out(
             f"  Файл: {shown}\n"
             f"  Размер: {s.st_size}\tБлоков: {s.st_blocks}\t{kind}\n"
-            f"Доступ: ({oct(s.st_mode & 0o7777)[2:].zfill(4)}/{mode})  Uid: ({uid:>5}/{owner:>8})  Gid: ({uid:>5}/{owner:>8})\n"
+            f"Доступ: ({oct(s.st_mode & 0o7777)[2:].zfill(4)}/{mode})  Uid: ({uid:>5}/{owner:>8})  Gid: ({gid:>5}/{group:>8})\n"
             f"Изменён: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(s.st_mtime))}\n"
         )
     return status
@@ -1912,6 +1938,8 @@ COMMANDS = {
     "mv": _lazy("cmd_files", "cmd_mv"),
     "cp": _lazy("cmd_files", "cmd_cp"),
     "chmod": _lazy("cmd_files", "cmd_chmod"),
+    "chown": _lazy("cmd_files", "cmd_chown"),
+    "chgrp": _lazy("cmd_files", "cmd_chgrp"),
     "ln": _lazy("cmd_files", "cmd_ln"),
     "readlink": _lazy("cmd_files", "cmd_readlink"),
     "file": _lazy("cmd_files", "cmd_file"),

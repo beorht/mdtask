@@ -51,6 +51,8 @@ function rowFor(student) {
   if (sum.clientMismatch) signals.push(`браузер ≠ сервер: ${sum.clientMismatch}`);
   if (sum.solutions) signals.push(`открыл ответ в обучении: ${sum.solutions}`);
   if (sum.awayMs >= 5 * 60000) signals.push(`вне страницы ${Math.round(sum.awayMs / 60000)} мин`);
+  const typed = require('../typing-check').typingSignal(progress);
+  if (typed) signals.push(typed);
   const cells = {};
   const solved = {};
   const total = {};

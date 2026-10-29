@@ -182,3 +182,23 @@ test('login ID ignores letter case and spaces around it; the session keeps the r
   assert.match(bad.text, /Неверный ID или пароль/);
   assert.strictEqual(db.verifyUserCredentials('STWEB-777', DEFAULT_PASSWORD).id, 'stWeb-777');
 });
+
+test('admin: typing signals and «Выбрать 4 студентов»; the attempt answer carries the explanation', async () => {
+  db.createUser({ id: 'teach-h', role: 'teacher', name: 'Преподаватель', mustChangePassword: false });
+  const app = createApp();
+  const tester = await loginAs(app, 'test-1');
+  const topic = course.TOPICS[0];
+  const taskId = topic.tasks[0].id;
+  const answer = await tester.post(`/subjects/html/api/${topic.key}/events`).send({
+    type: 'attempt', exerciseId: taskId, status: 'mismatch', code: '<div>не то</div>',
+    typing: { final: 60, restored: 0, typed: 2, emmet: 0, auto: 0, other: 58, deletes: 0, undos: 0, bigInserts: 1, biggest: 58, keys: 1, meanMs: 0, medianMs: 0, cv: null, rcv: null, activeMs: 100 },
+  });
+  assert.strictEqual(answer.body.status, 'mismatch');
+  assert.ok(answer.body.hints.length >= 1);
+  assert.deepStrictEqual(course.progressMap('test-1').get(taskId).typing, { chunk: 1, untyped: 1 });
+  const teacher = await loginAs(app, 'teach-h');
+  const page = await teacher.get('/admin/html?pick=1');
+  assert.strictEqual(page.status, 200);
+  assert.match(page.text, /На устную проверку/);
+  assert.match(page.text, /код не руками: готовый кусок кода, кода больше, чем набрано/);
+});

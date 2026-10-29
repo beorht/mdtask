@@ -46,10 +46,14 @@ export class FeedbackMessage {
     this.reset();
   }
 
-  show({ status, title, message, extra = '' }, { canAdvance = false } = {}) {
+  show({ status, title, message, extra = '', details = [] }, { canAdvance = false } = {}) {
     this.box.dataset.status = status;
     this.titleEl.textContent = title;
-    this.messageEl.innerHTML = escapeHtml(message) + (extra ? ` <span class="feedback-extra">${escapeHtml(extra)}</span>` : '');
+    // Несколько отличий — списком (до трёх), одно — строкой.
+    const body = details.length > 1
+      ? `<ul class="feedback-list">${details.map((d) => `<li>${escapeHtml(d)}</li>`).join('')}</ul>`
+      : escapeHtml(message);
+    this.messageEl.innerHTML = body + (extra ? ` <span class="feedback-extra">${escapeHtml(extra)}</span>` : '');
     this.nextButton.hidden = !(status === 'success' && canAdvance);
     // Перезапуск короткой анимации смены статуса.
     this.box.classList.remove('is-updated');

@@ -381,17 +381,26 @@ class Finder:
             return ("test", lambda e: getattr(self.meta(e), attr) > ref_time)
         if name in ("-user", "-group"):
             who = self.arg(name)
-            if who not in ("root", sb.user) and not who.isdigit():
-                raise FindError(f"find: «{who}» — неизвестный {'пользователь' if name == '-user' else 'группа'}")
+            is_user = name == "-user"
+            known = sb.known_user(who) if is_user else sb.known_group(who)
+            if not known and not who.isdigit():
+                raise FindError(f"find: «{who}» — неизвестный {'пользователь' if is_user else 'группа'}")
+            num = sb.uid if is_user else sb.gid
+            text = sb.owner if is_user else sb.group
             if who.isdigit():
-                uid = int(who)
-                return ("test", lambda e: sb.uid(e.vrel) == uid)
-            return ("test", lambda e: sb.owner(e.vrel) == who)
+                n = int(who)
+                return ("test", lambda e: num(e.vrel) == n)
+            return ("test", lambda e: text(e.vrel) == who)
         if name in ("-uid", "-gid"):
             cmp = _num_cmp(self.arg(name), name)
-            return ("test", lambda e: cmp(sb.uid(e.vrel)))
+            num = sb.uid if name == "-uid" else sb.gid
+            return ("test", lambda e: cmp(num(e.vrel)))
         if name in ("-nouser", "-nogroup"):
-            return ("const", False)
+            if not sb.per_file_owners:
+                return ("const", False)
+            if name == "-nouser":
+                return ("test", lambda e: not sb.known_user(sb.owner(e.vrel)))
+            return ("test", lambda e: not sb.known_group(sb.group(e.vrel)))
         if name == "-perm":
             mode, kind = _parse_perm(self.arg(name))
 
@@ -496,11 +505,11 @@ class Finder:
 
     def ls_line(self, e):
         s = self.lst(e)
-        owner = self.sb.owner(e.vrel)
+        owner, group = self.sb.owner(e.vrel), self.sb.group(e.vrel)
         t = s.st_mtime
         date = time.strftime("%b %d  %Y" if abs(time.time() - t) > 182 * 86400 else "%b %d %H:%M", time.localtime(t))
         line = (f"{s.st_ino:>9} {s.st_blocks // 2:>4} {vfs.mode_string(s.st_mode)} {s.st_nlink:>3} "
-                f"{owner:<8} {owner:<8} {s.st_size:>8} {date} {e.shown}")
+                f"{owner:<8} {group:<8} {s.st_size:>8} {date} {e.shown}")
         if self.sb.islink(e.vrel):
             line += " -> " + self.sb.readlink(e.vrel)
         return line
@@ -559,10 +568,14 @@ class Finder:
             return oct(st.S_IMODE(s.st_mode))[2:]
         if d == "M":
             return vfs.mode_string(s.st_mode)
-        if d in ("u", "g"):
+        if d == "u":
             return sb.owner(e.vrel)
-        if d in ("U", "G"):
+        if d == "g":
+            return sb.group(e.vrel)
+        if d == "U":
             return str(sb.uid(e.vrel))
+        if d == "G":
+            return str(sb.gid(e.vrel))
         if d == "d":
             return str(e.depth)
         if d == "y":

@@ -1,0 +1,60 @@
+[
+  { "key": "basics", "title": "Основы языка", "lead": "Консоль, переменные и типы, числа и операторы, ввод, строки, сравнение и логика.", "lessons": [
+    { "key": "intro", "dir": "m1/01-intro", "title": "JavaScript и где он работает" },
+    { "key": "variables", "dir": "m1/02-variables", "title": "Переменные и типы" },
+    { "key": "numbers", "dir": "m1/03-numbers", "title": "Числа и операторы" },
+    { "key": "input", "dir": "m1/04-input", "title": "Ввод и преобразование типов" },
+    { "key": "strings", "dir": "m1/05-strings", "title": "Строки" },
+    { "key": "logic", "dir": "m1/06-logic", "title": "Сравнение и логика" }
+  ] },
+  { "key": "control", "title": "Управление ходом программы", "lead": "Условия, switch, циклы for и while, алгоритмы на числах, мини-проект и отладка.", "lessons": [
+    { "key": "if", "dir": "m2/01-if", "title": "Условия if / else" },
+    { "key": "switch", "dir": "m2/02-switch", "title": "Тернарный оператор и switch" },
+    { "key": "for", "dir": "m2/03-for", "title": "Цикл for" },
+    { "key": "while", "dir": "m2/04-while", "title": "while, do…while, break и continue" },
+    { "key": "numbers-algo", "dir": "m2/05-numbers-algo", "title": "Практика: алгоритмы на числах" },
+    { "key": "guess", "dir": "m2/06-guess", "title": "Мини-проект «Угадай число»", "kind": "project" },
+    { "key": "debug", "dir": "m2/07-debug", "title": "Отладка: ищем ошибки" }
+  ] },
+  { "key": "functions", "title": "Функции", "lead": "Объявление и return, стрелочные функции, параметры, замыкания, рекурсия, функции высшего порядка.", "lessons": [
+    { "key": "functions", "dir": "m3/01-functions", "title": "Объявление функций" },
+    { "key": "arrows", "dir": "m3/02-arrows", "title": "Функциональные выражения и стрелки" },
+    { "key": "params", "dir": "m3/03-params", "title": "Параметры: по умолчанию и rest" },
+    { "key": "closures", "dir": "m3/04-closures", "title": "Область видимости и замыкания" },
+    { "key": "recursion", "dir": "m3/05-recursion", "title": "Рекурсия" },
+    { "key": "higher", "dir": "m3/06-higher", "title": "Функции высшего порядка" }
+  ] },
+  { "key": "data", "title": "Массивы и объекты", "lead": "Массивы и их методы, сортировка и поиск, объекты, деструктуризация, Map, Set, JSON, обработка данных.", "lessons": [
+    { "key": "arrays", "dir": "m4/01-arrays", "title": "Массивы" },
+    { "key": "loops-arrays", "dir": "m4/02-loops-arrays", "title": "Перебор массивов" },
+    { "key": "array-methods", "dir": "m4/03-array-methods", "title": "map, filter, reduce, find, some, every" },
+    { "key": "sorting", "dir": "m4/04-sorting", "title": "Сортировка и поиск" },
+    { "key": "objects", "dir": "m4/05-objects", "title": "Объекты" },
+    { "key": "destructuring", "dir": "m4/06-destructuring", "title": "Деструктуризация и spread" },
+    { "key": "collections", "dir": "m4/07-collections", "title": "Map, Set и JSON" },
+    { "key": "data-practice", "dir": "m4/08-data-practice", "title": "Практика: обработка данных" },
+    { "key": "catalog", "dir": "m4/09-catalog", "title": "Мини-проект «Каталог товаров»", "kind": "project" }
+  ] },
+  { "key": "advanced", "title": "Ошибки, классы, асинхронность", "lead": "try/catch, классы и наследование, дата и Math, Promise и async/await, fetch к учебному API.", "lessons": [
+    { "key": "errors", "dir": "m5/01-errors", "title": "Обработка ошибок" },
+    { "key": "classes", "dir": "m5/02-classes", "title": "Классы" },
+    { "key": "inheritance", "dir": "m5/03-inheritance", "title": "Наследование" },
+    { "key": "date-math", "dir": "m5/04-date-math", "title": "Дата, время и Math" },
+    { "key": "async", "dir": "m5/05-async", "title": "Асинхронность: таймеры и Promise" },
+    { "key": "fetch", "dir": "m5/06-fetch", "title": "fetch и API" }
+  ] },
+  { "key": "dom", "title": "Взаимодействие со страницей: DOM", "lead": "Дерево страницы, поиск элементов, содержимое, классы, создание элементов, события, формы, localStorage, таймеры и итоговое приложение.", "lessons": [
+    { "key": "dom-tree", "dir": "m6/01-dom-tree", "title": "Как браузер строит страницу" },
+    { "key": "dom-find", "dir": "m6/02-dom-find", "title": "Поиск элементов" },
+    { "key": "dom-content", "dir": "m6/03-dom-content", "title": "Содержимое и атрибуты" },
+    { "key": "dom-classes", "dir": "m6/04-dom-classes", "title": "Классы и стили" },
+    { "key": "dom-create", "dir": "m6/05-dom-create", "title": "Создание и удаление элементов" },
+    { "key": "dom-events", "dir": "m6/06-dom-events", "title": "События" },
+    { "key": "dom-delegation", "dir": "m6/07-dom-delegation", "title": "Всплытие и делегирование" },
+    { "key": "dom-forms", "dir": "m6/08-dom-forms", "title": "Формы" },
+    { "key": "dom-render", "dir": "m6/09-dom-render", "title": "Поиск, фильтр и сортировка на странице" },
+    { "key": "dom-storage", "dir": "m6/10-dom-storage", "title": "localStorage и состояние" },
+    { "key": "dom-timers", "dir": "m6/11-dom-timers", "title": "Таймеры и анимации" },
+    { "key": "dom-project", "dir": "m6/12-dom-project", "title": "Итоговый проект: приложение по ТЗ", "kind": "project" }
+  ] }
+]

@@ -154,4 +154,83 @@ function checkAttempt(source, exercise, { handwritten = false } = {}) {
   return hasDetailIssues(expected, actual) ? STATUS.partial : STATUS.success;
 }
 
-module.exports = { STATUS, checkAttempt, parseTree, findMarkupErrors };
+// ─── Разбор ошибок для студента ───────────────────────────────────────────────────────────────────────
+// Что именно отличается от образца — по тем же правилам, что checkAttempt: структура (какой элемент лишний,
+// пропущен или стоит не на своём месте), атрибуты и классы, текст. Не больше трёх подсказок; значения из образца
+// не раскрываются целиком — называется место и что не так.
+const ORDINAL = (n) => `${n}-й`;
+function describe(node) {
+  let text = `<${node.tag}`;
+  const id = node.attrs.get('id');
+  const cls = node.attrs.get('class');
+  if (id) text += ` id="${id}"`;
+  if (cls) text += ` class="${cls}"`;
+  return text + '>';
+}
+const where = (parent) => (parent ? `внутри ${describe(parent)}` : 'на верхнем уровне');
+
+/** Сопоставление детей по тегам (наибольшая общая подпоследовательность): пары, пропущенные и лишние. */
+function alignChildren(expected, actual) {
+  const n = expected.length;
+  const m = actual.length;
+  const dp = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
+  for (let i = n - 1; i >= 0; i -= 1) {
+    for (let j = m - 1; j >= 0; j -= 1) {
+      dp[i][j] = expected[i].tag === actual[j].tag ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
+    }
+  }
+  const pairs = []; const missing = []; const extra = [];
+  let i = 0; let j = 0;
+  while (i < n && j < m) {
+    if (expected[i].tag === actual[j].tag) { pairs.push([expected[i], actual[j]]); i += 1; j += 1; }
+    else if (dp[i + 1][j] >= dp[i][j + 1]) { missing.push({ node: expected[i], index: i }); i += 1; }
+    else { extra.push({ node: actual[j], index: j }); j += 1; }
+  }
+  for (; i < n; i += 1) missing.push({ node: expected[i], index: i });
+  for (; j < m; j += 1) extra.push({ node: actual[j], index: j });
+  return { pairs, missing, extra };
+}
+
+function explainNodes(expected, actual, parent, out) {
+  const { pairs, missing, extra } = alignChildren(expected, actual);
+  // Один пропущенный и один лишний на одном месте — «вместо».
+  if (missing.length === 1 && extra.length === 1 && missing[0].index === extra[0].index) {
+    out.push(`${where(parent)}: ${ORDINAL(missing[0].index + 1)} элемент должен быть <${missing[0].node.tag}>, а у вас <${extra[0].node.tag}>.`);
+  } else {
+    for (const { node, index } of missing) out.push(`${where(parent)}: не хватает элемента <${node.tag}> (${ORDINAL(index + 1)} по счёту).`);
+    for (const { node } of extra) out.push(`${where(parent)}: лишний элемент ${describe(node)}.`);
+  }
+  for (const [need, have] of pairs) {
+    if (out.length >= 3) return;
+    for (const [attr, value] of need.attrs) {
+      if (!have.attrs.has(attr)) { out.push(`У ${describe(have)} нет атрибута ${attr}.`); continue; }
+      if (!value) continue;
+      const actualValue = have.attrs.get(attr);
+      if (attr === 'class') {
+        const present = new Set(actualValue.split(' '));
+        const lost = value.split(' ').filter((c) => !present.has(c));
+        if (lost.length) out.push(`У ${describe(have)} не хватает класса ${lost.map((c) => `«${c}»`).join(', ')}.`);
+      } else if (actualValue !== value) out.push(`У ${describe(have)} атрибут ${attr} другой: «${actualValue}».`);
+    }
+    if (need.text && need.text !== have.text) {
+      out.push(have.text ? `Текст в ${describe(have)} отличается от образца: «${have.text.length > 40 ? have.text.slice(0, 40) + '…' : have.text}».` : `В ${describe(have)} нет текста — он должен быть.`);
+    }
+    explainNodes(need.children, have.children, have, out);
+  }
+}
+
+/** Подсказки к попытке (до трёх строк) или [] — если всё совпало. */
+function explainAttempt(source, exercise, { handwritten = false } = {}) {
+  const code = String(source || '').trim();
+  if (!code || !code.includes('<')) {
+    return [exercise.mode === 'emmet' ? 'Пока нет HTML: наберите сокращение Emmet и разверните его клавишей Tab.' : 'Пока нет HTML: напишите разметку.'];
+  }
+  if (exercise.mode === 'emmet' && handwritten) return ['В этом задании HTML нужно получить из сокращения Emmet (Tab), а не набирать руками.'];
+  const markup = findMarkupErrors(code);
+  if (markup.length) return markup.slice(0, 3);
+  const out = [];
+  explainNodes(parseTree(exercise.expectedHtml), parseTree(code), null, out);
+  return out.slice(0, 3);
+}
+
+module.exports = { STATUS, checkAttempt, explainAttempt, parseTree, findMarkupErrors };

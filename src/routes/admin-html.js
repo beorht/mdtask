@@ -6,8 +6,8 @@ const courseAdmin = require('../lib/html-course/admin');
 
 function register(router, { render, notFound, flash }) {
   router.get('/admin/html', (req, res) => {
-    const filters = { q: (req.query.q || '').trim() };
-    render(res, 'html-course', 'html', { pageTitle: course.HTML_TITLE, filters, o: courseAdmin.overview(filters) });
+    const filters = { q: (req.query.q || '').trim(), pick: req.query.pick === '1' };
+    render(res, 'html-course', 'html', { pageTitle: course.HTML_TITLE, filters, o: courseAdmin.overview(filters), groups: course.HTML_GROUPS });
   });
 
   router.get('/admin/html/students/:id', (req, res) => {

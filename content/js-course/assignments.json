@@ -1,0 +1,27 @@
+{
+  "_comment": "Задания со сдачей предмета JavaScript (content/src, путь из SUMMARY.md) и урок курса «JavaScript: от синтаксиса до DOM», к которому каждое привязано (* — любая часть пути без «/»). replacedBy — задание переделано в задачи практики уроков: тем, кому открыт курс, оно не показывается (у web-2 и других групп без курса всё остаётся как было). Задания DOM группы web-2 со сданными работами остаются заданиями со сдачей внутри уроков модуля 6.",
+  "rules": [
+    { "path": "section-dom-podrobnaya-teoriya/chast-1-*", "lesson": "dom-tree" },
+    { "path": "section-dom-podrobnaya-teoriya/chast-2-*", "lesson": "dom-find" },
+    { "path": "section-dom-podrobnaya-teoriya/chast-3-*", "lesson": "dom-content" },
+    { "path": "section-dom-podrobnaya-teoriya/chast-4-*", "lesson": "dom-create" },
+    { "path": "section-dom-podrobnaya-teoriya/chast-5-*", "lesson": "dom-events" },
+    { "path": "section-dom-podrobnaya-teoriya/chast-6-*", "lesson": "dom-forms" },
+    { "path": "section-dom-podrobnaya-teoriya/chast-7-*", "lesson": "dom-delegation" },
+    { "path": "section-dom-podrobnaya-teoriya/chast-8-*", "lesson": "dom-project" },
+    { "path": "section-dom-rabota-s-document/teoriya-*", "lesson": "dom-tree" },
+    { "path": "section-dom-rabota-s-document/zadacha-1-*", "lesson": "dom-content" },
+    { "path": "section-dom-rabota-s-document/zadacha-2-*", "lesson": "dom-events" },
+    { "path": "section-dom-rabota-s-document/zadacha-3-*", "lesson": "dom-classes" },
+    { "path": "section-dom-rabota-s-document/zadacha-4-*", "lesson": "dom-storage" },
+    { "path": "section-dom-rabota-s-document/zadacha-5-*", "lesson": "dom-delegation" },
+    { "path": "section-dom-rabota-s-document/zadacha-6-*", "lesson": "dom-events" },
+    { "path": "section-dom-rabota-s-document/zadacha-7-*", "lesson": "dom-create" },
+    { "path": "section-dom-rabota-s-document/zadacha-8-*", "lesson": "dom-render" },
+    { "path": "section-dom-rabota-s-document/zadacha-9-*", "lesson": "dom-render" },
+    { "path": "section-dom-rabota-s-document/zadacha-10-*", "lesson": "dom-forms" },
+    { "path": "section-dom-rabota-s-document/zadacha-11-*", "lesson": "dom-project" },
+    { "path": "section-dom-rabota-s-document/zadacha-12-*", "lesson": "dom-project" },
+    { "path": "section-obekty-i-slovari/*", "lesson": "objects", "replacedBy": ["jsd"] }
+  ]
+}

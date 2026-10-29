@@ -35,10 +35,10 @@ function makeEmmetDb(db, prepared) {
 
   function addEmmetEvent(e) {
     prepared(
-      `INSERT INTO emmet_events (student_id, exercise_id, type, status, client_status, handwritten, kind, ms, code, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO emmet_events (student_id, exercise_id, type, status, client_status, handwritten, kind, ms, code, typing, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).run(e.studentId, e.exerciseId, e.type, e.status || null, e.clientStatus || null, e.handwritten ? 1 : 0, e.kind || null,
-      e.ms == null ? null : e.ms, e.code == null ? null : e.code, e.at || now());
+      e.ms == null ? null : e.ms, e.code == null ? null : e.code, e.typing ? JSON.stringify(e.typing) : null, e.at || now());
   }
 
   function getEmmetEvents(studentId, limit = 500) {

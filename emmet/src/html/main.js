@@ -62,10 +62,10 @@ function App({ student, exercises, progress }) {
     onPreview: (code) => target.showStudent(code),
     validate: (code, context) => validate(code, store.current, context),
     onBlocked: (kind) => reporter.send({ type: 'paste', exerciseId: store.current.id, kind }),
-    onResult: (result, code) => {
+    onResult: (result, code, typing) => {
       if (result.status === Status.success) store.markSolved(store.current.id);
       if (!code.trim()) return;
-      reporter.send({ type: 'attempt', exerciseId: store.current.id, status: result.status, code });
+      reporter.send({ type: 'attempt', exerciseId: store.current.id, status: result.status, code, typing });
     },
   });
 

@@ -18,10 +18,13 @@
 что реальный путь (после символических ссылок) не выходит за пределы песочницы.
 """
 
+import json
 import os
 import posixpath
 import stat as st
 from pathlib import Path
+
+import accounts
 
 MAX_READ = 5 * 1024 * 1024      # больше не читаем (cat/grep/sed)
 MAX_WRITE = 1024 * 1024         # максимальный размер записываемого файла
@@ -41,6 +44,7 @@ OUTSIDE = "доступ за пределы домашнего каталога 
 EEXIST = "Файл существует"
 ENOTEMPTY = "Каталог не пуст"
 EPERM = "Операция не позволена"
+OWNERS_FILE = "var/lib/seclab/owners.json"   # владельцы файлов (задание №10); нет файла — владелец по месту
 PROTECTED = "удаление и перемещение домашнего каталога (и каталогов над ним) в учебном терминале запрещено"
 
 
@@ -60,6 +64,7 @@ class Sandbox:
         self.mapped_home = mapped_home
         self.writable = writable
         self.new_files = 0
+        self._owners_cache = None   # (подпись файлов, owners, users, groups)
 
     # ------------------------------------------------------------ пути ---
 
@@ -170,14 +175,131 @@ class Sandbox:
         h = self.home_vrel
         return h == "" or vrel == h or vrel.startswith(h + "/")
 
+    # ---------------------------------------------------- владельцы файлов ---
+    # Обычно владелец определяется местом: домашний каталог — студент, остальное — root. Если в песочнице
+    # есть OWNERS_FILE (задание №10), владелец и группа берутся из него (путь -> «user:group»), а у путей без
+    # записи — владелец по месту: /home/<имя>/… принадлежит <имя>, если такая учётная запись есть.
+
+    def _owner_data(self):
+        """(owners, users, groups) или None, если файла владельцев нет."""
+        paths = [self.root / OWNERS_FILE, self.root / "etc/passwd", self.root / "etc/group"]
+        sig = []
+        for p in paths:
+            try:
+                s = os.stat(p)
+                sig.append((s.st_mtime_ns, s.st_size))
+            except OSError:
+                sig.append(None)
+        if sig[0] is None:
+            return None
+        if self._owners_cache and self._owners_cache[0] == sig:
+            return self._owners_cache[1:]
+        try:
+            owners = json.loads(paths[0].read_text(encoding="utf-8"))
+            if not isinstance(owners, dict):
+                owners = {}
+        except (OSError, ValueError):
+            owners = {}
+        users, groups, _ = accounts.load(self.root)
+        self._owners_cache = (sig, owners, users, groups)
+        return owners, users, groups
+
+    @property
+    def per_file_owners(self):
+        return self._owner_data() is not None
+
+    def _entry(self, vrel):
+        data = self._owner_data()
+        if data is None:
+            return None
+        owners, users, _ = data
+        if vrel in owners:
+            user, _, group = str(owners[vrel]).partition(":")
+            return user, group or user
+        parts = vrel.split("/")
+        if len(parts) >= 2 and parts[0] == "home" and parts[1] in users:
+            return parts[1], parts[1]
+        if vrel == self.home_vrel or vrel.startswith(self.home_vrel + "/"):
+            return self.user, self.user
+        return "root", "root"
+
     def owner(self, vrel):
+        e = self._entry(vrel)
+        if e is not None:
+            return e[0]
         return self.user if self.in_home(vrel) else "root"
 
     def group(self, vrel):
-        return self.owner(vrel)
+        e = self._entry(vrel)
+        return e[1] if e is not None else self.owner(vrel)
 
     def uid(self, vrel):
-        return 1000 if self.in_home(vrel) else 0
+        data = self._owner_data()
+        if data is None:
+            return 1000 if self.in_home(vrel) else 0
+        name = self.owner(vrel)
+        if name.isdigit():
+            return int(name)
+        info = data[1].get(name)
+        return info["uid"] if info else 65534
+
+    def gid(self, vrel):
+        data = self._owner_data()
+        if data is None:
+            return self.uid(vrel)
+        name = self.group(vrel)
+        if name.isdigit():
+            return int(name)
+        info = data[2].get(name)
+        return info["gid"] if info else 65534
+
+    def known_user(self, name):
+        data = self._owner_data()
+        if data is None:
+            return name in ("root", self.user)
+        return name in data[1]
+
+    def known_group(self, name):
+        data = self._owner_data()
+        if data is None:
+            return name in ("root", self.user)
+        return name in data[2]
+
+    def user_groups(self, user=None):
+        data = self._owner_data()
+        user = user or self.user
+        if data is None:
+            return [user]
+        return accounts.user_groups(user, data[1], data[2])
+
+    def set_owner(self, vrel, user, group):
+        """chown/chgrp: записывает владельца в OWNERS_FILE (только при per_file_owners)."""
+        data = self._owner_data()
+        if data is None:
+            raise FsError(EPERM)
+        owners = dict(data[0])
+        owners[vrel] = f"{user}:{group}"
+        self._save_owners(owners)
+
+    def _save_owners(self, owners):
+        p = self.root / OWNERS_FILE
+        p.write_text(json.dumps(owners, ensure_ascii=False, indent=0, sort_keys=True), encoding="utf-8")
+        os.chmod(p, 0o600)
+
+    def _move_owners(self, src, dst):
+        data = self._owner_data()
+        if data is None:
+            return
+        owners = dict(data[0])
+        changed = False
+        for k in list(owners):
+            if k == src or k.startswith(src + "/"):
+                v = owners.pop(k)
+                changed = True
+                if dst is not None:
+                    owners[dst + k[len(src):]] = v
+        if changed:
+            self._save_owners(owners)
 
     def _mode(self, vrel, follow=True):
         s = os.stat(self.path(vrel)) if follow else os.lstat(self.path(vrel))
@@ -191,9 +313,16 @@ class Sandbox:
             mode = self._mode(self.real_vrel(vrel))
         except OSError:
             return False
-        if self.owner(self.real_vrel(vrel)) == self.user:
+        target = self.real_vrel(vrel)
+        if self.owner(target) == self.user:
             return bool(mode & (bit << 6))
+        if self.per_file_owners and self.group(target) in self.user_groups():
+            return bool(mode & (bit << 3))
         return bool(mode & bit)
+
+    def _owned_or_allowed(self, vrel):
+        """Запись без sudo: обычно — только в своё; с файлом владельцев решают биты (can)."""
+        return self.per_file_owners or self.owner(vrel) == self.user
 
     def real_vrel(self, vrel):
         """vrel цели после раскрытия всех символических ссылок."""
@@ -251,14 +380,14 @@ class Sandbox:
             if self.isdir(vrel):
                 raise FsError(EISDIR)
             target = self.real_vrel(vrel)
-            if not priv and self.owner(target) != self.user:
+            if not priv and not self._owned_or_allowed(target):
                 raise FsError(EACCES)
             if not self.can(vrel, 2, priv):
                 raise FsError(EACCES)
         else:
             if parent and not self.isdir(parent):
                 raise FsError(ENOENT)
-            if not priv and self.owner(parent) != self.user:
+            if not priv and not self._owned_or_allowed(parent):
                 raise FsError(EACCES)
             if not self.can(parent, 2, priv):
                 raise FsError(EACCES)
@@ -315,7 +444,7 @@ class Sandbox:
         if priv:
             return
         real = self.real_vrel(dir_vrel) if dir_vrel else ""
-        if self.owner(real) != self.user or not self.can(dir_vrel, 2, False) or not self.can(dir_vrel, 1, False):
+        if not self._owned_or_allowed(real) or not self.can(dir_vrel, 2, False) or not self.can(dir_vrel, 1, False):
             raise FsError(EACCES)
 
     def _count_new(self):
@@ -342,6 +471,7 @@ class Sandbox:
         if os.listdir(self.path(vrel)):
             raise FsError(ENOTEMPTY)
         os.rmdir(self.path(vrel))
+        self._move_owners(vrel, None)
 
     def unlink(self, vrel, priv):
         """Удаляет файл или ссылку (саму ссылку, не цель)."""
@@ -351,6 +481,7 @@ class Sandbox:
             raise FsError(EISDIR)
         self.check_dir_write(posixpath.dirname(vrel), priv)
         os.unlink(self.path(vrel))
+        self._move_owners(vrel, None)
 
     def rename(self, src, dst, priv):
         if not self.lexists(src):
@@ -371,6 +502,8 @@ class Sandbox:
             if dst_dir and os.listdir(self.path(dst)):
                 raise FsError(ENOTEMPTY)
         os.rename(self.path(src), self.path(dst))
+        self._move_owners(dst, None)
+        self._move_owners(src, dst)
 
     def chmod(self, vrel, mode, priv):
         if not self.writable:
@@ -415,7 +548,12 @@ def mode_string(mode):
     """drwxr-xr-x по st_mode."""
     kind = "d" if st.S_ISDIR(mode) else "l" if st.S_ISLNK(mode) else "-"
     out = kind
+    special = {6: (0o4000, "s"), 3: (0o2000, "s"), 0: (0o1000, "t")}
     for shift in (6, 3, 0):
         bits = (mode >> shift) & 7
-        out += ("r" if bits & 4 else "-") + ("w" if bits & 2 else "-") + ("x" if bits & 1 else "-")
+        flag, ch = special[shift]
+        x = "x" if bits & 1 else "-"
+        if mode & flag:
+            x = ch if bits & 1 else ch.upper()
+        out += ("r" if bits & 4 else "-") + ("w" if bits & 2 else "-") + x
     return out

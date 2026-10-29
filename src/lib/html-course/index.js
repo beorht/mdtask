@@ -9,7 +9,8 @@ const fs = require('fs');
 const path = require('path');
 const db = require('../../db');
 const { hasFullAccess } = require('../test-access');
-const { checkAttempt } = require('../emmet/validate');
+const { checkAttempt, explainAttempt } = require('../emmet/validate');
+const typing = require('../typing-check');
 
 const HTML_KEY = 'html';
 const HTML_TITLE = 'Web-разработка: HTML';
@@ -155,7 +156,7 @@ function parseEvent(body, topic) {
   if (type === 'paste' && BLOCKED_KINDS.has(body.kind)) return { type, itemId: exerciseId, kind: body.kind };
   if (type === 'away' && Number.isFinite(body.ms) && body.ms > 0) return { type, itemId: exerciseId, ms: Math.min(Math.round(body.ms), MAX_AWAY) };
   if (type === 'attempt' && STATUSES.has(body.status)) {
-    return { type, itemId: exerciseId, clientStatus: body.status, code: String(body.code ?? '').slice(0, MAX_CODE) };
+    return { type, itemId: exerciseId, clientStatus: body.status, code: String(body.code ?? '').slice(0, MAX_CODE), summary: typing.sanitize(body.typing) };
   }
   throw new HtmlCourseError(400, 'Некорректное событие.');
 }
@@ -173,8 +174,15 @@ function recordEvent(user, topicKey, body, now = new Date().toISOString()) {
     stats.lastAwayMs = event.ms;
     stats.lastReturnAt = now;
   }
+  let hints = [];
   if (event.type === 'attempt') {
-    event.status = checkAttempt(event.code, TASK_BY_ID.get(event.itemId));
+    const task = TASK_BY_ID.get(event.itemId);
+    event.status = checkAttempt(event.code, task);
+    // Как набирался код: признаки «не руками» — сигналы для преподавателя (src/lib/typing-check.js).
+    const flags = typing.typingFlags(event.summary, event.code);
+    typing.addToStats(stats, flags);
+    event.typing = event.summary || flags.length ? { summary: event.summary, flags } : null;
+    if (event.status !== 'success') hints = explainAttempt(event.code, task);
     stats.attempts += 1;
     stats[event.status] += 1;
     if (event.status !== event.clientStatus) stats.clientMismatch += 1;
@@ -189,8 +197,9 @@ function recordEvent(user, topicKey, body, now = new Date().toISOString()) {
     }
   }
   db.saveHtmlProgress(user.id, event.itemId, stats);
-  db.addHtmlEvent({ studentId: user.id, ...event, at: now });
-  return { ok: true, status: event.status || null };
+  const { summary, ...logged } = event;
+  db.addHtmlEvent({ studentId: user.id, ...logged, at: now });
+  return { ok: true, status: event.status || null, hints };
 }
 
 module.exports = {

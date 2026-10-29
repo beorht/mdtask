@@ -461,3 +461,26 @@ CREATE TABLE IF NOT EXISTS python_course_attempts (
   created_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_python_course_attempts ON python_course_attempts(student_id, task_id, id);
+
+-- Курс «JavaScript: от синтаксиса до DOM» (src/lib/js-course/): как python_course_* — шаги уроков и попытки задач.
+CREATE TABLE IF NOT EXISTS js_course_progress (
+  student_id TEXT NOT NULL,
+  item_id TEXT NOT NULL,
+  draft TEXT,
+  stats TEXT NOT NULL DEFAULT '{}',
+  solved_at TEXT,
+  updated_at TEXT NOT NULL,
+  PRIMARY KEY (student_id, item_id)
+);
+CREATE TABLE IF NOT EXISTS js_course_attempts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  student_id TEXT NOT NULL,
+  task_id TEXT NOT NULL,
+  code TEXT NOT NULL,
+  passed INTEGER NOT NULL,
+  total INTEGER NOT NULL,
+  forbidden TEXT NOT NULL DEFAULT '[]',
+  results TEXT NOT NULL DEFAULT '[]',
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_js_course_attempts ON js_course_attempts(student_id, task_id, id);

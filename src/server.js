@@ -53,6 +53,7 @@ function createApp() {
   const htmlCourseRoutes = require('./routes/html-course');
   const cssCourseRoutes = require('./routes/css-course');
   const pythonCourseRoutes = require('./routes/python-course');
+  const jsCourseRoutes = require('./routes/js-course');
   const examRoutes = require('./routes/exam');
   const webExamRoutes = require('./routes/web-exam');
 
@@ -65,6 +66,7 @@ function createApp() {
   app.use(htmlCourseRoutes);
   app.use(cssCourseRoutes);
   app.use(pythonCourseRoutes);
+  app.use(jsCourseRoutes);
   // The WEB group's exam answers its own /exam/<id> and passes every other id on to examRoutes.
   app.use(webExamRoutes);
   app.use(examRoutes);

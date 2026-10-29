@@ -19,7 +19,8 @@
       <span class="role-tag role-tag-<%= user.role %>"><%= user.role === 'teacher' ? 'Преподаватель' : 'Студент' %></span>
     </div>
     <% if (user.role === 'teacher') { %><a href="/admin" class="btn btn-secondary">Админ-панель</a><% } %>
-    <a href="/change-password" class="btn btn-secondary">Сменить пароль</a>
-    <form method="post" action="/logout"><button type="submit" class="btn-secondary">Выйти</button></form>
+    <%# На телефоне подписи скрыты (остаются значки), полные названия — в title и для экранных дикторов. %>
+    <a href="/change-password" class="btn btn-secondary header-btn" title="Сменить пароль"><span class="header-btn-icon" aria-hidden="true">🔑</span><span class="header-btn-label">Сменить пароль</span></a>
+    <form method="post" action="/logout"><button type="submit" class="btn-secondary header-btn" title="Выйти"><span class="header-btn-icon" aria-hidden="true">⎋</span><span class="header-btn-label">Выйти</span></button></form>
   </div>
 </header>

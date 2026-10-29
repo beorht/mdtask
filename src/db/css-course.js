@@ -20,10 +20,10 @@ function makeCssCourseDb(db, prepared) {
 
   function addCssEvent(e) {
     prepared(
-      `INSERT INTO css_events (student_id, item_id, type, status, client_status, kind, ms, code, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO css_events (student_id, item_id, type, status, client_status, kind, ms, code, typing, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).run(e.studentId, e.itemId, e.type, e.status || null, e.clientStatus || null, e.kind || null,
-      e.ms == null ? null : e.ms, e.code == null ? null : e.code, e.at || now());
+      e.ms == null ? null : e.ms, e.code == null ? null : e.code, e.typing ? JSON.stringify(e.typing) : null, e.at || now());
   }
 
   function getCssEvents(studentId, limit = 500) {
