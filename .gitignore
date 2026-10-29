@@ -6,3 +6,5 @@ node_modules/
 __pycache__/
 /results_exam/
 /emmet/dist/
+/archive/
+/backups/
