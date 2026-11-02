@@ -352,6 +352,17 @@ CREATE TABLE IF NOT EXISTS sessions (
 );
 CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at);
 
+-- Защита от перебора пароля (src/lib/login-throttle.js): неудачные попытки входа по IP и логину.
+-- created_at — миллисекунды эпохи; записи старше окна периодически вычищаются.
+CREATE TABLE IF NOT EXISTS login_attempts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  ip TEXT NOT NULL,
+  login TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_login_attempts_ip ON login_attempts(ip, created_at);
+CREATE INDEX IF NOT EXISTS idx_login_attempts_login ON login_attempts(login, created_at);
+
 -- Тренажёр «Emmet · Тетрадь» (группа WEB, src/lib/emmet/, src/routes/emmet.js): личный набор работ Emmet,
 -- статистика по каждой работе (JSON, поля как в docs/emmet/04-data-model.md), журнал событий и
 -- «Завершить / Открыть занятие» по группам.
@@ -411,6 +422,26 @@ CREATE TABLE IF NOT EXISTS html_events (
   created_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_html_events_student ON html_events(student_id, id);
+
+-- Предмет «Linux Terminal Trainer» (src/lib/linux-course/, src/routes/linux-course.js): прогресс по миссиям
+-- (item_id = id миссии, JSON stats) и журнал событий (открыл, проверка, сброс).
+CREATE TABLE IF NOT EXISTS linux_progress (
+  student_id TEXT NOT NULL,
+  item_id TEXT NOT NULL,
+  stats TEXT NOT NULL,
+  solved_at TEXT,
+  updated_at TEXT NOT NULL,
+  PRIMARY KEY (student_id, item_id)
+);
+CREATE TABLE IF NOT EXISTS linux_events (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  student_id TEXT NOT NULL,
+  item_id TEXT NOT NULL,
+  type TEXT NOT NULL,
+  solved INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_linux_events_student ON linux_events(student_id, id);
 
 -- Предмет «Web-разработка: CSS» (src/lib/css-course/, src/routes/css-course.js):
 -- статистика по каждому шагу (item_id: «<тема>:theory» — теория прочитана, иначе id задания практики; JSON как у
@@ -484,3 +515,20 @@ CREATE TABLE IF NOT EXISTS js_course_attempts (
   created_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_js_course_attempts ON js_course_attempts(student_id, task_id, id);
+
+-- Админ-блокировки и дедлайны тем по предметам (src/lib/topic-locks.js).
+-- scope: 'group' (target = имя группы) | 'student' (target = id студента).
+-- mode: 'lock' (закрыто сразу) | 'deadline' (закрыто после deadline) | 'allow' (только student: форс-открыть).
+CREATE TABLE IF NOT EXISTS topic_overrides (
+  subject TEXT NOT NULL,
+  topic_key TEXT NOT NULL,
+  scope TEXT NOT NULL,
+  target TEXT NOT NULL,
+  mode TEXT NOT NULL,
+  deadline TEXT,
+  note TEXT,
+  updated_at TEXT,
+  updated_by TEXT,
+  PRIMARY KEY (subject, topic_key, scope, target)
+);
+CREATE INDEX IF NOT EXISTS idx_topic_overrides_lookup ON topic_overrides(subject, scope, target);

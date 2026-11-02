@@ -603,6 +603,7 @@ def get(key):
         import logs_task  # noqa: F401
         import grep_task  # noqa: F401
         import perms_task  # noqa: F401
+        import procs_task  # noqa: F401
     return LABS.get(key)
 
 

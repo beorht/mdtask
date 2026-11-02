@@ -6,7 +6,7 @@ const CELL = { none: ['·', 'не открывал'], opened: ['○', 'откр�
 <div class="a-page-head">
   <div>
     <h1>Web-разработка: HTML</h1>
-    <p class="a-subtitle">Предмет открыт группам <strong><%= groups.join(', ') %></strong> (и TEST). Готово тем: <%= o.topics.length %> из <%= o.topics.length + o.soon.length %>, заданий: <%= o.total %>. В каждой теме — теория и практическая работа; задания общие для всех, каждую попытку перепроверяет сервер.</p>
+    <p class="a-subtitle">Предмет открыт группам <strong><%= groups.join(', ') %></strong> (и TEST). Готово тем: <%= o.readyTopics %> из <%= o.readyTopics + o.soon.length %>, заданий: <%= o.total %> (включая тренажёр). В каждой теме — теория и практическая работа; задания общие для всех, каждую попытку перепроверяет сервер.</p>
   </div>
 </div>
 
@@ -27,6 +27,12 @@ const CELL = { none: ['·', 'не открывал'], opened: ['○', 'откр�
     <%- icon('search') %>
     <input type="search" name="q" value="<%= filters.q %>" placeholder="Поиск по имени или ID" aria-label="Поиск студента">
   </label>
+  <label>Группа
+    <select name="group">
+      <option value="">все группы</option>
+      <% groups.forEach(function (g) { %><option value="<%= g %>"<%= filters.group === g ? ' selected' : '' %>><%= g %></option><% }) %>
+    </select>
+  </label>
   <button type="submit" class="a-btn a-btn-secondary a-noscript-only">Применить</button>
 </form>
 
@@ -39,7 +45,7 @@ const CELL = { none: ['·', 'не открывал'], opened: ['○', 'откр�
         <thead>
           <tr>
             <th rowspan="2">Студент</th>
-            <% o.topics.forEach(function (t) { %><th colspan="<%= t.tasks.length + 1 %>" class="a-num">Тема <%= t.number %>. <%= t.title %></th><% }) %>
+            <% o.topics.forEach(function (t) { %><th colspan="<%= t.tasks.length + 1 %>" class="a-num"><%= t.number ? ('Тема ' + t.number + '. ' + t.title) : ('🧩 ' + t.title) %></th><% }) %>
             <th rowspan="2" class="a-num">Решено</th><th rowspan="2">Сигналы</th>
           </tr>
           <tr>

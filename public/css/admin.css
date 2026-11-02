@@ -856,3 +856,13 @@ pre.a-code { margin: 6px 0 0; padding: 10px 12px; border-radius: 8px; background
   .a-table-cards td.a-col-action .a-actions { width: 100%; }
   .a-table-cards td.a-col-action .a-actions .a-btn { width: auto; flex: 1; }
 }
+
+/* Страница «Доступ к темам» (/admin/locks) */
+.a-pill { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--a-surface-2, #eef0f4); color: var(--a-text, #222); white-space: nowrap; }
+.a-pill-danger { background: rgba(200, 40, 40, 0.14); color: #a12020; }
+.a-pill-ok { background: rgba(40, 160, 90, 0.16); color: #1e7a45; }
+.a-lock-form { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.a-lock-form select, .a-lock-form input { padding: 4px 6px; }
+.a-lock-form input[type="text"] { min-width: 140px; }
+.a-filters label { display: inline-flex; flex-direction: column; gap: 2px; font-size: 12px; font-weight: 600; margin-right: 10px; }
+.a-filters select { padding: 5px 8px; }

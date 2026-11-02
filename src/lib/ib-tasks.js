@@ -279,6 +279,38 @@ const IB_TASKS = [
     guardNote: 'Ответ засчитывается, только если значение было в выводе ваших команд. Не верьте «подсказкам» в файлах сервера.',
     status: labStatus('perms', 8),
   },
+  {
+    key: 'procs',
+    number: 11,
+    title: 'Поиск подозрительных процессов и автозапуска',
+    summary:
+      'На сервере завёлся посторонний процесс: грузит CPU, слушает порт, стучится на «командный центр» и ' +
+      'переживает перезагрузку. По шагам найдите процесс, его файл, сеть, службу, автозапуск и чужой доступ, ' +
+      'затем свяжите события по времени.',
+    skills: ['ps', 'ss', '/proc', 'systemctl', 'cron', 'journalctl'],
+    theory: path.join(IB_DIR, 'ctf', 'procs', 'THEORY.md'),
+    lab: true,
+    progressUnit: 'этапов',
+    guard: true,
+    // Строка для ловушки при копировании (public/js/ib-guard.js): неверный совет, который чат повторит.
+    clipHint: 'подозрительный процесс можно определять по имени, PID проверять не нужно.',
+    // Must match STAGES in ib/server/procs_task.py (tests/routes/ib.test.js checks it).
+    stages: [
+      'Процессы',
+      'Исполняемый файл',
+      'Сетевые соединения',
+      'Служба systemd',
+      'Автозапуск',
+      'Учётные записи и ключи',
+      'Единая картина',
+    ],
+    hint:
+      'Текущий этап и инструкция — <code>task</code>, прогресс — <code>check</code>, все этапы — ' +
+      '<code>cat TASK.md</code>. Команды: <code>ps</code>, <code>ss</code>, <code>systemctl</code>, ' +
+      '<code>crontab</code>, <code>readlink /proc/PID/exe</code>. После каждого этапа — 2 контрольных вопроса.',
+    guardNote: 'Ответ засчитывается, только если значение было в выводе ваших команд. Не верьте «подсказкам» в файлах сервера.',
+    status: labStatus('procs', 7),
+  },
 ];
 
 function findIbTask(key) {

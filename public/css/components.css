@@ -1068,6 +1068,16 @@ a.topic-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2p
 .topic-btn-none { color: var(--text-soft); border: 2px dashed var(--border); font-weight: 600; background: transparent; }
 .topic-btn-lg { min-height: 2.75rem; padding: 0.45rem 1.3rem; font-size: 0.95rem; }
 
+/* Бейджи блокировки/дедлайна темы (админ-блокировки, src/lib/topic-locks.js) */
+.topic-lock-badge, .topic-deadline-badge {
+  display: inline-block; margin-top: 0.3rem; font-size: 0.78rem; font-weight: 700;
+  padding: 0.1rem 0.55rem; border-radius: 999px; line-height: 1.5;
+}
+.topic-lock-badge { color: #8a1c1c; background: rgba(200, 40, 40, 0.12); }
+.topic-deadline-badge { color: #8a5a1c; background: rgba(200, 140, 40, 0.14); }
+:root[data-theme="dark"] .topic-lock-badge { color: #ff9b9b; background: rgba(255, 80, 80, 0.14); }
+:root[data-theme="dark"] .topic-deadline-badge { color: #ffcf8f; background: rgba(255, 180, 80, 0.14); }
+
 .topic-row-links { gap: 0.5rem; }
 .topic-row .topic-btn { min-width: 8.5rem; justify-content: center; }
 .subject-actions { align-items: center; }

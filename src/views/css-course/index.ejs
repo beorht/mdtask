@@ -28,6 +28,7 @@
             <span class="html-topic-body">
               <span class="html-topic-title">Тема <%= t.number %>. <%= t.title %></span>
               <span class="html-topic-lead"><%= t.lead %></span>
+              <% if (t.adminLocked) { %><span class="topic-lock-badge">🔒 <%= t.lockReason || 'Закрыто преподавателем' %></span><% } else if (t.deadlineText) { %><span class="topic-deadline-badge">⏳ до <%= t.deadlineText %></span><% } %>
             </span>
             <span class="html-topic-steps">
               <% if (!t.ready) { %>

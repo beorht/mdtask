@@ -596,6 +596,7 @@ const LAB_INFO = {
   logs: (p) => `${p.service || ''} · ${p.target} · SSH ${p.ssh_ip} · веб ${p.web_ip}`,
   grep: (p) => `${p.svc} · ${p.emp} · ${p.domain}`,
   perms: (p) => `${p.theme} · /srv/${p.app} · UID 0: ${p.rogue} · SUID: ${p.suid_extra}`,
+  procs: (p) => `${p.theme} · ${p.mal} (PID ${p.pid}) · порт ${p.port} · C2 ${p.c2_ip} · ${p.service}`,
 };
 
 const GUARD_LABELS = {

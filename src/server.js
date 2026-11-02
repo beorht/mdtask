@@ -51,11 +51,15 @@ function createApp() {
   const ibRoutes = require('./routes/ib');
   const emmetRoutes = require('./routes/emmet');
   const htmlCourseRoutes = require('./routes/html-course');
+  const linuxCourseRoutes = require('./routes/linux-course');
   const cssCourseRoutes = require('./routes/css-course');
   const pythonCourseRoutes = require('./routes/python-course');
   const jsCourseRoutes = require('./routes/js-course');
   const examRoutes = require('./routes/exam');
   const webExamRoutes = require('./routes/web-exam');
+
+  // Общий лимит частоты запросов на пользователя/IP (защита от флуда; статика выше — не под лимитом).
+  app.use(require('./lib/rate-limit').globalLimiter);
 
   app.use(authRoutes);
   // Before studentRoutes: its /subjects/:key would otherwise answer /subjects/ib, /subjects/emmet and
@@ -64,6 +68,7 @@ function createApp() {
   app.use(ibRoutes);
   app.use(emmetRoutes);
   app.use(htmlCourseRoutes);
+  app.use(linuxCourseRoutes);
   app.use(cssCourseRoutes);
   app.use(pythonCourseRoutes);
   app.use(jsCourseRoutes);

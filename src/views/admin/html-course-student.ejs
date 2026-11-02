@@ -22,14 +22,14 @@ const titleOf = function (id) { const t = d.topics.flatMap(function (x) { return
 
 <% d.topics.forEach(function (t) { %>
 <section class="a-card a-card-flush">
-  <div class="a-card-head"><h2>Тема <%= t.number %>. <%= t.title %></h2><p class="a-muted">Теория: <%= t.theory ? 'прочитана ' + view.formatDateTime(t.theory.openedAt || t.theory.lastAt) : 'не открывал' %></p></div>
+  <div class="a-card-head"><h2><%= t.number ? ('Тема ' + t.number + '. ' + t.title) : ('🧩 Тренажёр: ' + t.title) %></h2><p class="a-muted"><%= t.number ? ('Теория: ' + (t.theory ? 'прочитана ' + view.formatDateTime(t.theory.openedAt || t.theory.lastAt) : 'не открывал')) : 'отдельный тренажёр, без теории' %></p></div>
   <div class="a-table-wrap">
     <table class="a-table a-table-cards">
       <thead><tr><th>№</th><th>Задание</th><th>Состояние</th><th class="a-num">Попыток</th><th class="a-num">Вставок</th><th class="a-num">Уходов</th><th>Решено</th></tr></thead>
       <tbody>
         <% t.items.forEach(function (it) { const s = it.stats; %>
           <tr>
-            <td data-label="№"><%= t.number %>.<%= it.task.number %></td>
+            <td data-label="№"><%= t.number ? (t.number + '.' + it.task.number) : it.task.number %></td>
             <td data-label="Задание"><%= it.task.title %>
               <% if (s && (s.solvedCode || s.lastCode)) { %>
                 <details><summary class="a-muted"><%= s.solvedCode ? 'Код решения' : 'Последний код' %></summary><pre class="a-code"><%= s.solvedCode || s.lastCode %></pre></details>

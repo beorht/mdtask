@@ -8,6 +8,7 @@ const { examLockFor } = require('../lib/exam');
 const { buildSidebarTree } = require('../lib/sidebar');
 const { renderTheory } = require('../lib/html-course/theory');
 const course = require('../lib/html-course');
+const { lockState } = require('../lib/topic-locks');
 
 const router = express.Router();
 const BASE = `/subjects/${course.HTML_KEY}`;
@@ -30,6 +31,10 @@ function findTopic(req, res, step) {
     res.status(404).render('404');
     return null;
   }
+  if (topic.adminLocked) {
+    res.status(423).render('topic-locked', { user: req.session.user, state: { locked: true, overdue: topic.overdue, reason: topic.lockReason, note: '' } });
+    return null;
+  }
   if (!(step === 'theory' ? topic.theoryOpen : topic.practiceOpen)) {
     res.redirect(BASE);
     return null;
@@ -47,6 +52,19 @@ router.get(BASE, ...page, (req, res) => {
     title: course.HTML_TITLE,
     base: BASE,
     summary: course.summaryForStudent(user),
+    trainer: course.trainerForStudent(user),
+  });
+});
+
+// Тренажёр «Вложенность и контейнеры» — отдельная практика в начале предмета (без гейтинга темами).
+router.get(`${BASE}/trainer`, ...page, (req, res) => {
+  const tlock = lockState(course.HTML_KEY, course.TRAINER_KEY, req.session.user);
+  if (tlock.locked) return res.status(423).render('topic-locked', { user: req.session.user, state: tlock });
+  res.render('html-course/practice', {
+    user: req.session.user,
+    topic: { key: course.TRAINER_KEY, number: '', title: course.TRAINER_TITLE },
+    base: BASE,
+    pageTitle: `Тренажёр · ${course.TRAINER_TITLE}`,
   });
 });
 
@@ -85,6 +103,7 @@ function api(handler) {
     if (lock) return res.status(423).json({ error: lock.during ? 'Закрыто на время итоговой контрольной.' : 'Закрыто преподавателем.' });
     const topic = course.topicFor(user, req.params.topic);
     if (!topic || !topic.ready) return res.status(404).json({ error: 'Такой темы нет.' });
+    if (topic.adminLocked) return res.status(423).json({ error: topic.lockReason || 'Тема закрыта преподавателем.' });
     if (!topic.practiceOpen) return res.status(403).json({ error: 'Сначала прочитайте теорию темы.' });
     try {
       res.json(handler(req, user, topic));
@@ -94,6 +113,30 @@ function api(handler) {
     }
   };
 }
+
+// API тренажёра — без гейтинга темами (регистрируется до общего :topic, иначе :topic перехватит «trainer»).
+function trainerApi(handler) {
+  return (req, res) => {
+    const user = req.session.user;
+    res.set('Cache-Control', 'no-store');
+    if (!user) return res.status(401).json({ error: 'Войдите на сайт заново.' });
+    if (user.mustChangePassword) return res.status(401).json({ error: 'Сначала смените пароль.' });
+    if (!course.canSeeHtml(user)) return res.status(404).json({ error: 'Предмет недоступен.' });
+    const lock = examLockFor(user);
+    if (lock) return res.status(423).json({ error: lock.during ? 'Закрыто на время итоговой контрольной.' : 'Закрыто преподавателем.' });
+    const tlock = lockState(course.HTML_KEY, course.TRAINER_KEY, user);
+    if (tlock.locked) return res.status(423).json({ error: tlock.reason || 'Тема закрыта преподавателем.' });
+    try {
+      res.json(handler(req, user));
+    } catch (err) {
+      if (!(err instanceof course.HtmlCourseError)) throw err;
+      res.status(err.status).json({ error: err.message });
+    }
+  };
+}
+
+router.get(`${BASE}/api/trainer/me`, requireRole('student'), trainerApi((req, user) => course.me(user, course.TRAINER_KEY)));
+router.post(`${BASE}/api/trainer/events`, requireRole('student'), trainerApi((req, user) => course.recordEvent(user, course.TRAINER_KEY, req.body)));
 
 router.get(`${BASE}/api/:topic/me`, api((req, user, topic) => course.me(user, topic.key)));
 router.post(`${BASE}/api/:topic/events`, api((req, user, topic) => course.recordEvent(user, topic.key, req.body)));

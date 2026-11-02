@@ -55,7 +55,8 @@ function rowFor(student, topics) {
 }
 
 function overview(filters = {}) {
-  const topics = course.TOPICS.filter((t) => t.ready);
+  const ready = course.TOPICS.filter((t) => t.ready);
+  const topics = [course.TRAINER, ...ready]; // тренажёр — первым столбцом матрицы (не тема)
   const q = (filters.q || '').toLowerCase();
   const all = students(filters.group).map((s) => rowFor(s, topics));
   // Одинаковые (длинные) решения у разных студентов — сигнал списывания.
@@ -75,13 +76,13 @@ function overview(filters = {}) {
     const shuffle = (list) => list.map((r) => [Math.random(), r]).sort((a, b) => a[0] - b[0]).map((x) => x[1]);
     picked = [...shuffle(pool.filter((r) => r.signals.length)), ...shuffle(pool.filter((r) => !r.signals.length))].slice(0, 4);
   }
-  return { topics, rows, picked, total: topics.reduce((n, t) => n + t.tasks.length, 0), soon: course.TOPICS.filter((t) => !t.ready) };
+  return { topics, rows, picked, total: topics.reduce((n, t) => n + t.tasks.length, 0), readyTopics: ready.length, soon: course.TOPICS.filter((t) => !t.ready) };
 }
 
 function studentDetail(studentId) {
   const student = db.getUserById(studentId);
   if (!student || student.role !== 'student') return null;
-  const topics = course.TOPICS.filter((t) => t.ready);
+  const topics = [course.TRAINER, ...course.TOPICS.filter((t) => t.ready)];
   const progress = course.progressMap(student.id);
   return {
     student,

@@ -10,6 +10,7 @@ const { callTerminal } = require('../lib/ib-bridge');
 const { renderMarkdown, extractHeadings } = require('../lib/markdown');
 const { IB_SUBJECT_KEY, IB_SUBJECT_TITLE, findIbTask, ibSummary } = require('../lib/ib-tasks');
 const detector = require('../lib/ib-detector');
+const { heavyLimiter } = require('../lib/rate-limit');
 const guardLib = require('../lib/ib-guard');
 const siteDefense = require('../lib/ib-defense');
 const db = require('../db');
@@ -165,7 +166,7 @@ router.post(`/subjects/${IB_SUBJECT_KEY}/:task/detector/draft`, requireRole('stu
   res.json({ saved: true });
 });
 
-router.post(`/subjects/${IB_SUBJECT_KEY}/:task/detector/check`, requireRole('student'), loadTask, loadDetector, (req, res) => {
+router.post(`/subjects/${IB_SUBJECT_KEY}/:task/detector/check`, requireRole('student'), heavyLimiter, loadTask, loadDetector, (req, res) => {
   const code = codeOf(req);
   if (code === null) return res.status(413).json({ error: 'Слишком длинная программа.' });
   let check;
@@ -203,7 +204,7 @@ router.post(`/subjects/${IB_SUBJECT_KEY}/:task/detector/defense`, requireRole('s
 
 // Terminal API. The TTY login is kept as in IBEmulator (the student's own mdtask password),
 // but only for the logged-in student — the terminal session id stays in the mdtask session.
-router.post('/ib/:task/api/:action', requireRole('student'), loadTask, async (req, res) => {
+router.post('/ib/:task/api/:action', requireRole('student'), heavyLimiter, loadTask, async (req, res) => {
   const action = req.params.action;
   if (!API_PATHS.includes(action)) return res.status(404).json({});
   const user = req.session.user;

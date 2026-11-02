@@ -1,0 +1,54 @@
+<!-- src/views/linux-course/index.ejs — «Linux Terminal Trainer»: модули и миссии (src/lib/linux-course) -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <%- include('../partials/head', { pageTitle: title }) %>
+</head>
+<body>
+  <%- include('../partials/header') %>
+  <div class="app-layout">
+    <%- include('../partials/sidebar') %>
+    <main class="content">
+      <p class="subject-back"><%- include('../partials/back-btn', { href: '/', label: 'Все предметы' }) %></p>
+      <h1><span aria-hidden="true">🐧</span> <%= title %></h1>
+      <p class="subject-block-lead"><%= lead %></p>
+
+      <% const pct = summary.total ? Math.round((summary.solved / summary.total) * 100) : 0; %>
+      <div class="subject-summary">
+        <span>Пройдено миссий: <strong><%= summary.solved %> / <%= summary.total %></strong></span>
+        <span class="progress subject-summary-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<%= pct %>" aria-label="Прогресс">
+          <span class="progress-fill" style="width: <%= pct %>%"></span>
+        </span>
+      </div>
+
+      <% summary.modules.forEach(function (m) { %>
+        <section class="linux-module">
+          <h2>Модуль <%= m.number %>. <%= m.title %></h2>
+          <% if (!m.ready) { %>
+            <p class="topic-btn topic-btn-none">Готовится</p>
+          <% } else { %>
+            <ol class="html-topic-list">
+              <% m.missions.forEach(function (mi) { %>
+                <li class="html-topic<%= mi.solved ? ' is-done' : '' %><%= !mi.open ? ' is-locked' : '' %>">
+                  <span class="ib-task-num" aria-hidden="true"><%= mi.solved ? '✓' : mi.open ? (m.number + '.' + mi.number) : '🔒' %></span>
+                  <span class="html-topic-body">
+                    <span class="html-topic-title">Миссия <%= m.number %>.<%= mi.number %>. <%= mi.title %></span>
+                  </span>
+                  <span class="html-topic-steps">
+                    <% if (mi.open) { %>
+                      <a class="topic-btn topic-btn-practice topic-btn-lg<%= mi.solved ? ' is-done' : '' %>" href="<%= base %>/mission/<%= mi.id %>"><span aria-hidden="true"><%= mi.solved ? '✓' : '🖥️' %></span> <%= mi.solved ? 'Пройдена' : 'Начать' %></a>
+                    <% } else { %>
+                      <span class="topic-btn topic-btn-practice is-locked" title="Откроется после предыдущей миссии"><span aria-hidden="true">🔒</span> Начать</span>
+                    <% } %>
+                  </span>
+                </li>
+              <% }) %>
+            </ol>
+          <% } %>
+        </section>
+      <% }) %>
+    </main>
+  </div>
+  <%- include('../partials/scripts') %>
+</body>
+</html>

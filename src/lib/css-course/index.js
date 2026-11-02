@@ -15,6 +15,7 @@ const db = require('../../db');
 const { hasFullAccess } = require('../test-access');
 const { checkCss } = require('./cascade');
 const typing = require('../typing-check');
+const topicLocks = require('../topic-locks');
 
 const CSS_KEY = 'css';
 const CSS_TITLE = 'Web-разработка: CSS';
@@ -121,8 +122,11 @@ function topicsForStudent(user) {
     const tasks = t.tasks.map((task) => ({ id: task.id, number: task.number, title: task.title, solved: solved(task.id), tried: Boolean(progress.get(task.id) && progress.get(task.id).attempts) }));
     const theoryRead = progress.has(theoryId(t.key));
     const done = t.ready && tasks.every((task) => task.solved);
-    const theoryOpen = t.ready && (full || previousDone);
-    const practiceOpen = theoryOpen && (full || theoryRead);
+    const lock = topicLocks.lockState(CSS_KEY, t.key, user);
+    let theoryOpen = t.ready && (full || previousDone);
+    let practiceOpen = theoryOpen && (full || theoryRead);
+    if (lock.forcedOpen) { theoryOpen = t.ready; practiceOpen = t.ready; }
+    if (lock.locked) { theoryOpen = false; practiceOpen = false; }
     previousDone = previousDone && done;
     return {
       key: t.key,
@@ -137,6 +141,11 @@ function topicsForStudent(user) {
       theoryOpen,
       practiceOpen,
       done,
+      adminLocked: lock.locked,
+      deadline: lock.deadline,
+      deadlineText: lock.deadlineText,
+      lockReason: lock.reason,
+      overdue: lock.overdue,
     };
   });
 }

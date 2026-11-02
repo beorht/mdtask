@@ -1,0 +1,80 @@
+/* «Linux Terminal Trainer» — страница тренажёра. Хром (панели, шапка, кнопки, дерево) наследует основную
+   тему сайта (theme.css: --bg/--surface/--text/--border/--accent) и переключается светлая/тёмная. Сам
+   терминал остаётся тёмным, как был, и получает «тетрадную» клетку, как редакторы кода (--grid-line × --grid-size). */
+.ltt-body { margin: 0; height: 100vh; overflow: hidden; }
+.ltt { display: grid; grid-template-rows: 52px 1fr 60px; height: 100vh; color: var(--text);
+  font-family: system-ui, 'Open Sans', sans-serif; position: relative; z-index: 1; }
+
+.ltt-header { display: flex; align-items: center; justify-content: space-between; padding: 0 16px;
+  background: var(--surface); border-bottom: 1px solid var(--border); }
+.ltt-brand { font-weight: 700; } .ltt-logo { margin-right: 6px; }
+.ltt-sub { color: var(--text-soft); font-weight: 400; margin-left: 10px; font-size: 14px; }
+.ltt-head-actions { display: flex; align-items: center; gap: 10px; }
+.ltt-home { color: var(--accent-text, var(--accent)); text-decoration: none; font-size: 14px; }
+.ltt-home:hover { text-decoration: underline; }
+
+.ltt-main { display: grid; grid-template-columns: minmax(220px, 270px) 1fr minmax(220px, 290px); min-height: 0; }
+.ltt-task, .ltt-tree-wrap { background: var(--surface); overflow: auto; }
+.ltt-task { border-right: 1px solid var(--border); padding: 14px 16px; }
+.ltt-task h1 { font-size: 18px; margin: 0; color: var(--text); }
+.ltt-task h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-soft); margin: 16px 0 6px; }
+.ltt-task-head { display: flex; align-items: center; gap: 8px; }
+.ltt-badge { background: var(--editor-bg); color: #7fd38f; border: 1px solid var(--editor-border);
+  border-radius: 6px; padding: 2px 8px; font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+.ltt-section p { margin: 0; line-height: 1.55; }
+.ltt-syntax { margin: 0; padding: 0; list-style: none; }
+.ltt-syntax li { font-family: 'JetBrains Mono', monospace; font-size: 13px; background: var(--editor-bg);
+  color: #7fd38f; border: 1px solid var(--editor-border); border-radius: 6px; padding: 5px 8px; margin: 4px 0; }
+/* Светлая тема: чипы команд на светлом фоне — тёмный текст, чтобы было видно. */
+:root[data-theme="light"] .ltt-syntax li,
+:root[data-theme="light"] .ltt-badge { color: #0D1117; }
+.ltt-hint-box p { color: var(--accent); }
+.ltt-verdict { margin-top: 14px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); }
+.ltt-verdict.is-ok { border-color: var(--color-status-done); background: color-mix(in srgb, var(--color-status-done) 12%, transparent); }
+.ltt-verdict.is-no { border-color: var(--color-status-failed); background: color-mix(in srgb, var(--color-status-failed) 10%, transparent); }
+.ltt-verdict ul { margin: 6px 0 0; padding-left: 18px; }
+
+/* Терминал — всегда тёмный, с «тетрадной» клеткой под текстом (как в редакторах кода). */
+.ltt-terminal-wrap { min-width: 0; padding: 10px; }
+.ltt-terminal { height: 100%; color: #d7e2ef; border: 1px solid var(--editor-border); border-radius: 12px;
+  padding: 12px 14px; overflow: auto; font-family: 'JetBrains Mono', monospace; font-size: 14px; line-height: 24px;
+  display: flex; flex-direction: column;
+  background-color: #0d1117;
+  background-image: linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: var(--grid-size) var(--grid-size);
+  background-attachment: local; }
+.ltt-out > div { white-space: pre-wrap; word-break: break-word; }
+.ltt-echo { color: #9fb3c8; } .ltt-ok-line { color: #d7e2ef; } .ltt-err-line { color: #ff8a8a; }
+.ltt-note { color: #7b8aa0; font-style: italic; }
+.ltt-input-line { display: flex; align-items: center; }
+.ltt-prompt { color: #4fd083; white-space: pre; margin-right: 8px; }
+.ltt-input { flex: 1; background: transparent; border: none; color: #d7e2ef; font: inherit; outline: none; caret-color: #4fd083; }
+
+.ltt-tree-wrap { border-left: 1px solid var(--border); padding: 12px; }
+.ltt-tree-head { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-soft); margin-bottom: 8px; }
+.ltt-cwd { font-family: 'JetBrains Mono', monospace; color: var(--accent); text-transform: none; letter-spacing: 0; }
+.ltt-tree { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--text); }
+.ltt-children { margin-left: 14px; border-left: 1px dotted var(--border); padding-left: 8px; }
+.ltt-node-self { padding: 1px 4px; border-radius: 4px; }
+.ltt-node-self.is-cwd { background: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--accent-text, var(--accent)); }
+.ltt-visual { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 8px; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+.ltt-visual-title { color: var(--text-soft); margin-bottom: 4px; }
+.ltt-add { color: var(--color-status-done); } .ltt-rem { color: var(--color-status-failed); }
+
+.ltt-controls { display: flex; align-items: center; gap: 8px; padding: 0 12px; background: var(--surface); border-top: 1px solid var(--border); }
+.ltt-btn { background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 10px;
+  padding: 7px 12px; font: inherit; font-size: 13px; cursor: pointer; }
+.ltt-btn:hover { border-color: var(--accent); }
+.ltt-icon { padding: 7px 10px; }
+.ltt-visual-toggle.is-on { border-color: var(--accent); color: var(--accent); }
+.ltt-check { margin-left: auto; background: var(--accent); color: var(--on-accent-text, #fff); border-color: var(--accent); font-weight: 700; }
+.ltt-check:hover { filter: brightness(1.06); }
+
+@media (max-width: 900px) {
+  .ltt-body { overflow: auto; }
+  .ltt { height: auto; min-height: 100vh; }
+  .ltt-main { grid-template-columns: 1fr; grid-template-rows: auto 50vh auto; }
+  .ltt-task { border-right: none; border-bottom: 1px solid var(--border); }
+  .ltt-tree-wrap { border-left: none; border-top: 1px solid var(--border); }
+}

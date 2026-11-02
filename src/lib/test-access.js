@@ -19,7 +19,7 @@ function seesSharedAssignments(group) {
 
 // Группы, которым пока открыты только перечисленные предметы (ключи карточек на главной: sql, emmet, html,
 // python, javascript, ib, pis…): остальные карточки не показываются, их страницы отвечают 404 (subjectGuard).
-const GROUP_SUBJECTS = { 'web-1': ['html', 'css', 'emmet'] };
+const GROUP_SUBJECTS = { 'web-1': ['html', 'css', 'emmet', 'linux'] };
 // Группы, которым скрыты отдельные предметы (остальные видны как обычно): web-2 не изучает Python (с 27.10.2026).
 const GROUP_HIDDEN_SUBJECTS = { 'web-2': ['python'] };
 

@@ -227,6 +227,22 @@ function buildStudentHome(user, now = Date.now()) {
     });
   }
 
+  // «Linux Terminal Trainer» — группы из LINUX_GROUPS и TEST (src/lib/linux-course).
+  const linuxCourse = require('./linux-course');
+  if (linuxCourse.canSeeLinux(user)) {
+    const ltc = linuxCourse.summaryForStudent(user);
+    htmlSubjects.push({
+      key: linuxCourse.LINUX_KEY,
+      kind: 'html',
+      title: linuxCourse.LINUX_TITLE,
+      icon: linuxCourse.LINUX_ICON,
+      solved: ltc.solved,
+      total: ltc.total,
+      topicsCount: ltc.modules.filter((m) => m.ready).length,
+      current: ltc.current && { number: `${ltc.current.moduleNumber}.${ltc.current.number}`, title: ltc.current.title },
+    });
+  }
+
   // The final exam: a card while it runs and after it; the IB tasks and the trainer are closed while it runs.
   const webExam = require('./web-exam');
   const exams = [...Object.values(exam.EXAMS).map((def) => [def, exam]), ...Object.values(webExam.EXAMS).map((def) => [def, webExam])]

@@ -64,6 +64,10 @@ HELP_TEXT = """Доступные команды:
   id / groups [имя], getent passwd|group [имя] - учётные записи и группы
   sudo passwd -l|-u|-S имя - заблокировать / разблокировать / состояние учётной записи
   sudo usermod -L|-U|-aG группа|-s оболочка имя, sudo gpasswd -d имя группа - изменить учётную запись
+  ps aux [--sort=-%cpu|-%mem], ps -p PID -o pid,ppid,user,lstart,etime,cmd - процессы
+  ss -lntup / ss -tnp - сетевые сокеты: слушающие и установленные соединения
+  systemctl list-units --state=running | list-unit-files | --failed | list-timers | status | cat ЮНИТ
+  crontab -l [-u ИМЯ] - задания cron пользователя
   last, sudo lastb   - журнал успешных / неудачных входов
   ssh [-i ключ] [-p порт] пользователь@localhost - подключиться по SSH (к этому же серверу)
   sudo sshd -t / -T  - проверить конфигурацию SSH / показать действующие значения
@@ -105,6 +109,7 @@ BIN_DIR = {
     "md5sum": "/usr/bin/md5sum", "systemctl": "/usr/bin/systemctl", "journalctl": "/usr/bin/journalctl",
     "sshd": "/usr/sbin/sshd", "ssh": "/usr/bin/ssh", "ssh-keygen": "/usr/bin/ssh-keygen",
     "zcat": "/usr/bin/zcat", "zgrep": "/usr/bin/zgrep", "tr": "/usr/bin/tr", "iptables": "/usr/sbin/iptables",
+    "ps": "/usr/bin/ps", "ss": "/usr/bin/ss", "crontab": "/usr/bin/crontab",
 }
 
 MONTHS = ["янв", "фев", "мар", "апр", "мая", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"]
@@ -1899,6 +1904,9 @@ COMMANDS = {
     "date": _lazy("cmd_logs", "cmd_date"),
     "zcat": _lazy("cmd_logs", "cmd_zcat"),
     "zgrep": _lazy("cmd_logs", "cmd_zgrep"),
+    "ps": _lazy("cmd_proc", "cmd_ps"),
+    "ss": _lazy("cmd_proc", "cmd_ss"),
+    "crontab": _lazy("cmd_proc", "cmd_crontab"),
     "tr": _lazy("cmd_logs", "cmd_tr"),
     "iptables": _lazy("cmd_logs", "cmd_iptables"),
     "duty": _hook_command("duty", "команда доступна только в задании №8 (дежурство SOC)"),

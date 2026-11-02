@@ -42,6 +42,8 @@ router.use(['/subjects', '/assignment'], (req, res, next) =>
 const upload = multer({
   // Browsers send file names as UTF-8; busboy's default (latin1) turned «Задача 1.zip» into mojibake.
   defParamCharset: 'utf8',
+  // Защита от заполнения диска: предел размера и числа файлов на одну сдачу.
+  limits: { fileSize: 30 * 1024 * 1024, files: 10 },
   storage: multer.diskStorage({
     destination: (req, file, cb) => {
       const dir = path.join(UPLOAD_DIR, req.params.id, req.session.user.id);
@@ -82,6 +84,16 @@ function canSubmit(assignment, latestSubmission) {
   if (latestSubmission.status === 'pending') return true;
   if (latestSubmission.resubmitAllowed) return true;
   return Date.now() <= new Date(assignment.dueDate).getTime();
+}
+
+// Проверяем доступ и срок ДО приёма файла, чтобы не писать на диск то, что всё равно отклонится.
+function canUploadGuard(req, res, next) {
+  const user = req.session.user;
+  const assignment = getAssignments().find((a) => a.id === req.params.id);
+  if (!assignment || !canAccessAssignment(assignment, user)) return res.status(404).render('404');
+  if (assignment.codeFiles) return next(); // редактор кода — обработчик сам ответит 400
+  if (!canSubmit(assignment, getLatestSubmission(assignment.id, user.id))) return res.status(403).render('403');
+  next();
 }
 
 // "/" is the home link everywhere (error pages, brand); a teacher's home is the admin panel.
@@ -234,7 +246,7 @@ router.get('/assignment/:id', requireRole('student'), (req, res) => {
   });
 });
 
-router.post('/assignment/:id/submit', requireRole('student'), handleUpload, (req, res) => {
+router.post('/assignment/:id/submit', requireRole('student'), canUploadGuard, handleUpload, (req, res) => {
   const user = req.session.user;
   const assignment = getAssignments().find((a) => a.id === req.params.id);
 

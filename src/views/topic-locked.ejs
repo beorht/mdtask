@@ -1,0 +1,20 @@
+<!-- src/views/topic-locked.ejs — тема закрыта преподавателем или по дедлайну (src/lib/topic-locks.js). -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <%- include('partials/head', { pageTitle: 'Тема закрыта' }) %>
+</head>
+<body>
+  <%- include('partials/header') %>
+  <main class="content home">
+    <section class="task-panel exam-locked">
+      <h1>🔒 Тема закрыта</h1>
+      <p><%= state.overdue ? 'Срок сдачи этой темы прошёл.' : 'Эта тема сейчас закрыта преподавателем.' %></p>
+      <% if (state.reason) { %><p><strong><%= state.reason %></strong></p><% } %>
+      <% if (state.note) { %><p><%= state.note %></p><% } %>
+      <p><%- include('partials/back-btn', { href: '/', label: 'На главную' }) %></p>
+    </section>
+  </main>
+  <%- include('partials/scripts') %>
+</body>
+</html>

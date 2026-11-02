@@ -2,6 +2,7 @@ const express = require('express');
 const { verifyUserCredentials, setUserPassword } = require('../db');
 const { MIN_PASSWORD_LENGTH } = require('../lib/password');
 const { requireAuth } = require('../middleware/auth');
+const throttle = require('../lib/login-throttle');
 
 const router = express.Router();
 
@@ -11,12 +12,24 @@ router.get('/login', (req, res) => {
 
 router.post('/login', (req, res) => {
   const { studentId, password } = req.body;
+
+  // Защита от перебора пароля: при слишком частых неудачах — отказ без проверки пароля.
+  const gate = throttle.check(req, studentId);
+  if (gate.blocked) {
+    const mins = Math.max(1, Math.ceil(gate.retryAfterSec / 60));
+    return res.status(429).render('login', {
+      error: `Слишком много неудачных попыток входа. Повторите примерно через ${mins} мин.`,
+    });
+  }
+
   const user = verifyUserCredentials(studentId, password || '');
 
   if (!user) {
+    throttle.recordFailure(req, studentId);
     return res.render('login', { error: 'Неверный ID или пароль' });
   }
 
+  throttle.recordSuccess(req, studentId);
   req.session.user = user;
   if (user.mustChangePassword) return res.redirect('/change-password');
   res.redirect(user.role === 'teacher' ? '/admin' : '/');

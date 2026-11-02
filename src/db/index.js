@@ -9,7 +9,9 @@ const { TEST_GROUP, seesSharedAssignments } = require('../lib/test-access');
 const { makeExamDb } = require('./exam');
 const { makeEmmetDb } = require('./emmet');
 const { makeHtmlCourseDb } = require('./html-course');
+const { makeTopicLocksDb } = require('./topic-locks');
 const { makeCssCourseDb } = require('./css-course');
+const { makeLinuxCourseDb } = require('./linux-course');
 const { makeJsCourseDb } = require('./js-course');
 const { makePythonCourseDb } = require('./python-course');
 
@@ -112,8 +114,10 @@ const examDb = makeExamDb(db, prepared);
 const emmetDb = makeEmmetDb(db, prepared);
 const htmlCourseDb = makeHtmlCourseDb(db, prepared);
 const cssCourseDb = makeCssCourseDb(db, prepared);
+const linuxCourseDb = makeLinuxCourseDb(db, prepared);
 const jsCourseDb = makeJsCourseDb(db, prepared);
 const pythonCourseDb = makePythonCourseDb(db, prepared);
+const topicLocksDb = makeTopicLocksDb(db, prepared);
 
 function rowToUser(row) {
   return {
@@ -177,6 +181,32 @@ function verifyUserCredentials(id, password) {
 function getUserById(id) {
   const row = prepared('SELECT * FROM users WHERE id = ?').get(id);
   return row ? rowToUser(row) : null;
+}
+
+// --- защита от перебора пароля (src/lib/login-throttle.js) ---
+// login хранится в нижнем регистре, чтобы ключ совпадал при входе без учёта регистра.
+function recordLoginFailure(ip, login, now = Date.now()) {
+  prepared('INSERT INTO login_attempts (ip, login, created_at) VALUES (?, ?, ?)')
+    .run(String(ip || ''), String(login || '').toLowerCase(), now);
+}
+
+function clearLoginFailures(ip, login) {
+  prepared('DELETE FROM login_attempts WHERE ip = ? AND login = ?')
+    .run(String(ip || ''), String(login || '').toLowerCase());
+}
+
+// Число неудачных попыток за since..now: по (ip+login), либо по ip (если login не задан).
+function countLoginFailures({ ip, login, since }) {
+  if (login !== undefined) {
+    return prepared('SELECT COUNT(*) AS c FROM login_attempts WHERE ip = ? AND login = ? AND created_at >= ?')
+      .get(String(ip || ''), String(login || '').toLowerCase(), since).c;
+  }
+  return prepared('SELECT COUNT(*) AS c FROM login_attempts WHERE ip = ? AND created_at >= ?')
+    .get(String(ip || ''), since).c;
+}
+
+function pruneLoginAttempts(before) {
+  return prepared('DELETE FROM login_attempts WHERE created_at < ?').run(before).changes;
 }
 
 // Задание «Доступ к защищённой базе данных» (раздел «Информационная безопасность», ib/):
@@ -719,7 +749,7 @@ function purgeExpiredSessions(now) {
 }
 
 function __resetForTests() {
-  db.exec('DELETE FROM sessions; DELETE FROM python_course_attempts; DELETE FROM python_course_progress; DELETE FROM css_events; DELETE FROM css_progress; DELETE FROM js_course_attempts; DELETE FROM js_course_progress; DELETE FROM html_events; DELETE FROM html_progress; DELETE FROM emmet_events; DELETE FROM emmet_progress; DELETE FROM emmet_assignments; DELETE FROM emmet_sessions; DELETE FROM exam_pcs; DELETE FROM exam_events; DELETE FROM exam_tasks; DELETE FROM exam_variants; DELETE FROM exams; DELETE FROM python_basics_attempts; DELETE FROM python_basics_progress; DELETE FROM code_drafts; DELETE FROM ib_guard_events; DELETE FROM ib_task_defense; DELETE FROM ib_logs_detector; DELETE FROM ib_lab_log; DELETE FROM ib_lab_tasks; DELETE FROM ib_terminal_log; DELETE FROM ib_terminal_tasks; DELETE FROM ib_config_tasks; DELETE FROM ctf_caesar_secrets; DELETE FROM sql_attempts; DELETE FROM submissions; DELETE FROM assignments; DELETE FROM courses; DELETE FROM users;');
+  db.exec('DELETE FROM topic_overrides; DELETE FROM linux_events; DELETE FROM linux_progress; DELETE FROM login_attempts; DELETE FROM sessions; DELETE FROM python_course_attempts; DELETE FROM python_course_progress; DELETE FROM css_events; DELETE FROM css_progress; DELETE FROM js_course_attempts; DELETE FROM js_course_progress; DELETE FROM html_events; DELETE FROM html_progress; DELETE FROM emmet_events; DELETE FROM emmet_progress; DELETE FROM emmet_assignments; DELETE FROM emmet_sessions; DELETE FROM exam_pcs; DELETE FROM exam_events; DELETE FROM exam_tasks; DELETE FROM exam_variants; DELETE FROM exams; DELETE FROM python_basics_attempts; DELETE FROM python_basics_progress; DELETE FROM code_drafts; DELETE FROM ib_guard_events; DELETE FROM ib_task_defense; DELETE FROM ib_logs_detector; DELETE FROM ib_lab_log; DELETE FROM ib_lab_tasks; DELETE FROM ib_terminal_log; DELETE FROM ib_terminal_tasks; DELETE FROM ib_config_tasks; DELETE FROM ctf_caesar_secrets; DELETE FROM sql_attempts; DELETE FROM submissions; DELETE FROM assignments; DELETE FROM courses; DELETE FROM users;');
   seed(db);
 }
 
@@ -727,6 +757,10 @@ module.exports = {
   getUsers,
   verifyUserCredentials,
   getUserById,
+  recordLoginFailure,
+  clearLoginFailures,
+  countLoginFailures,
+  pruneLoginAttempts,
   getCaesarSecretForStudent,
   getCaesarSecrets,
   seedCaesarSecretForTests,
@@ -793,7 +827,9 @@ module.exports = {
   ...emmetDb,
   ...htmlCourseDb,
   ...cssCourseDb,
+  ...linuxCourseDb,
   ...jsCourseDb,
   ...pythonCourseDb,
+  ...topicLocksDb,
   __resetForTests,
 };

@@ -1,0 +1,132 @@
+<%- include('partials/start') %>
+
+<div class="a-page-head">
+  <div>
+    <h1>Доступ к темам</h1>
+    <p class="a-subtitle">Блокировка, дедлайны и индивидуальное открытие тем по предметам. Приоритет: студент важнее группы. Группа TEST не блокируется никогда.</p>
+  </div>
+</div>
+
+<% if (!subject) { %>
+  <section class="a-card"><p class="a-muted">Пока нет предметов с темами, подключённых к блокировкам.</p></section>
+<% } else { %>
+
+<%# --- Выбор предмета / области / группы или студента --- %>
+<form class="a-filters" method="get" action="/admin/locks" data-autosubmit>
+  <label>Предмет
+    <select name="subject">
+      <% subjects.forEach(function (s) { %><option value="<%= s.key %>"<%= s.key === subject.key ? ' selected' : '' %>><%= s.title %></option><% }) %>
+    </select>
+  </label>
+  <label>Область
+    <select name="scope">
+      <option value="group"<%= scope === 'group' ? ' selected' : '' %>>По группе</option>
+      <option value="student"<%= scope === 'student' ? ' selected' : '' %>>По студенту</option>
+    </select>
+  </label>
+  <% if (scope === 'group') { %>
+    <label>Группа
+      <select name="group">
+        <% groups.forEach(function (g) { %><option value="<%= g %>"<%= g === group ? ' selected' : '' %>><%= g %></option><% }) %>
+      </select>
+    </label>
+  <% } else { %>
+    <label>Студент
+      <select name="student">
+        <% students.forEach(function (s) { %><option value="<%= s.id %>"<%= student && s.id === student.id ? ' selected' : '' %>><%= s.group %> · <%= s.name %></option><% }) %>
+      </select>
+    </label>
+  <% } %>
+  <button type="submit" class="a-btn a-btn-secondary a-noscript-only">Применить</button>
+</form>
+
+<%
+// Один набор контролов действия для строки темы. row — тема с текущей настройкой.
+function target() { return scope === 'group' ? group : (student && student.id); }
+%>
+
+<% if (scope === 'group' && !group) { %>
+  <section class="a-card"><p class="a-muted">У предмета «<%= subject.title %>» нет групп.</p></section>
+<% } else if (scope === 'student' && !student) { %>
+  <section class="a-card"><p class="a-muted">Нет студентов, видящих предмет «<%= subject.title %>».</p></section>
+<% } else { %>
+
+<% if (scope === 'group') { %>
+  <p class="a-subtitle">Группа <strong><%= group %></strong> · студентов: <strong><%= studentsCount %></strong></p>
+<% } else { %>
+  <p class="a-subtitle">Студент <strong><%= student.name %></strong> · группа <strong><%= student.group %></strong>. «Открыть доступ» перебивает групповой замок.</p>
+<% } %>
+
+<section class="a-card a-card-flush">
+  <div class="a-table-wrap">
+    <table class="a-table">
+      <thead>
+        <tr>
+          <th>Тема</th>
+          <% if (scope === 'group') { %><th class="a-num">Выполнили</th><% } else { %><th class="a-num">Решено</th><th>Сейчас у студента</th><% } %>
+          <th>Текущая настройка</th>
+          <th>Действие</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% topics.forEach(function (t) { %>
+          <tr>
+            <td><%= t.title %></td>
+
+            <% if (scope === 'group') { %>
+              <td class="a-num">
+                <details>
+                  <summary><%= t.done %> / <%= studentsCount %></summary>
+                  <div class="a-muted" style="margin-top:6px;font-weight:400">
+                    <strong>Решили:</strong> <%= t.students.filter(function(s){return s.done}).map(function(s){return s.name}).join(', ') || '—' %><br>
+                    <strong>Нет:</strong> <%= t.students.filter(function(s){return !s.done}).map(function(s){return s.name}).join(', ') || '—' %>
+                  </div>
+                </details>
+              </td>
+            <% } else { %>
+              <td class="a-num"><%= t.solved %> / <%= t.total %><%= t.done ? ' ✓' : '' %></td>
+              <td>
+                <% if (t.effective && t.effective.locked) { %><span class="a-pill a-pill-danger">🔒 <%= t.effective.reason %></span>
+                <% } else if (t.effective && t.effective.forcedOpen) { %><span class="a-pill a-pill-ok">открыто вам</span>
+                <% } else if (t.effective && t.effective.deadlineText) { %><span class="a-pill">до <%= t.effective.deadlineText %></span>
+                <% } else { %><span class="a-muted">открыто</span><% } %>
+              </td>
+            <% } %>
+
+            <td>
+              <% if (t.mode === 'lock') { %><span class="a-pill a-pill-danger">🔒 закрыто</span>
+              <% } else if (t.mode === 'deadline') { %><span class="a-pill">⏳ дедлайн <%= t.deadlineInput.replace('T',' ') %></span>
+              <% } else if (t.mode === 'allow') { %><span class="a-pill a-pill-ok">✔ открыт доступ</span>
+              <% } else { %><span class="a-muted">—</span><% } %>
+              <% if (t.note) { %><br><span class="a-muted"><%= t.note %></span><% } %>
+            </td>
+
+            <td>
+              <form method="post" class="a-lock-form">
+                <input type="hidden" name="subject" value="<%= subject.key %>">
+                <input type="hidden" name="topic_key" value="<%= t.key %>">
+                <input type="hidden" name="scope" value="<%= scope %>">
+                <input type="hidden" name="target" value="<%= target() %>">
+                <select name="mode" aria-label="Режим">
+                  <option value="lock"<%= t.mode === 'lock' ? ' selected' : '' %>>🔒 Заблокировать</option>
+                  <option value="deadline"<%= t.mode === 'deadline' ? ' selected' : '' %>>⏳ Дедлайн</option>
+                  <% if (scope === 'student') { %><option value="allow"<%= t.mode === 'allow' ? ' selected' : '' %>>✔ Открыть доступ</option><% } %>
+                </select>
+                <input type="datetime-local" name="deadline" value="<%= t.deadlineInput %>" aria-label="Дедлайн">
+                <input type="text" name="note" value="<%= t.note %>" placeholder="заметка (необязательно)" maxlength="200" aria-label="Заметка">
+                <button type="submit" class="a-btn a-btn-primary" formaction="/admin/locks/set">Сохранить</button>
+                <% if (t.mode !== 'none') { %><button type="submit" class="a-btn a-btn-secondary" formaction="/admin/locks/clear">Снять</button><% } %>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+  <div class="a-card-foot a-muted">Дедлайн — по времени +05. После дедлайна тема закрывается так же, как ручной замок. «Открыть доступ» — только в режиме «студент», перебивает групповой замок.</div>
+</section>
+
+<% } %>
+<% } %>
+
+<%- include('partials/end') %>

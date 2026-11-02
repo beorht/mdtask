@@ -1,6 +1,7 @@
 const express = require('express');
 const { requireRole } = require('../middleware/auth');
 const { renderMarkdown } = require('../lib/markdown');
+const { heavyLimiter } = require('../lib/rate-limit');
 
 // The classic teacher UI was replaced by the admin panel (/admin). This router keeps
 // the markdown preview API the admin editor uses, and redirects old /teacher links
@@ -8,7 +9,7 @@ const { renderMarkdown } = require('../lib/markdown');
 
 const router = express.Router();
 
-router.post('/api/preview', requireRole('teacher'), (req, res) => {
+router.post('/api/preview', requireRole('teacher'), heavyLimiter, (req, res) => {
   const markdown = typeof req.body.markdown === 'string' ? req.body.markdown : '';
   res.json({ html: renderMarkdown(markdown) });
 });

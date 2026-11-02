@@ -12,7 +12,16 @@ const CLOSES_P = new Set([
 ]);
 const TAG_PATTERN = /<!--[\s\S]*?-->|<(\/?)([a-zA-Z][\w-]*)((?:[^>"']|"[^"]*"|'[^']*')*)>/g;
 const ATTR_PATTERN = /([^\s"'=<>/]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g;
-const ENTITIES = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' };
+const ENTITIES = {
+  amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ',
+  mdash: '—', ndash: '–', minus: '−', hellip: '…', shy: '',
+  laquo: '«', raquo: '»', ldquo: '“', rdquo: '”', lsquo: '‘', rsquo: '’', sbquo: '‚', bdquo: '„',
+  copy: '©', reg: '®', trade: '™', deg: '°', middot: '·', bull: '•', sect: '§', para: '¶',
+  times: '×', divide: '÷', plusmn: '±', ne: '≠', le: '≤', ge: '≥', frac12: '½', frac14: '¼', frac34: '¾',
+  sup1: '¹', sup2: '²', sup3: '³', micro: 'µ',
+  euro: '€', pound: '£', cent: '¢', yen: '¥', curren: '¤',
+  larr: '←', rarr: '→', uarr: '↑', darr: '↓', harr: '↔', hearts: '♥', star: '★', check: '✓', cross: '✗',
+};
 
 const STATUS = { success: 'success', partial: 'partial', error: 'error', mismatch: 'mismatch' };
 
@@ -57,7 +66,22 @@ function findMarkupErrors(source) {
   return errors;
 }
 
-const collapse = (text) => text.replace(/\s+/g, ' ').trim();
+// Нормализация «трудных» символов: студент не должен терять задание из-за символов, которых нет на
+// клавиатуре. Длинное/короткое тире и минус → дефис (и «--» → «-»), многоточие … → «...», кавычки-ёлочки
+// и «лапки» → прямые. Сущности раскрывает decode(). Сравнивается уже нормализованный текст.
+function normTypography(s) {
+  return s
+    .replace(/[—–−‒―]/g, '-')
+    .replace(/-{2,}/g, '-')
+    .replace(/…/g, '...')
+    .replace(/[«»“”„‟]/g, '"')
+    .replace(/[‘’‚‛‹›]/g, "'")
+    .replace(/©/g, '(c)').replace(/®/g, '(r)').replace(/™/g, '(tm)')
+    .replace(/×/g, 'x').replace(/÷/g, '/')
+    .replace(/№/g, '#')
+    .replace(/·/g, '*');
+}
+const collapse = (text) => normTypography(text.replace(/\s+/g, ' ').trim());
 const normalizeClasses = (value) => value.split(/\s+/).filter(Boolean).sort().join(' ');
 
 function parseAttrs(rest) {

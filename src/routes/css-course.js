@@ -30,6 +30,10 @@ function findTopic(req, res, step) {
     res.status(404).render('404');
     return null;
   }
+  if (topic.adminLocked) {
+    res.status(423).render('topic-locked', { user: req.session.user, state: { locked: true, overdue: topic.overdue, reason: topic.lockReason, note: '' } });
+    return null;
+  }
   if (!(step === 'theory' ? topic.theoryOpen : topic.practiceOpen)) {
     res.redirect(BASE);
     return null;
@@ -85,6 +89,7 @@ function api(handler) {
     if (lock) return res.status(423).json({ error: lock.during ? 'Закрыто на время итоговой контрольной.' : 'Закрыто преподавателем.' });
     const topic = course.topicFor(user, req.params.topic);
     if (!topic || !topic.ready) return res.status(404).json({ error: 'Такой темы нет.' });
+    if (topic.adminLocked) return res.status(423).json({ error: topic.lockReason || 'Тема закрыта преподавателем.' });
     if (!topic.practiceOpen) return res.status(403).json({ error: 'Сначала прочитайте теорию темы.' });
     try {
       res.json(handler(req, user, topic));

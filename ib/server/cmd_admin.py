@@ -425,23 +425,66 @@ def _apply(ctx, io, state, action):
 
 
 def cmd_systemctl(ctx, argv, io):
+    import systemd_model as sysd
+    flags = [a for a in argv[1:] if a.startswith("-")]
     args = [a for a in argv[1:] if not a.startswith("-")]
+    hasf = lambda f: any(a == f or a.startswith(f + "=") for a in flags)  # noqa: E731
+    model = sysd.units_view(_root(ctx))
+
+    # systemctl --failed (без позиционного действия)
+    if not args and hasf("--failed"):
+        io.out(sysd.format_failed(model))
+        return 0
     if not args:
-        io.err("systemctl: укажите действие: systemctl status|reload|restart|start|stop|is-active ssh")
+        io.err("systemctl: укажите действие: systemctl status|list-units|list-unit-files|list-timers|cat ...")
         return 1
     action, units = args[0], args[1:]
-    if action in ("daemon-reload",):
+    if action == "daemon-reload":
         return 0 if not _need_root(ctx, io, "systemctl") else 1
+    if action == "list-unit-files":
+        io.out(sysd.format_unit_files(model))
+        return 0
+    if action == "list-timers":
+        io.out(sysd.format_timers(model))
+        return 0
     if action == "list-units":
+        running = any("running" in a for a in flags if a.startswith("--state"))
         state = sshd_sim.load_state(_root(ctx))
-        io.out("  UNIT            LOAD   ACTIVE SUB     DESCRIPTION\n")
-        if state:
+        extra = []
+        if state and (not running or state.get("active")):
             sub = "running" if state.get("active") else "failed" if state.get("failed") else "dead"
             act = "active" if state.get("active") else "failed" if state.get("failed") else "inactive"
-            io.out(f"  ssh.service     loaded {act:<6} {sub:<7} OpenBSD Secure Shell server\n")
-        io.out("  cron.service    loaded active running Regular background program processing daemon\n"
-               "  rsyslog.service loaded active running System Logging Service\n")
+            extra.append(f"  {'ssh.service':<28} loaded {act:<8} {sub:<7} OpenBSD Secure Shell server")
+        extra.append(f"  {'cron.service':<28} loaded active   running Regular background program processing daemon")
+        extra.append(f"  {'rsyslog.service':<28} loaded active   running System Logging Service")
+        io.out(sysd.format_units(model, running_only=running).rstrip("\n") + "\n" + "\n".join(extra) + "\n")
         return 0
+    if action == "cat":
+        if not units:
+            io.err("systemctl: укажите юнит: systemctl cat ИМЯ.service")
+            return 1
+        u = sysd.find(model, units[0])
+        if u:
+            io.out(f"# {u['path']}\n" + (u["text"] if u["text"].endswith("\n") else u["text"] + "\n"))
+            return 0
+        if UNITS.get(units[0]) == "ssh":
+            io.out("# /lib/systemd/system/ssh.service\n[Unit]\nDescription=OpenBSD Secure Shell server\n\n"
+                   "[Service]\nExecStart=/usr/sbin/sshd -D\n\n[Install]\nWantedBy=multi-user.target\n")
+            return 0
+        io.err(f"No files found for {units[0] if '.' in units[0] else units[0] + '.service'}.")
+        return 1
+    # generic (не ssh) юнит: status / is-active / is-enabled по модели
+    if units and UNITS.get(units[0]) != "ssh":
+        u = sysd.find(model, units[0])
+        if u and action in ("status", "is-active", "is-enabled"):
+            if action == "status":
+                io.out(sysd.format_status(u))
+                return 0 if u["active"] else 3
+            if action == "is-active":
+                io.out(("active" if u["active"] else "failed" if u["failed"] else "inactive") + "\n")
+                return 0 if u["active"] else 3
+            io.out(("enabled" if u["enabled"] else "disabled") + "\n")
+            return 0
     if action not in ("status", "reload", "restart", "start", "stop", "is-active", "is-enabled", "enable", "disable"):
         io.err(f"systemctl: неизвестное действие «{action}» (в учебном терминале: status, reload, restart, start, "
                "stop, is-active)")

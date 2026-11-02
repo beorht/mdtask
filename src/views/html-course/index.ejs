@@ -21,6 +21,24 @@
         </span>
       </div>
 
+      <% if (typeof trainer !== 'undefined' && trainer) { %>
+        <div class="html-topic html-trainer">
+          <span class="ib-task-num" aria-hidden="true">🧩</span>
+          <span class="html-topic-body">
+            <span class="html-topic-title">Тренажёр: <%= trainer.title %></span>
+            <span class="html-topic-lead">Отдельные задания на вложенность тегов (тег внутри тега) и группировку контейнерами. Пишите руками или через Emmet, сверяйтесь со схемой. Все открыты сразу.</span>
+            <% if (trainer.adminLocked) { %><span class="topic-lock-badge">🔒 <%= trainer.lockReason || 'Закрыто преподавателем' %></span><% } else if (trainer.deadlineText) { %><span class="topic-deadline-badge">⏳ до <%= trainer.deadlineText %></span><% } %>
+          </span>
+          <span class="html-topic-steps">
+            <% if (trainer.adminLocked) { %>
+              <span class="topic-btn topic-btn-practice topic-btn-lg is-locked"><span aria-hidden="true">🔒</span> Тренажёр закрыт <span class="topic-btn-count"><%= trainer.solved %>/<%= trainer.total %></span></span>
+            <% } else { %>
+              <a class="topic-btn topic-btn-practice topic-btn-lg<%= trainer.total && trainer.solved === trainer.total ? ' is-done' : '' %>" href="<%= base %>/trainer"><span aria-hidden="true"><%= trainer.total && trainer.solved === trainer.total ? '✓' : '🧩' %></span> Открыть тренажёр <span class="topic-btn-count"><%= trainer.solved %>/<%= trainer.total %></span></a>
+            <% } %>
+          </span>
+        </div>
+      <% } %>
+
       <ol class="html-topic-list">
         <% summary.topics.forEach(function (t) { %>
           <li class="html-topic<%= t.done ? ' is-done' : '' %><%= !t.ready || !t.theoryOpen ? ' is-locked' : '' %>">
@@ -28,6 +46,7 @@
             <span class="html-topic-body">
               <span class="html-topic-title">Тема <%= t.number %>. <%= t.title %></span>
               <span class="html-topic-lead"><%= t.lead %></span>
+              <% if (t.adminLocked) { %><span class="topic-lock-badge">🔒 <%= t.lockReason || 'Закрыто преподавателем' %></span><% } else if (t.deadlineText) { %><span class="topic-deadline-badge">⏳ до <%= t.deadlineText %></span><% } %>
             </span>
             <span class="html-topic-steps">
               <% if (!t.ready) { %>

@@ -80,3 +80,44 @@ test('requireRole blocks access without a session', async () => {
   assert.strictEqual(res.status, 302);
   assert.strictEqual(res.headers.location, '/login');
 });
+
+const { PER_ACCOUNT_MAX } = require('../../src/lib/login-throttle');
+
+test('brute force: login is blocked after too many failed attempts, even with the right password', async () => {
+  const app = createApp();
+  const agent = request.agent(app);
+  for (let i = 0; i < PER_ACCOUNT_MAX; i += 1) {
+    const r = await agent.post('/login').send({ studentId: 'student-1', password: 'wrong' });
+    assert.strictEqual(r.status, 200, `attempt ${i} should just re-render`);
+  }
+  // Следующая попытка блокируется — даже с верным паролем.
+  const blocked = await agent.post('/login').send({ studentId: 'student-1', password: DEFAULT_PASSWORD });
+  assert.strictEqual(blocked.status, 429);
+  assert.match(blocked.text, /Слишком много/);
+});
+
+test('brute force: a different account from the same client is not blocked', async () => {
+  const app = createApp();
+  const agent = request.agent(app);
+  for (let i = 0; i < PER_ACCOUNT_MAX; i += 1) {
+    await agent.post('/login').send({ studentId: 'student-1', password: 'wrong' });
+  }
+  // student-1 заблокирован, но teacher-1 — нет (ключ блокировки — IP + логин).
+  const other = await agent.post('/login').send({ studentId: 'teacher-1', password: DEFAULT_PASSWORD });
+  assert.strictEqual(other.status, 302);
+  assert.strictEqual(other.headers.location, '/admin');
+});
+
+test('brute force: a successful login clears the failure counter', async () => {
+  const app = createApp();
+  const agent = request.agent(app);
+  for (let i = 0; i < PER_ACCOUNT_MAX - 1; i += 1) {
+    await agent.post('/login').send({ studentId: 'student-1', password: 'wrong' });
+  }
+  // Верный вход сбрасывает счётчик...
+  const ok = await agent.post('/login').send({ studentId: 'student-1', password: DEFAULT_PASSWORD });
+  assert.strictEqual(ok.status, 302);
+  // ...поэтому снова можно ошибаться, и блокировки нет.
+  const again = await agent.post('/login').send({ studentId: 'student-1', password: 'wrong' });
+  assert.strictEqual(again.status, 200);
+});

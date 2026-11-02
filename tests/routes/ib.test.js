@@ -249,7 +249,7 @@ test('lab task stage titles in mdtask match the Python lab tasks', () => {
   const { spawnSync } = require('child_process');
   const path = require('path');
   const { findIbTask } = require('../../src/lib/ib-tasks');
-  for (const key of ['incident', 'ssh', 'logs', 'perms']) {
+  for (const key of ['incident', 'ssh', 'logs', 'perms', 'procs']) {
     const out = spawnSync(
       'python3',
       ['-c', `import json, lab_task; print(json.dumps([s["title"] for s in lab_task.get("${key}").stages], ensure_ascii=False))`],

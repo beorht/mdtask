@@ -15,6 +15,7 @@ const { LANGUAGE_SUBJECTS, COURSE_SUBJECTS } = require('./subjects');
 const { IB_SUBJECT_KEY, IB_SUBJECT_TITLE, ibTasksForUser } = require('./ib-tasks');
 const htmlCourse = require('./html-course');
 const cssCourse = require('./css-course');
+const linuxCourse = require('./linux-course');
 const pythonCourse = require('./python-course');
 const jsCourse = require('./js-course');
 
@@ -152,6 +153,11 @@ function buildSidebarTree({ role, studentId, studentGroup, subject }) {
   if (subject === cssCourse.CSS_KEY) return htmlCourseNav(cssCourse);
   if (subject === 'python-course') return pythonCourseNav();
   if (COURSE_SUBJECTS[subject]) return courseSubjectNav(COURSE_SUBJECTS[subject]);
+  if (subject === linuxCourse.LINUX_KEY) {
+    const s = linuxCourse.summaryForStudent({ id: studentId, role, group: studentGroup });
+    return [backLink(), { kind: 'header', icon: linuxCourse.LINUX_ICON, title: linuxCourse.LINUX_TITLE,
+      href: '/subjects/linux', done: s.solved, total: s.total, label: 'миссий пройдено', children: [] }];
+  }
 
   function backLink() {
     return role === 'teacher'

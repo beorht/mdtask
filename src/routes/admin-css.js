@@ -6,7 +6,8 @@ const courseAdmin = require('../lib/css-course/admin');
 
 function register(router, { render, notFound, flash }) {
   router.get('/admin/css', (req, res) => {
-    const filters = { q: (req.query.q || '').trim(), pick: req.query.pick === '1' };
+    const group = course.CSS_GROUPS.includes(req.query.group) ? req.query.group : '';
+    const filters = { q: (req.query.q || '').trim(), pick: req.query.pick === '1', group };
     render(res, 'css-course', 'css', { pageTitle: course.CSS_TITLE, filters, o: courseAdmin.overview(filters), groups: course.CSS_GROUPS });
   });
 

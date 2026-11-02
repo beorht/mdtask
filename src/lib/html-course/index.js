@@ -11,6 +11,7 @@ const db = require('../../db');
 const { hasFullAccess } = require('../test-access');
 const { checkAttempt, explainAttempt } = require('../emmet/validate');
 const typing = require('../typing-check');
+const topicLocks = require('../topic-locks');
 
 const HTML_KEY = 'html';
 const HTML_TITLE = 'Web-разработка: HTML';
@@ -35,6 +36,45 @@ const TOPICS = JSON.parse(read('topics.json')).map((t, i) => {
 const TOPIC_BY_KEY = new Map(TOPICS.map((t) => [t.key, t]));
 const TASK_BY_ID = new Map(TOPICS.flatMap((t) => t.tasks.map((task) => [task.id, task])));
 const theoryId = (topicKey) => `${topicKey}:theory`;
+
+// HTML-тренажёр «Вложенность и контейнеры» — отдельная секция в начале предмета (не тема): все задания
+// открыты сразу, без гейтинга; движок, схема-образец и строгая серверная проверка — те же, что у тем.
+// Прогресс — в html_progress под ключами заданий (tr-*). Задан псевдо-топиком, чтобы me()/recordEvent()
+// работали без изменений (TOPIC_BY_KEY/TASK_BY_ID содержат тренажёр).
+const TRAINER_KEY = 'trainer';
+const TRAINER_TITLE = 'Вложенность и контейнеры';
+const TRAINER = {
+  key: TRAINER_KEY,
+  number: 0,
+  title: TRAINER_TITLE,
+  ready: true,
+  tasks: JSON.parse(read('trainer', 'tasks.json')).map((task, j) => ({
+    ...task,
+    number: j + 1,
+    topic: TRAINER_KEY,
+    expectedHtml: read('trainer', 'tasks', `${task.id}.html`).trimEnd(),
+  })),
+};
+TOPIC_BY_KEY.set(TRAINER_KEY, TRAINER);
+for (const task of TRAINER.tasks) TASK_BY_ID.set(task.id, task);
+
+/** Тренажёр со статусом задач для студента (все открыты, порядка нет). */
+function trainerForStudent(user) {
+  const progress = progressMap(user.id);
+  const tasks = TRAINER.tasks.map((task) => ({
+    id: task.id,
+    number: task.number,
+    title: task.title,
+    solved: Boolean(progress.get(task.id) && progress.get(task.id).solvedAt),
+    tried: Boolean(progress.get(task.id) && progress.get(task.id).attempts),
+  }));
+  const lock = topicLocks.lockState(HTML_KEY, TRAINER_KEY, user);
+  return {
+    key: TRAINER_KEY, title: TRAINER_TITLE, tasks,
+    solved: tasks.filter((t) => t.solved).length, total: tasks.length,
+    adminLocked: lock.locked, deadline: lock.deadline, lockReason: lock.reason, overdue: lock.overdue,
+  };
+}
 
 const STATUSES = new Set(['success', 'partial', 'error', 'mismatch']);
 const BLOCKED_KINDS = new Set(['paste', 'drop', 'bulk']);
@@ -83,8 +123,11 @@ function topicsForStudent(user) {
     const tasks = t.tasks.map((task) => ({ id: task.id, number: task.number, title: task.title, solved: solved(task.id), tried: Boolean(progress.get(task.id) && progress.get(task.id).attempts) }));
     const theoryRead = progress.has(theoryId(t.key));
     const done = t.ready && tasks.every((task) => task.solved);
-    const theoryOpen = t.ready && (full || previousDone);
-    const practiceOpen = theoryOpen && (full || theoryRead);
+    const lock = topicLocks.lockState(HTML_KEY, t.key, user);
+    let theoryOpen = t.ready && (full || previousDone);
+    let practiceOpen = theoryOpen && (full || theoryRead);
+    if (lock.forcedOpen) { theoryOpen = t.ready; practiceOpen = t.ready; }
+    if (lock.locked) { theoryOpen = false; practiceOpen = false; }
     previousDone = previousDone && done;
     return {
       key: t.key,
@@ -99,6 +142,11 @@ function topicsForStudent(user) {
       theoryOpen,
       practiceOpen,
       done,
+      adminLocked: lock.locked,
+      deadline: lock.deadline,
+      deadlineText: lock.deadlineText,
+      lockReason: lock.reason,
+      overdue: lock.overdue,
     };
   });
 }
@@ -210,11 +258,15 @@ module.exports = {
   TOPICS,
   TOPIC_BY_KEY,
   TASK_BY_ID,
+  TRAINER_KEY,
+  TRAINER_TITLE,
+  TRAINER,
   HtmlCourseError,
   canSeeHtml,
   progressMap,
   topicsForStudent,
   summaryForStudent,
+  trainerForStudent,
   topicFor,
   markTheoryRead,
   publicTask,

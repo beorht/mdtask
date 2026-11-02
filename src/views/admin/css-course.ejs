@@ -27,6 +27,12 @@ const CELL = { none: ['·', 'не открывал'], opened: ['○', 'откр�
     <%- icon('search') %>
     <input type="search" name="q" value="<%= filters.q %>" placeholder="Поиск по имени или ID" aria-label="Поиск студента">
   </label>
+  <label>Группа
+    <select name="group">
+      <option value="">все группы</option>
+      <% groups.forEach(function (g) { %><option value="<%= g %>"<%= filters.group === g ? ' selected' : '' %>><%= g %></option><% }) %>
+    </select>
+  </label>
   <button type="submit" class="a-btn a-btn-secondary a-noscript-only">Применить</button>
 </form>
 

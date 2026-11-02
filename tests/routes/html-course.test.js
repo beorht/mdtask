@@ -202,3 +202,53 @@ test('admin: typing signals and «Выбрать 4 студентов»; the att
   assert.match(page.text, /На устную проверку/);
   assert.match(page.text, /код не руками: готовый кусок кода, кода больше, чем набрано/);
 });
+
+test('named HTML entities decode to their character (a student who types &mdash; passes a «—» task)', () => {
+  const task = { expectedHtml: '<p>Учитель сказал: <q>Повторение — мать учения</q>.</p>' };
+  assert.strictEqual(checkAttempt('<p>Учитель сказал: <q>Повторение &mdash; мать учения</q>.</p>', task), 'success');
+  assert.strictEqual(checkAttempt('<p>А&hellip;Б</p>', { expectedHtml: '<p>А…Б</p>' }), 'success');
+  assert.strictEqual(checkAttempt('<p>&laquo;цитата&raquo;</p>', { expectedHtml: '<p>«цитата»</p>' }), 'success');
+});
+
+test('trainer: 25 tasks on nesting/containers, no difficulty words, strict nesting check', () => {
+  assert.strictEqual(course.TRAINER.tasks.length, 25);
+  for (const t of course.TRAINER.tasks) {
+    assert.ok(t.title && t.description && t.expectedHtml.includes('<'), t.id);
+    assert.strictEqual(checkAttempt(t.expectedHtml, t), 'success', t.id);
+  }
+  const texts = course.TRAINER.tasks.flatMap((t) => [t.title, t.description]).join('\n');
+  assert.doesNotMatch(texts, /лёгк|легк|средн(ий|яя|его) уровн|сложн(ый|ая) уровн|уровень сложности/i);
+  // строгая вложенность: ссылки не внутри пунктов — не засчитано
+  const nest = course.TASK_BY_ID.get('tr-11');
+  assert.strictEqual(checkAttempt('<ul><li>Главная</li><li>О нас</li><li>Контакты</li></ul>', nest), 'mismatch');
+});
+
+test('trainer is a separate section at the top, open without gating; hidden from non-HTML groups', async () => {
+  db.createUser({ id: 'ib2-1', role: 'student', name: 'ИБ Студент', group: 'ib-2', mustChangePassword: false });
+  const app = createApp();
+  const tester = await loginAs(app, 'test-1');
+  // карточка тренажёра на странице предмета + ссылка
+  const index = await tester.get('/subjects/html');
+  assert.match(index.text, /Тренажёр/);
+  assert.match(index.text, new RegExp(`${course.HTML_KEY}/trainer`));
+  // страница тренажёра открыта сразу (без чтения теории темы)
+  const page = await tester.get('/subjects/html/trainer');
+  assert.strictEqual(page.status, 200);
+  assert.match(page.text, /data-topic="trainer"/);
+  // API: 25 заданий с ожидаемым HTML
+  const me = await tester.get('/subjects/html/api/trainer/me');
+  assert.strictEqual(me.status, 200);
+  assert.strictEqual(me.body.exercises.length, 25);
+  assert.ok(me.body.exercises[0].expectedHtml.includes('<'));
+  // проверка попытки: верное решение — success, плоское — mismatch
+  const ok = await tester.post('/subjects/html/api/trainer/events')
+    .send({ type: 'attempt', status: 'success', exerciseId: 'tr-11', code: course.TASK_BY_ID.get('tr-11').expectedHtml });
+  assert.strictEqual(ok.body.status, 'success');
+  const bad = await tester.post('/subjects/html/api/trainer/events')
+    .send({ type: 'attempt', status: 'success', exerciseId: 'tr-11', code: '<ul><li>Главная</li></ul>' });
+  assert.strictEqual(bad.body.status, 'mismatch');
+  // группа без предмета HTML не видит тренажёр
+  const ib = await loginAs(app, 'ib2-1');
+  assert.strictEqual((await ib.get('/subjects/html/trainer')).status, 404);
+  assert.strictEqual((await ib.get('/subjects/html/api/trainer/me')).status, 404);
+});

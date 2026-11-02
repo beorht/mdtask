@@ -22,7 +22,7 @@
           <div class="brand">
             <span class="brand-mark" aria-hidden="true">&lt;/&gt;</span>
             <span class="brand-name">HTML</span>
-            <span class="brand-sub">тема <%= topic.number %>. <%= topic.title %></span>
+            <span class="brand-sub"><%= topic.number ? ('тема ' + topic.number + '. ') : '' %><%= topic.title %></span>
           </div>
         </div>
         <nav class="lesson-nav" id="lesson-nav" aria-label="Задания"></nav>

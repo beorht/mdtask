@@ -3,6 +3,7 @@ const { requireRole, requireAuth } = require('../middleware/auth');
 const { buildSidebarTree } = require('../lib/sidebar');
 const { runPreview, checkSolution, getTableSchema, getTableData } = require('../lib/sql-sandbox');
 const { getSqlExercises, getSqlAttempts, getSolvedSqlExerciseIds } = require('../db');
+const { heavyLimiter } = require('../lib/rate-limit');
 const { renderMarkdown } = require('../lib/markdown');
 const { TOPIC_THEORY } = require('../content/sql-theory');
 const { TOPIC_LABELS, getAllowedTopicKeys, getTopicsForUser, groupBySection } = require('../lib/sql-topics');
@@ -164,7 +165,7 @@ router.get('/trainer/:id', requireRole('student'), findExerciseWithProgress, (re
   });
 });
 
-router.post('/trainer/:id/run', requireRole('student'), findExerciseWithProgress, (req, res) => {
+router.post('/trainer/:id/run', requireRole('student'), heavyLimiter, findExerciseWithProgress, (req, res) => {
   const exercise = req.sqlExercise;
   const sql = typeof req.body.sql === 'string' ? req.body.sql : '';
   const runResult = runPreview(req.session.user.id, exercise, sql);
@@ -194,7 +195,7 @@ router.post('/trainer/:id/run', requireRole('student'), findExerciseWithProgress
   });
 });
 
-router.post('/trainer/:id/submit', requireRole('student'), findExerciseWithProgress, (req, res) => {
+router.post('/trainer/:id/submit', requireRole('student'), heavyLimiter, findExerciseWithProgress, (req, res) => {
   const exercise = req.sqlExercise;
   const sql = typeof req.body.sql === 'string' ? req.body.sql : '';
   const submitResult = checkSolution(req.session.user.id, exercise, sql);
