@@ -71,18 +71,10 @@ function target() { return scope === 'group' ? group : (student && student.id); 
       <tbody>
         <% topics.forEach(function (t) { %>
           <tr>
-            <td><%= t.title %></td>
+            <td><% if (scope === 'group') { %><button type="button" class="a-topic-link" data-topic-key="<%= t.key %>" title="Показать список студентов"><%= t.title %></button><% } else { %><%= t.title %><% } %></td>
 
             <% if (scope === 'group') { %>
-              <td class="a-num">
-                <details>
-                  <summary><%= t.done %> / <%= studentsCount %></summary>
-                  <div class="a-muted" style="margin-top:6px;font-weight:400">
-                    <strong>Решили:</strong> <%= t.students.filter(function(s){return s.done}).map(function(s){return s.name}).join(', ') || '—' %><br>
-                    <strong>Нет:</strong> <%= t.students.filter(function(s){return !s.done}).map(function(s){return s.name}).join(', ') || '—' %>
-                  </div>
-                </details>
-              </td>
+              <td class="a-num"><button type="button" class="a-topic-count" data-topic-key="<%= t.key %>" title="Показать список студентов"><%= t.done %> / <%= studentsCount %></button></td>
             <% } else { %>
               <td class="a-num"><%= t.solved %> / <%= t.total %><%= t.done ? ' ✓' : '' %></td>
               <td>
@@ -102,7 +94,7 @@ function target() { return scope === 'group' ? group : (student && student.id); 
             </td>
 
             <td>
-              <form method="post" class="a-lock-form">
+              <form method="post" class="a-lock-form"<% if (scope === 'group') { %> data-confirm="Изменить доступ к теме для группы <%= group %>?|Настройка применится сразу ко всем студентам группы (TEST не блокируется). Снять или изменить можно в любой момент.|Применить"<% } %>>
                 <input type="hidden" name="subject" value="<%= subject.key %>">
                 <input type="hidden" name="topic_key" value="<%= t.key %>">
                 <input type="hidden" name="scope" value="<%= scope %>">
@@ -123,8 +115,119 @@ function target() { return scope === 'group' ? group : (student && student.id); 
       </tbody>
     </table>
   </div>
-  <div class="a-card-foot a-muted">Дедлайн — по времени +05. После дедлайна тема закрывается так же, как ручной замок. «Открыть доступ» — только в режиме «студент», перебивает групповой замок.</div>
+  <div class="a-card-foot a-muted">Дедлайн — по времени +05. После дедлайна тема закрывается так же, как ручной замок. «Открыть доступ» — только в режиме «студент», перебивает групповой замок. Нажмите на тему, чтобы увидеть список студентов.</div>
 </section>
+
+<% if (scope === 'group') { %>
+<dialog id="a-topic-modal" class="a-modal">
+  <div class="a-modal-head">
+    <div>
+      <h2 id="a-modal-title">Тема</h2>
+      <p class="a-muted" id="a-modal-sub"></p>
+    </div>
+    <button type="button" class="a-icon-btn" data-modal-close aria-label="Закрыть">✕</button>
+  </div>
+  <div class="a-modal-body" id="a-modal-body"></div>
+  <div class="a-modal-foot">
+    <button type="button" class="a-btn a-btn-secondary" id="a-modal-xlsx"><%- icon('download') %> Экспорт в Excel</button>
+    <button type="button" class="a-btn a-btn-secondary" id="a-modal-png"><%- icon('eye') %> Скриншот (PNG)</button>
+    <button type="button" class="a-btn a-btn-primary" data-modal-close>Закрыть</button>
+  </div>
+</dialog>
+<script>
+window.__topicLockData = {
+  group: <%- JSON.stringify(group).replace(/</g, '\\u003c') %>,
+  topics: <%- JSON.stringify(topics.map(function (t) { return { key: t.key, title: t.title, total: t.total, done: t.done, students: t.students }; })).replace(/</g, '\\u003c') %>
+};
+</script>
+<script>
+(function () {
+  var data = window.__topicLockData, dialog = document.getElementById('a-topic-modal');
+  if (!data || !dialog) return;
+  var byKey = {}; data.topics.forEach(function (t) { byKey[t.key] = t; });
+  var current = null;
+
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  // Сначала выполнившие, затем по числу решённых, затем по имени.
+  function ordered(t) {
+    return (t.students || []).slice().sort(function (a, b) {
+      if (!!b.done !== !!a.done) return (b.done ? 1 : 0) - (a.done ? 1 : 0);
+      if ((b.solved || 0) !== (a.solved || 0)) return (b.solved || 0) - (a.solved || 0);
+      return String(a.name).localeCompare(String(b.name), 'ru');
+    });
+  }
+
+  function openTopic(key) {
+    var t = byKey[key]; if (!t) return; current = t;
+    var list = ordered(t), doneN = list.filter(function (s) { return s.done; }).length;
+    document.getElementById('a-modal-title').textContent = t.title;
+    document.getElementById('a-modal-sub').textContent = 'Группа ' + data.group + ' · выполнили ' + doneN + ' из ' + list.length + ' · заданий в теме: ' + t.total;
+    var rows = list.map(function (s, i) {
+      return '<tr class="' + (s.done ? 'is-done' : 'is-not') + '"><td class="a-num">' + (i + 1) + '</td><td>' + esc(s.name) +
+        '</td><td class="a-num">' + (s.solved || 0) + ' / ' + t.total + '</td><td>' + (s.done ? '✓ выполнил' : '✗ не выполнил') + '</td></tr>';
+    }).join('');
+    document.getElementById('a-modal-body').innerHTML =
+      '<table class="a-table a-modal-table"><thead><tr><th class="a-num">№</th><th>Студент</th><th class="a-num">Решено</th><th>Статус</th></tr></thead><tbody>' +
+      (rows || '<tr><td colspan="4" class="a-muted">Нет студентов</td></tr>') + '</tbody></table>';
+    if (typeof dialog.showModal === 'function') dialog.showModal(); else dialog.setAttribute('open', '');
+  }
+
+  document.querySelectorAll('[data-topic-key]').forEach(function (el) {
+    el.addEventListener('click', function () { openTopic(el.getAttribute('data-topic-key')); });
+  });
+  dialog.querySelectorAll('[data-modal-close]').forEach(function (b) { b.addEventListener('click', function () { dialog.close(); }); });
+  dialog.addEventListener('click', function (e) { if (e.target === dialog) dialog.close(); });
+
+  function fname(ext) {
+    var safe = (current ? current.title : 'tema').replace(/[^0-9A-Za-zА-Яа-яЁё \-]/g, '').trim().replace(/\s+/g, '-');
+    return 'tema-' + safe + '-' + data.group + '.' + ext;
+  }
+  function save(blob, name) {
+    var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  }
+
+  // Экспорт в Excel: CSV с BOM и разделителем «;» (открывается в Excel двойным кликом).
+  document.getElementById('a-modal-xlsx').addEventListener('click', function () {
+    if (!current) return;
+    var rows = [['№', 'Студент', 'Группа', 'Решено', 'Всего', 'Статус']];
+    ordered(current).forEach(function (s, i) { rows.push([i + 1, s.name, data.group, (s.solved || 0), current.total, s.done ? 'выполнил' : 'не выполнил']); });
+    var csv = rows.map(function (r) { return r.map(function (c) { var v = String(c).replace(/"/g, '""'); return /[";\n]/.test(v) ? '"' + v + '"' : v; }).join(';'); }).join('\r\n');
+    save(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' }), fname('csv'));
+  });
+
+  // Скриншот всего списка: рисуем на canvas (белый фон, чёрный текст) — работает офлайн, без библиотек.
+  document.getElementById('a-modal-png').addEventListener('click', function () {
+    if (!current) return;
+    var list = ordered(current), scale = window.devicePixelRatio || 1;
+    var W = 760, padX = 28, rowH = 34, headH = 110, H = headH + 10 + (list.length + 1) * rowH + 24;
+    var cv = document.createElement('canvas'); cv.width = W * scale; cv.height = H * scale;
+    var ctx = cv.getContext('2d'); ctx.scale(scale, scale);
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#111'; ctx.font = '700 20px "Open Sans", Arial, sans-serif'; ctx.fillText(current.title, padX, 40);
+    var doneN = list.filter(function (s) { return s.done; }).length;
+    ctx.fillStyle = '#555'; ctx.font = '400 13px "Open Sans", Arial, sans-serif';
+    ctx.fillText('Группа ' + data.group + ' · выполнили ' + doneN + ' из ' + list.length + ' · заданий: ' + current.total, padX, 64);
+    var y = headH;
+    ctx.fillStyle = '#eee'; ctx.fillRect(padX, y - 22, W - padX * 2, 26);
+    ctx.fillStyle = '#333'; ctx.font = '700 13px "Open Sans", Arial, sans-serif';
+    ctx.fillText('№', padX + 8, y - 4); ctx.fillText('Студент', padX + 52, y - 4);
+    ctx.fillText('Решено', W - 268, y - 4); ctx.fillText('Статус', W - 160, y - 4);
+    y += 12;
+    list.forEach(function (s, i) {
+      var top = y + i * rowH;
+      if (i % 2 === 0) { ctx.fillStyle = '#f7f7f7'; ctx.fillRect(padX, top - 20, W - padX * 2, rowH); }
+      ctx.fillStyle = '#111'; ctx.font = '400 14px "Open Sans", Arial, sans-serif';
+      ctx.fillText(String(i + 1), padX + 8, top); ctx.fillText(s.name, padX + 52, top);
+      ctx.fillText((s.solved || 0) + ' / ' + current.total, W - 268, top);
+      ctx.fillStyle = s.done ? '#1e7a3d' : '#b42318'; ctx.font = '700 14px "Open Sans", Arial, sans-serif';
+      ctx.fillText(s.done ? '✓ выполнил' : '✗ не выполнил', W - 160, top);
+    });
+    cv.toBlob(function (blob) { save(blob, fname('png')); }, 'image/png');
+  });
+})();
+</script>
+<% } %>
 
 <% } %>
 <% } %>

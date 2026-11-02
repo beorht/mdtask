@@ -22,6 +22,7 @@ const navItem = function (key, href, label, iconName, badge) {
     <%- navItem('submissions', '/admin/submissions', 'Работы студентов', 'review', reviewCount > 0 ? reviewCount : '') %>
   </div>
   <div class="a-nav-group">
+    <div class="a-nav-label">Предметы и тренажёры</div>
     <%- navItem('trainer', '/admin/trainer', 'Тренажёр', 'trainer') %>
     <%- navItem('emmet', '/admin/emmet', 'Emmet · Тетрадь', 'book') %>
     <%- navItem('html', '/admin/html', 'Web-разработка: HTML', 'book') %>
@@ -29,6 +30,9 @@ const navItem = function (key, href, label, iconName, badge) {
     <%- navItem('python-course', '/admin/python-course', 'Начальный Python', 'book') %>
     <%- navItem('js-course', '/admin/js-course', 'JavaScript: курс', 'book') %>
     <%- navItem('ib', '/admin/ib', 'Инфобез', 'shield') %>
+  </div>
+  <div class="a-nav-group">
+    <div class="a-nav-label">Контрольные</div>
     <%- navItem('exam', '/admin/exam', 'Контрольная IB', 'review') %>
     <%- navItem('webexam', '/admin/web-exam', 'Контрольная WEB', 'review') %>
   </div>

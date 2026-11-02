@@ -198,9 +198,17 @@
     form.addEventListener('submit', function (e) {
       if (ok) return;
       e.preventDefault();
+      // Сохранить нажатую кнопку: у неё может быть свой formaction и name/value
+      // (напр. форма замков тем: «Сохранить» → /set, «Снять» → /clear).
+      // form.submit() их теряет — поэтому отправляем через requestSubmit(submitter).
+      var submitter = e.submitter;
       var parts = form.dataset.confirm.split('|');
       confirmAction({ title: parts[0], text: parts[1] || '', ok: parts[2] || 'Подтвердить' }).then(function (yes) {
-        if (yes) { ok = true; form.submit(); }
+        if (!yes) return;
+        ok = true;
+        if (submitter && form.requestSubmit) form.requestSubmit(submitter);
+        else if (form.requestSubmit) form.requestSubmit();
+        else form.submit();
       });
     });
   });

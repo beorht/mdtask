@@ -7,7 +7,9 @@
     <h1><%= detail.course.title %></h1>
     <p class="a-subtitle"><%= detail.teacher ? 'Преподаватель: ' + detail.teacher.name : '' %></p>
   </div>
-  <a class="a-btn a-btn-primary" href="/admin/assignments/new?course=<%= detail.course.id %>"><%- icon('plus') %> Создать задание</a>
+  <div class="a-head-actions">
+    <a class="a-btn a-btn-primary" href="/admin/assignments/new?course=<%= detail.course.id %>"><%- icon('plus') %> Создать задание</a>
+  </div>
 </div>
 
 <div class="a-stats a-stats-sm">

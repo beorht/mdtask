@@ -329,6 +329,7 @@ a.a-stat:hover { border-color: var(--a-border-strong); box-shadow: var(--a-shado
 .a-stat-label { font-size: 13px; color: var(--a-muted); }
 .a-stat-accent { border-color: var(--a-accent); box-shadow: inset 3px 0 0 var(--a-accent), var(--a-shadow-sm); }
 .a-stat-accent .a-stat-value { color: var(--a-accent-text); }
+.a-stat-warn { border-color: var(--a-warning); box-shadow: inset 3px 0 0 var(--a-warning), var(--a-shadow-sm); }
 .a-stat-warn .a-stat-value { color: var(--a-warning); }
 .a-stats-sm { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
 
@@ -862,7 +863,37 @@ pre.a-code { margin: 6px 0 0; padding: 10px 12px; border-radius: 8px; background
 .a-pill-danger { background: rgba(200, 40, 40, 0.14); color: #a12020; }
 .a-pill-ok { background: rgba(40, 160, 90, 0.16); color: #1e7a45; }
 .a-lock-form { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-.a-lock-form select, .a-lock-form input { padding: 4px 6px; }
-.a-lock-form input[type="text"] { min-width: 140px; }
+.a-lock-form select, .a-lock-form input {
+  height: 36px; padding: 0 10px; border: 1px solid var(--a-border-strong); border-radius: var(--a-radius-sm);
+  background: var(--a-surface); color: var(--a-text); font: inherit;
+  transition: border-color 450ms var(--a-ease), box-shadow 450ms var(--a-ease);
+}
+.a-lock-form select { padding-right: 28px; cursor: pointer; }
+.a-lock-form input[type="text"] { min-width: 140px; flex: 1 1 160px; }
+.a-lock-form select:hover, .a-lock-form input:hover { border-color: var(--a-accent); }
+.a-lock-form select:focus, .a-lock-form input:focus {
+  outline: none; border-color: var(--a-accent); box-shadow: 0 0 0 3px var(--a-focus);
+}
+
+/* Доступ к темам: клик по теме → модалка со списком студентов */
+.a-topic-link { background: none; border: 0; padding: 0; margin: 0; font: inherit; font-weight: 600;
+  color: var(--a-accent-text); cursor: pointer; text-align: left; }
+.a-topic-link:hover { text-decoration: underline; }
+.a-topic-count { background: none; border: 0; padding: 2px 8px; font: inherit; color: var(--a-text);
+  cursor: pointer; border-radius: var(--a-radius-sm); transition: background 200ms var(--a-ease); }
+.a-topic-count:hover { background: var(--a-hover); color: var(--a-accent-text); }
+
+.a-modal { width: min(760px, 94vw); max-height: 86vh; padding: 0; border: 1px solid var(--a-border-strong);
+  border-radius: var(--a-radius-lg); background: var(--a-surface); color: var(--a-text); box-shadow: var(--a-shadow-lg); overflow: hidden; }
+.a-modal::backdrop { background: rgba(0, 0, 0, 0.5); }
+.a-modal-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+  padding: 18px 20px; border-bottom: 1px solid var(--a-border); }
+.a-modal-head h2 { font-size: 18px; margin: 0; }
+.a-modal-body { padding: 4px 20px 12px; overflow: auto; max-height: 58vh; }
+.a-modal-table { width: 100%; }
+.a-modal-table tbody tr.is-done td:last-child { color: var(--a-done); font-weight: 600; }
+.a-modal-table tbody tr.is-not td:last-child { color: var(--a-failed); font-weight: 600; }
+.a-modal-foot { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap;
+  padding: 16px 20px; border-top: 1px solid var(--a-border); }
 .a-filters label { display: inline-flex; flex-direction: column; gap: 2px; font-size: 12px; font-weight: 600; margin-right: 10px; }
 .a-filters select { padding: 5px 8px; }

@@ -1070,13 +1070,16 @@ a.topic-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2p
 
 /* Бейджи блокировки/дедлайна темы (админ-блокировки, src/lib/topic-locks.js) */
 .topic-lock-badge, .topic-deadline-badge {
-  display: inline-block; margin-top: 0.3rem; font-size: 0.78rem; font-weight: 700;
-  padding: 0.1rem 0.55rem; border-radius: 999px; line-height: 1.5;
+  display: inline-block; margin-top: 0.3rem; font-size: 0.92rem; font-weight: 700;
+  padding: 0.22rem 0.72rem; border-radius: 999px; line-height: 1.5; color: #111;
 }
-.topic-lock-badge { color: #8a1c1c; background: rgba(200, 40, 40, 0.12); }
-.topic-deadline-badge { color: #8a5a1c; background: rgba(200, 140, 40, 0.14); }
-:root[data-theme="dark"] .topic-lock-badge { color: #ff9b9b; background: rgba(255, 80, 80, 0.14); }
-:root[data-theme="dark"] .topic-deadline-badge { color: #ffcf8f; background: rgba(255, 180, 80, 0.14); }
+.topic-lock-badge { background: rgba(200, 40, 40, 0.16); }
+.topic-deadline-badge { background: rgba(200, 140, 40, 0.18); }
+/* Тёмная тема: карточка бейджа белая, текст чёрный; тонкая цветная рамка различает лок/дедлайн */
+:root[data-theme="dark"] .topic-lock-badge,
+:root[data-theme="dark"] .topic-deadline-badge { color: #111; background: #fff; }
+:root[data-theme="dark"] .topic-lock-badge { box-shadow: inset 0 0 0 1px rgba(200, 40, 40, 0.55); }
+:root[data-theme="dark"] .topic-deadline-badge { box-shadow: inset 0 0 0 1px rgba(200, 140, 40, 0.6); }
 
 .topic-row-links { gap: 0.5rem; }
 .topic-row .topic-btn { min-width: 8.5rem; justify-content: center; }
