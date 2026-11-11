@@ -50,3 +50,5 @@
   - [Учёт библиотеки: анализ выдачи книг на Python и SQLite](individual/st-ib-601/uchet-biblioteki-analiz-vydachi-knig-na-python-i-sqlite.md)
   - [Учёт библиотеки: анализ выдачи книг на Python и SQLite](individual/st-ib-218/uchet-biblioteki-analiz-vydachi-knig-na-python-i-sqlite.md)
   - [Учёт библиотеки: анализ выдачи книг на Python и SQLite](individual/st-ib-902/uchet-biblioteki-analiz-vydachi-knig-na-python-i-sqlite.md)
+- [Python: анализ данных]()
+  - [Анализатор журналов сервера на SQLite](section-python-analiz-dannyh/analizator-zhurnalov-servera-na-sqlite.md)

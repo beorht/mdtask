@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Утка с ножом</title>
+  <style>
+    /* фон полностью прозрачный: видно то, что под анимацией */
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: transparent;
+    }
+
+    #stage {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: transparent;
+    }
+
+    /* Высота утки от высоты кадра: она всегда помещается целиком */
+    #duck {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: min(62vh, 420px);
+    }
+
+    #walk {
+      height: 100%;
+    }
+
+    #walk img {
+      display: block;
+      height: 100%;
+      width: auto;
+      user-select: none;
+      -webkit-user-drag: none;
+      transform-origin: 50% 100%;
+    }
+  </style>
+</head>
+<body>
+  <div id="stage">
+    <div id="duck">
+      <div id="walk">
+        <img id="img" src="img/duck.png" alt="Утка с ножом">
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const duck = document.getElementById('duck');
+    const walk = document.getElementById('walk');
+    const img = document.getElementById('img');
+
+    const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    // Переваливание с ноги на ногу: пока утка в кадре
+    img.animate(
+      [{ transform: 'rotate(-4deg)' }, { transform: 'rotate(4deg)' }],
+      { duration: 500, iterations: Infinity, direction: 'alternate', easing: 'ease-in-out' }
+    );
+
+    // Снимаем предыдущий проход: утка снова выше экрана
+    function reset(startY) {
+      [duck, walk].forEach((el) => el.getAnimations().forEach((a) => a.cancel()));
+      duck.style.transform = `translateY(${startY}px)`;
+      walk.style.transform = 'translateX(0px)';
+    }
+
+    // Один проход: резкое падение сверху слева или справа, медленно влево за край, затем исчезает
+    async function cycle() {
+      const vh = window.innerHeight;
+      const vw = window.innerWidth;
+      const h = duck.offsetHeight;
+      const w = duck.offsetWidth;
+
+      // утка стоит целиком в кадре: низ чуть выше края экрана
+      const restY = vh - h - Math.round(vh * 0.04);
+      const startY = -(h + 40);
+
+      // случайная половина экрана: левая или правая часть
+      const fromLeft = Math.random() < 0.5;
+      const x = fromLeft ? vw * 0.3 : vw * 0.8;
+      duck.style.left = x + 'px';
+      reset(startY);
+
+      // 1. Резкое падение сверху, с ускорением
+      await duck.animate(
+        [
+          { transform: `translateY(${startY}px)`, easing: 'cubic-bezier(0.7, 0, 1, 0.6)' },
+          { transform: `translateY(${restY}px)` }
+        ],
+        { duration: 380, fill: 'forwards' }
+      ).finished;
+
+      // 2. Короткий отскок при приземлении
+      await duck.animate(
+        [
+          { transform: `translateY(${restY}px)` },
+          { transform: `translateY(${restY - 6}px)` },
+          { transform: `translateY(${restY}px)` }
+        ],
+        { duration: 320, easing: 'ease-out', fill: 'forwards' }
+      ).finished;
+
+      // 3. Уходит влево, пока полностью не скроется за левым краем
+      const distance = x + w + 10;
+      await walk.animate(
+        [
+          { transform: 'translateX(0px)' },
+          { transform: `translateX(${-distance}px)` }
+        ],
+        { duration: 7000, easing: 'linear', fill: 'forwards' }
+      ).finished;
+
+      // 4. Пропадает: плавно гаснет
+      await duck.animate(
+        [{ opacity: 1 }, { opacity: 0 }],
+        { duration: 400, fill: 'forwards' }
+      ).finished;
+
+      // пауза и следующий проход
+      await wait(1200);
+      cycle();
+    }
+
+    cycle();
+  </script>
+</body>
+</html>

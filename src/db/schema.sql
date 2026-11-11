@@ -443,6 +443,13 @@ CREATE TABLE IF NOT EXISTS linux_events (
 );
 CREATE INDEX IF NOT EXISTS idx_linux_events_student ON linux_events(student_id, id);
 
+-- Время открытия практической работы «Терминал» (одна строка id='practical-terminal').
+-- Пусто = открыто сразу. opens_at (ISO) — до него практическая закрыта («откроется в …»).
+CREATE TABLE IF NOT EXISTS linux_practical_window (
+  id TEXT PRIMARY KEY,
+  opens_at TEXT
+);
+
 -- Предмет «Web-разработка: CSS» (src/lib/css-course/, src/routes/css-course.js):
 -- статистика по каждому шагу (item_id: «<тема>:theory» — теория прочитана, иначе id задания практики; JSON как у
 -- emmet_progress) и журнал событий практики (открыл, попытка с кодом и проверкой сервера, вставка, уход со страницы).
@@ -516,6 +523,39 @@ CREATE TABLE IF NOT EXISTS js_course_attempts (
 );
 CREATE INDEX IF NOT EXISTS idx_js_course_attempts ON js_course_attempts(student_id, task_id, id);
 
+-- Предмет «Bash: скрипты в Linux» (src/lib/bash-course/). item_id: '<тема>:theory' | id задачи | id вопроса квиза.
+CREATE TABLE IF NOT EXISTS bash_course_progress (
+  student_id TEXT NOT NULL,
+  item_id TEXT NOT NULL,
+  draft TEXT,
+  stats TEXT NOT NULL DEFAULT '{}',
+  last_choice INTEGER,
+  solved_at TEXT,
+  updated_at TEXT NOT NULL,
+  PRIMARY KEY (student_id, item_id)
+);
+CREATE TABLE IF NOT EXISTS bash_course_attempts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  student_id TEXT NOT NULL,
+  task_id TEXT NOT NULL,
+  code TEXT NOT NULL,
+  passed INTEGER NOT NULL,
+  total INTEGER NOT NULL,
+  forbidden TEXT NOT NULL DEFAULT '[]',
+  results TEXT NOT NULL DEFAULT '[]',
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_bash_course_attempts ON bash_course_attempts(student_id, task_id, id);
+CREATE TABLE IF NOT EXISTS bash_quiz_attempts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  student_id TEXT NOT NULL,
+  question_id TEXT NOT NULL,
+  choice INTEGER NOT NULL,
+  correct INTEGER NOT NULL,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_bash_quiz_attempts ON bash_quiz_attempts(student_id, question_id, id);
+
 -- Админ-блокировки и дедлайны тем по предметам (src/lib/topic-locks.js).
 -- scope: 'group' (target = имя группы) | 'student' (target = id студента).
 -- mode: 'lock' (закрыто сразу) | 'deadline' (закрыто после deadline) | 'allow' (только student: форс-открыть).
@@ -532,3 +572,31 @@ CREATE TABLE IF NOT EXISTS topic_overrides (
   PRIMARY KEY (subject, topic_key, scope, target)
 );
 CREATE INDEX IF NOT EXISTS idx_topic_overrides_lookup ON topic_overrides(subject, scope, target);
+
+-- Средняя (промежуточная) контрольная группы ИБ (ib-mid-1, src/lib/ib-mid/): прогресс по каждому
+-- заданию (блоки A/B/D/C). status: in_progress|submitted|done|not_done; runs — число запусков кода
+-- (для блока C лимит 4 → авто-сдача); draft — текущий код/ответ; result — JSON последней проверки;
+-- score — баллы преподавателя; submitted_at — единственная сдача; locked — менять нельзя.
+CREATE TABLE IF NOT EXISTS ib_mid_progress (
+  student_id TEXT NOT NULL REFERENCES users(id),
+  task_id TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'in_progress',
+  runs INTEGER NOT NULL DEFAULT 0,
+  draft TEXT,
+  answer TEXT,
+  result TEXT,
+  score REAL,
+  locked INTEGER NOT NULL DEFAULT 0,
+  submitted_at TEXT,
+  updated_at TEXT NOT NULL,
+  PRIMARY KEY (student_id, task_id)
+);
+CREATE INDEX IF NOT EXISTS idx_ib_mid_progress_student ON ib_mid_progress(student_id);
+
+-- Окно проведения ИБ-контрольной (одна строка id='ib-mid-1'). Пусто = не назначена: контрольная
+-- закрыта и практика группы ib-2 НЕ блокируется. Задаёт преподаватель при выкладке (scripts/ib-mid/set-window.js).
+CREATE TABLE IF NOT EXISTS ib_mid_window (
+  id TEXT PRIMARY KEY,
+  starts_at TEXT,
+  ends_at TEXT
+);

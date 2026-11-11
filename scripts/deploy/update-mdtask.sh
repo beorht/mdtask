@@ -6,9 +6,10 @@
 # Заменяется только КОД; данные сервера не трогаются: data/, uploads/, backups/, results_exam/,
 # archive/, node_modules/, .env, data/session-secret.
 #
-# Использование:
-#   bash update-mdtask.sh ИСТОЧНИК [ЦЕЛЬ] [--dry-run] [--yes] [--no-restart] [--force]
-#     ИСТОЧНИК      распакованная папка новой версии (в ней index.js) ИЛИ архив .tar.gz (верхняя папка mdtask)
+# Использование (проще всего — запуск из РАСПАКОВАННОГО архива новой версии, источник указывать НЕ нужно):
+#   bash <архив>/scripts/deploy/update-mdtask.sh            # источник = папка самого скрипта, цель = /root/mdtask
+#   bash update-mdtask.sh [ИСТОЧНИК] [ЦЕЛЬ] [--dry-run] [--yes] [--no-restart] [--force]
+#     ИСТОЧНИК      папка новой версии (в ней index.js) ИЛИ архив .tar.gz; по умолчанию — папка, где лежит скрипт
 #     ЦЕЛЬ          папка проекта на сервере, по умолчанию /root/mdtask
 #     --dry-run     показать, что изменится, и ничего не менять
 #     --yes         не спрашивать подтверждение
@@ -33,7 +34,16 @@ for a in "$@"; do
     *) if [ -z "$SRC" ]; then SRC="$a"; else TARGET="$a"; fi ;;
   esac
 done
-[ -n "$SRC" ] || { echo "Укажите источник: bash $0 ПАПКА_ИЛИ_АРХИВ [ЦЕЛЬ]" >&2; exit 2; }
+
+# Источник по умолчанию — папка новой версии, где лежит сам скрипт (запуск из распакованного архива).
+SELF="$(readlink -f "$0" 2>/dev/null || echo "$0")"
+SELF_ROOT="$(cd "$(dirname "$SELF")/../.." 2>/dev/null && pwd || true)"
+if [ -z "$SRC" ]; then
+  { [ -n "$SELF_ROOT" ] && [ -f "$SELF_ROOT/index.js" ]; } || {
+    echo "Источник не указан и папку скрипта определить не удалось. Укажите: bash $0 ПАПКА_ИЛИ_АРХИВ [ЦЕЛЬ]" >&2; exit 2; }
+  SRC="$SELF_ROOT"
+  echo "Источник не указан — беру папку скрипта: $SRC"
+fi
 [ -f "$TARGET/index.js" ] || { echo "В «$TARGET» нет index.js — это не папка проекта mdtask." >&2; exit 2; }
 
 TMP=""
@@ -119,16 +129,19 @@ if [ "$DEPS" -eq 1 ]; then
 fi
 
 # --- перезапуск службы ---
-if [ "$RESTART" -eq 1 ]; then
-  echo "== Перезапуск службы $SERVICE"
-  systemctl restart "$SERVICE"
-  sleep 2
+healthcheck() {
   systemctl is-active --quiet "$SERVICE" && echo "   служба active" || { echo "!! служба НЕ запустилась: journalctl -u $SERVICE -n 50" >&2; }
   if curl -fsS "http://localhost:$HEALTH_PORT/health" >/dev/null 2>&1; then
     echo "   /health OK (порт $HEALTH_PORT)"
   else
     echo "   /health не ответил на порту $HEALTH_PORT (проверьте порт в unit-файле: systemctl cat $SERVICE)"
   fi
+}
+
+if [ "$RESTART" -eq 1 ]; then
+  echo "== Перезапуск службы $SERVICE"
+  systemctl restart "$SERVICE"; sleep 2
+  healthcheck
 else
   echo "== Служба не перезапущена (--no-restart). Запуск вручную: systemctl restart $SERVICE"
 fi

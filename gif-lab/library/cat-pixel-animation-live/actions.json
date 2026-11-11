@@ -1,0 +1,37 @@
+{
+  "_about": "Действия кошки. Каждое действие — список шагов, которые выполняются по порядку. Шаг: { \"clip\": имя из clips.json, \"for\": [мин, макс] мс } (для loop-клипа держит случайное время из диапазона) | { \"clip\": имя } (для клипа без повтора — один проход) | { \"move\": \"random\" } (пройти в случайное место) | { \"move\": \"exit\" } (уйти за край). weight — вес при случайном выборе: чем больше, тем чаще. Меняйте этот файл без правки кода: страница перечитает его при следующем проходе после перезагрузки.",
+  "walk": { "right": "walk_right", "left": "walk_left" },
+  "walkSpeed": 75,
+  "pass": {
+    "actionCount": [3, 5],
+    "wanderAfterAction": 0.6
+  },
+  "depth": {
+    "farScale": 0.75,
+    "nearScale": 1.2,
+    "farGround": 0.5,
+    "nearGround": 0.9
+  },
+  "actions": [
+    { "id": "sit",       "label": "сидит с хвостом",     "weight": 3, "steps": [ { "clip": "sit_tail", "for": [6000, 12000] } ] },
+    { "id": "look",      "label": "смотрит",             "weight": 2, "steps": [ { "clip": "look", "for": [5000, 9000] } ] },
+    { "id": "wash_back", "label": "умывается спиной",    "weight": 2, "steps": [ { "clip": "wash_back", "for": [6000, 10000] } ] },
+    { "id": "wash_paw",  "label": "умывается лапой",     "weight": 2, "steps": [ { "clip": "wash_paw", "for": [6000, 10000] } ] },
+    { "id": "sleep",     "label": "ложится и спит",      "weight": 2, "steps": [
+        { "clip": "lie_down" },
+        { "clip": "sleep", "for": [12000, 22000] },
+        { "clip": "wake" },
+        { "clip": "sit_tail", "for": [1200, 1200] }
+    ] },
+    { "id": "lie_rest",  "label": "лежит, голова на лапах", "weight": 2, "steps": [
+        { "clip": "lie_down" },
+        { "clip": "lie_rest", "for": [8000, 14000] },
+        { "clip": "wake" },
+        { "clip": "sit_tail", "for": [1200, 1200] }
+    ] },
+    { "id": "wander",    "label": "идёт в другое место и садится", "weight": 3, "steps": [
+        { "move": "random" },
+        { "clip": "sit_tail", "for": [3000, 6000] }
+    ] }
+  ]
+}

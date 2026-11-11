@@ -1,0 +1,28 @@
+<!-- src/views/bash-course/theory.ejs — N.1. Теория темы предмета «Bash: скрипты в Linux» (content/bash/<тема>/theory.md) -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <%- include('../partials/head', { pageTitle: topic.number + '. ' + topic.title }) %>
+</head>
+<body>
+  <%- include('../partials/header') %>
+  <div class="app-layout">
+    <%- include('../partials/sidebar') %>
+    <main class="content html-theory">
+      <nav class="breadcrumbs"><a href="/">Главная</a> / <a href="<%= base %>"><%= subjectTitle %></a> / Тема <%= topic.number %></nav>
+      <p class="html-theory-kicker">Тема <%= topic.number %> · Теория</p>
+      <h1><%= topic.title %></h1>
+      <div class="markdown-body"><%- html %></div>
+      <div class="html-theory-next">
+        <a class="topic-btn topic-btn-practice topic-btn-lg" href="<%= base %>/<%= topic.key %>/practice"><span aria-hidden="true">🧪</span> К практике <span class="topic-btn-count"><%= topic.solved %>/<%= topic.total %></span></a>
+        <a class="topic-btn topic-btn-theory topic-btn-lg" href="<%= base %>/<%= topic.key %>/test"><span aria-hidden="true">❓</span> К тесту <span class="topic-btn-count"><%= topic.quizSolved %>/<%= topic.quizTotal %></span></a>
+      </div>
+    </main>
+  </div>
+  <%- include('../partials/scripts') %>
+  <script src="/vendor/codemirror/5.65.16/codemirror.min.js" defer></script>
+  <script src="/vendor/codemirror/5.65.16/mode/shell/shell.min.js" defer></script>
+  <script src="/js/bash-engine.js" defer></script>
+  <script src="/js/bash-course-theory.js" defer></script>
+</body>
+</html>

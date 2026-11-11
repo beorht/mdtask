@@ -29,6 +29,10 @@
     {
       "path": "individual/*/uchet-biblioteki-analiz-vydachi-knig-na-python-i-sqlite.md",
       "lesson": "sqlite-2"
+    },
+    {
+      "path": "section-python-analiz-dannyh/*",
+      "lesson": "sqlite-2"
     }
   ]
 }

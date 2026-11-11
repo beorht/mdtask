@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <%- include('../partials/head', { pageTitle: title }) %>
+  <link rel="stylesheet" href="/vendor/codemirror/5.65.16/codemirror.min.css">
+  <link rel="stylesheet" href="/vendor/codemirror/5.65.16/theme/material-darker.min.css">
+</head>
+<body>
+  <%- include('../partials/header') %>
+  <main class="content">
+    <nav class="breadcrumbs"><a href="/">Главная</a> / <a href="/exam/ib-mid-1"><%= midTitle %></a> / <%= title %></nav>
+    <h1><%= title %></h1>
+    <%- descriptionHtml %>
+    <p class="code-editor-hint">В программе одна ошибка. Исправьте код и запускайте. Запусков — не больше <strong><%= runsLimit %></strong>; результат проверки не показывается. После <%= runsLimit %>-го запуска код отправляется на проверку автоматически (или нажмите «Отправить»).</p>
+
+    <section class="task-panel code-editor-panel" id="ibmidBug"
+             data-task="<%= taskId %>"
+             data-run-url="/exam/ib-mid-1/<%= taskId %>/run"
+             data-submit-url="/exam/ib-mid-1/<%= taskId %>/submit"
+             data-tests="<%= testsAttr %>"
+             data-runs-used="<%= runsUsed %>"
+             data-runs-limit="<%= runsLimit %>"
+             data-locked="<%= locked ? '1' : '' %>">
+      <div class="code-editor-actions" style="margin-bottom:8px">
+        <strong id="ibmidRunsInfo"></strong>
+      </div>
+      <textarea class="sql-console code-file-source" id="ibmidBugCode" rows="20" spellcheck="false" autocomplete="off" aria-label="Код программы"><%= starter %></textarea>
+      <div class="code-editor-actions">
+        <button type="button" class="btn btn-primary" id="ibmidBugRun">▶ Запустить</button>
+        <button type="button" class="btn btn-accent" id="ibmidBugSubmit">Отправить на проверку</button>
+        <span class="code-editor-status" id="ibmidBugStatus" aria-live="polite"></span>
+      </div>
+      <div class="code-output-head">Вывод программы (на первом наборе)</div>
+      <pre class="code-output" id="ibmidBugOut" aria-live="polite">Нажмите «Запустить».</pre>
+    </section>
+    <p><%- include('../partials/back-btn', { href: '/exam/ib-mid-1', label: 'К контрольной' }) %></p>
+  </main>
+  <%- include('../partials/scripts') %>
+  <script src="/vendor/codemirror/5.65.16/codemirror.min.js" defer></script>
+  <script src="/vendor/codemirror/5.65.16/mode/python/python.min.js" defer></script>
+  <script src="/js/ib-mid-bugfix.js" defer></script>
+</body>
+</html>

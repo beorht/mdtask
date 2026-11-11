@@ -1,0 +1,1 @@
+echo "Адрес: ${HOST:-localhost}"

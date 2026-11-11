@@ -1,0 +1,65 @@
+<%- include('partials/start') %>
+
+<nav class="a-breadcrumbs" aria-label="Навигация"><a href="/admin/ib-mid">ИБ-контрольная</a><span>/</span><span><%= detail.student.name %></span></nav>
+
+<div class="a-page-head">
+  <div>
+    <h1><%= detail.student.name %></h1>
+    <p class="a-subtitle">ID <code><%= detail.student.id %></code> · группа <%= detail.student.group || '—' %> · сдано <%= detail.submitted %> из <%= detail.total %> · сумма баллов <%= detail.score %></p>
+  </div>
+</div>
+
+<% detail.blocks.forEach(function (b) { %>
+<section class="a-card a-card-flush">
+  <div class="a-card-head a-card-head-pad"><h2>Блок <%= b.key %>. <%= b.title %></h2><p class="a-muted"><%= b.desc %></p></div>
+  <div class="a-table-wrap">
+    <table class="a-table">
+      <thead><tr><th>Задание</th><th>Статус</th><th class="a-num">Запуски</th><th>Сдано</th><th>Работа</th><th>Балл</th></tr></thead>
+      <tbody>
+        <% b.tasks.forEach(function (t) { const r = t.row; %>
+          <tr>
+            <td>
+              <%= t.title %> <span class="a-muted">(<%= t.short %>)</span>
+              <% if (!t.ready) { %><br><span class="a-tag">страница готовится</span><% } %>
+            </td>
+            <td><%- include('partials/status', { key: t.statusKey }) %></td>
+            <td class="a-num"><% if (t.labTask) { %>—<% } else { %><%= r ? r.runs : 0 %><% if (t.type === 'bugfix') { %> / <%= t.runsLimit %><% } %><% } %></td>
+            <td class="a-nowrap a-muted"><%= r && r.submitted_at ? view.formatDateTime(r.submitted_at) : '—' %></td>
+            <td>
+              <% if (t.labTask) { %>
+                Терминальное задание: пройдено <strong><%= t.labProgress.passed %></strong> / <%= t.labProgress.total %> этапов
+              <% } else if (r && (r.draft || r.answer || r.result)) { %>
+                <details>
+                  <summary>показать</summary>
+                  <% if (r.answer) { %><p class="a-muted">Ответ: <code><%= r.answer %></code></p><% } %>
+                  <% if (r.draft) { %><div class="a-code"><pre class="a-code-body"><code><%= r.draft %></code></pre></div><% } %>
+                  <% if (r.result) { %><p class="a-muted">Проверка: <%= JSON.stringify(r.result) %></p><% } %>
+                </details>
+              <% } else { %><span class="a-muted">—</span><% } %>
+            </td>
+            <td class="a-score-cell">
+              <% if (t.labTask) { %>
+                <span class="a-muted">по этапам</span>
+              <% } else { %>
+              <form method="post" action="/admin/ib-mid/students/<%= detail.student.id %>/score" class="a-score-form">
+                <input type="hidden" name="task_id" value="<%= t.id %>">
+                <input type="number" name="score" step="0.5" value="<%= t.score !== null ? t.score : '' %>" aria-label="Балл за <%= t.short %>">
+                <button type="submit" class="a-btn a-btn-secondary a-btn-sm">OK</button>
+              </form>
+              <% if (r) { %>
+                <form method="post" action="/admin/ib-mid/students/<%= detail.student.id %>/reset" data-confirm="Сбросить задание <%= t.short %> у студента?|Прогресс и сдача этого задания будут удалены.|Сбросить">
+                  <input type="hidden" name="task_id" value="<%= t.id %>">
+                  <button type="submit" class="a-btn a-btn-ghost a-btn-sm">Сбросить</button>
+                </form>
+              <% } %>
+              <% } %>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</section>
+<% }) %>
+
+<%- include('partials/end') %>

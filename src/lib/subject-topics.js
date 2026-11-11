@@ -6,6 +6,8 @@ const html = require('./html-course');
 const htmlAdmin = require('./html-course/admin');
 const css = require('./css-course');
 const cssAdmin = require('./css-course/admin');
+const bash = require('./bash-course');
+const bashAdmin = require('./bash-course/admin');
 
 function topicsOf(course, { trainer = false } = {}) {
   const list = [];
@@ -28,6 +30,11 @@ const SUBJECTS = {
     key: 'css', title: css.CSS_TITLE, groups: css.CSS_GROUPS,
     topics: topicsOf(css),
     overview: (group) => cssAdmin.overview({ group }),
+  },
+  bash: {
+    key: bash.SUBJECT_KEY, title: bash.SUBJECT_TITLE, groups: bash.BASH_COURSE_GROUPS,
+    topics: topicsOf(bash),
+    overview: (group) => bashAdmin.overview({ group }),
   },
 };
 

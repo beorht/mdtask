@@ -1,0 +1,45 @@
+<!-- src/views/bash-course/test.ejs — N.3. Тест темы предмета «Bash: скрипты в Linux»: вопросы с выбором ответа
+     (что выведет код / найдите ошибку / какой вариант верный). Правильный ответ держит сервер (public/js/bash-quiz.js). -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <%- include('../partials/head', { pageTitle: topic.number + '.3. Тест: ' + topic.title }) %>
+  <link rel="stylesheet" href="/vendor/codemirror/5.65.16/codemirror.min.css">
+  <link rel="stylesheet" href="/vendor/codemirror/5.65.16/theme/material-darker.min.css">
+</head>
+<body>
+  <%- include('../partials/header') %>
+  <div class="app-layout">
+    <%- include('../partials/sidebar') %>
+    <main class="content">
+      <nav class="breadcrumbs"><a href="/">Главная</a> / <a href="<%= base %>"><%= subjectTitle %></a> / <a href="<%= base %>/<%= topic.key %>/theory">Тема <%= topic.number %></a> / Тест</nav>
+      <h1><%= topic.number %>.3. Тест: <%= topic.title %></h1>
+      <p class="subject-block-lead">Выберите один верный вариант в каждом вопросе. После ответа появится пояснение. Тема засчитывается, когда верно отвечены все вопросы.</p>
+
+      <div class="subject-summary"><span>Верных ответов: <strong data-quiz-score><%= topic.quizSolved %></strong> / <%= topic.quizTotal %></span></div>
+
+      <ol class="bash-quiz" data-answer-base="<%= base %>/<%= topic.key %>/quiz">
+        <% questions.forEach(function (q) { %>
+          <li class="bash-quiz-item<%= q.solved ? ' is-solved' : '' %>" data-qid="<%= q.id %>">
+            <div class="bash-quiz-kind"><%= q.kind === 'output' ? 'Что выведет код?' : q.kind === 'error' ? 'Найдите ошибку' : 'Какой вариант верный?' %></div>
+            <div class="bash-quiz-prompt"><%= q.prompt %></div>
+            <% if (q.code) { %><pre class="code-output bash-quiz-code"><code><%= q.code %></code></pre><% } %>
+            <div class="bash-quiz-options">
+              <% q.options.forEach(function (opt, i) { %>
+                <button type="button" class="bash-quiz-opt<%= q.solved && q.lastChoice === i ? ' is-correct' : '' %>" data-choice="<%= i %>"<%= q.solved ? ' disabled' : '' %>><pre><%= opt %></pre></button>
+              <% }) %>
+            </div>
+            <div class="bash-quiz-feedback" aria-live="polite"<%= q.solved ? '' : ' hidden' %>><%= q.solved && q.explain ? '✓ Верно. ' + q.explain : '' %></div>
+          </li>
+        <% }) %>
+      </ol>
+
+      <div class="html-theory-next">
+        <a class="topic-btn topic-btn-theory topic-btn-lg" href="<%= base %>">← Все темы</a>
+      </div>
+    </main>
+  </div>
+  <%- include('../partials/scripts') %>
+  <script src="/js/bash-quiz.js" defer></script>
+</body>
+</html>

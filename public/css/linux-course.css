@@ -29,6 +29,9 @@
 :root[data-theme="light"] .ltt-syntax li,
 :root[data-theme="light"] .ltt-badge { color: #0D1117; }
 .ltt-hint-box p { color: var(--accent); }
+.ltt-progress { font-size: 13px; color: var(--text-soft); margin: 4px 0 8px; }
+.ltt-locked { display: block; padding: 32px; }
+.ltt-locked .ltt-task { max-width: 560px; }
 .ltt-verdict { margin-top: 14px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); }
 .ltt-verdict.is-ok { border-color: var(--color-status-done); background: color-mix(in srgb, var(--color-status-done) 12%, transparent); }
 .ltt-verdict.is-no { border-color: var(--color-status-failed); background: color-mix(in srgb, var(--color-status-failed) 10%, transparent); }

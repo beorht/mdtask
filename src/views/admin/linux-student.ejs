@@ -1,0 +1,45 @@
+<%- include('partials/start') %>
+
+<nav class="a-breadcrumbs" aria-label="Навигация"><a href="/admin/linux">Linux Terminal</a><span>/</span><span><%= detail.student.name %></span></nav>
+
+<div class="a-page-head">
+  <div>
+    <h1><%= detail.student.name %></h1>
+    <p class="a-subtitle"><%= detail.student.id %> · группа <%= detail.student.group || '—' %> · практика <%= detail.practicalSolved %>/<%= detail.practicalTotal %> · миссии <%= detail.missionsSolved %>/<%= detail.missionsTotal %></p>
+  </div>
+</div>
+
+<section class="a-card">
+  <h2 class="a-card-title">Практическая работа. Терминал</h2>
+  <% detail.groups.forEach(function (g) { %>
+    <div class="a-lx-group">
+      <div class="a-lx-cmd">команда <code><%= g.cmd %></code></div>
+      <ul class="a-lx-steps">
+        <% g.steps.forEach(function (s) { %>
+          <li class="<%= s.solved ? 'is-ok' : 'is-no' %>"><span aria-hidden="true"><%= s.solved ? '✓' : '·' %></span> <%= s.task %></li>
+        <% }) %>
+      </ul>
+    </div>
+  <% }) %>
+</section>
+
+<section class="a-card">
+  <h2 class="a-card-title">Журнал команд студента</h2>
+  <% if (detail.journal.length) { %>
+    <pre class="a-lx-journal"><% detail.journal.forEach(function (l) { %><%= l %>
+<% }) %></pre>
+  <% } else { %>
+    <p class="a-muted">Команд пока нет.</p>
+  <% } %>
+</section>
+
+<section class="a-card">
+  <h2 class="a-card-title">Миссии тренажёра</h2>
+  <ul class="a-lx-steps">
+    <% detail.missions.forEach(function (m) { %>
+      <li class="<%= m.solved ? 'is-ok' : 'is-no' %>"><span aria-hidden="true"><%= m.solved ? '✓' : '·' %></span> <%= m.title %></li>
+    <% }) %>
+  </ul>
+</section>
+
+<%- include('partials/end') %>

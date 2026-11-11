@@ -1,0 +1,225 @@
+[
+ {
+  "id": "pattern-01",
+  "title": "Имя файла",
+  "statement": "Из пути `p=\"/home/user/report.txt\"` получите имя файла `report.txt` (удалите всё до последнего `/` через `##*/`).",
+  "openTests": 2,
+  "tests": [
+   {
+    "args": [],
+    "stdin": "",
+    "output": "report.txt\n"
+   }
+  ]
+ },
+ {
+  "id": "pattern-02",
+  "title": "Каталог",
+  "statement": "Из пути `p=\"/home/user/report.txt\"` получите каталог `/home/user` (удалите всё после последнего `/` через `%/*`).",
+  "openTests": 2,
+  "tests": [
+   {
+    "args": [],
+    "stdin": "",
+    "output": "/home/user\n"
+   }
+  ]
+ },
+ {
+  "id": "pattern-03",
+  "title": "Расширение",
+  "statement": "Из пути `p=\"/home/user/report.txt\"` получите только расширение `txt` (через `##*.`).",
+  "openTests": 2,
+  "tests": [
+   {
+    "args": [],
+    "stdin": "",
+    "output": "txt\n"
+   }
+  ]
+ },
+ {
+  "id": "pattern-04",
+  "title": "Без расширения",
+  "statement": "Из пути `p=\"/home/user/report.txt\"` уберите расширение, получив `/home/user/report` (через `%.*`).",
+  "openTests": 2,
+  "tests": [
+   {
+    "args": [],
+    "stdin": "",
+    "output": "/home/user/report\n"
+   }
+  ]
+ },
+ {
+  "id": "pattern-05",
+  "title": "Одно расширение",
+  "statement": "Из строки `s=\"archive.tar.gz\"` уберите одно (последнее) расширение, получив `archive.tar`.",
+  "openTests": 2,
+  "tests": [
+   {
+    "args": [],
+    "stdin": "",
+    "output": "archive.tar\n"
+   }
+  ]
+ },
+ {
+  "id": "pattern-06",
+  "title": "Всё после первой точки",
+  "statement": "Из строки `s=\"archive.tar.gz\"` уберите всё, начиная с первой точки, получив `archive` (через `%%.*`).",
+  "openTests": 2,
+  "tests": [
+   {
+    "args": [],
+    "stdin": "",
+    "output": "archive\n"
+   }
+  ]
+ },
+ {
+  "id": "pattern-07",
+  "title": "После первой точки",
+  "statement": "Из строки `s=\"archive.tar.gz\"` оставьте всё после первой точки, получив `tar.gz` (через `#*.`).",
+  "openTests": 2,
+  "tests": [
+   {
+    "args": [],
+    "stdin": "",
+    "output": "tar.gz\n"
+   }
+  ]
+ },
+ {
+  "id": "pattern-08",
+  "title": "Сменить расширение",
+  "statement": "Из строки `f=\"notes.txt\"` сделайте `notes.md` (уберите `.txt` и допишите `.md`).",
+  "openTests": 2,
+  "tests": [
+   {
+    "args": [],
+    "stdin": "",
+    "output": "notes.md\n"
+   }
+  ]
+ },
+ {
+  "id": "pattern-09",
+  "title": "Заменить первое",
+  "statement": "В строке `s=\"archive.tar.gz\"` замените первое `tar` на `zip`, получив `archive.zip.gz` (через `${s/tar/zip}`).",
+  "openTests": 2,
+  "require": [
+   "subst"
+  ],
+  "tests": [
+   {
+    "args": [],
+    "stdin": "",
+    "output": "archive.zip.gz\n"
+   }
+  ]
+ },
+ {
+  "id": "pattern-10",
+  "title": "Заменить все",
+  "statement": "В строке `s=\"banana\"` замените все `a` на `o`, получив `bonono` (через `${s//a/o}`).",
+  "openTests": 2,
+  "require": [
+   "subst"
+  ],
+  "tests": [
+   {
+    "args": [],
+    "stdin": "",
+    "output": "bonono\n"
+   }
+  ]
+ },
+ {
+  "id": "pattern-11",
+  "title": "Разбор пути",
+  "statement": "Для `p=\"/var/log/nginx/access.log.1\"` выведите на трёх строках: имя файла `access.log.1`, каталог `/var/log/nginx`, имя без последнего расширения `access.log`.",
+  "openTests": 2,
+  "tests": [
+   {
+    "args": [],
+    "stdin": "",
+    "output": "access.log.1\n/var/log/nginx\naccess.log\n"
+   }
+  ]
+ },
+ {
+  "id": "pattern-12",
+  "title": "jpg в png",
+  "statement": "Из переданного в `$1` пути к файлу `.jpg` выведите то же имя с расширением `.png`.",
+  "openTests": 2,
+  "tests": [
+   {
+    "args": [
+     "photo.jpg"
+    ],
+    "stdin": "",
+    "output": "photo.png\n"
+   },
+   {
+    "args": [
+     "/img/cat.jpg"
+    ],
+    "stdin": "",
+    "output": "/img/cat.png\n"
+   }
+  ]
+ },
+ {
+  "id": "pattern-13",
+  "title": "Логин и хост",
+  "statement": "Из строки `email=\"user@example.com\"` выведите на двух строках логин `user` (через `%@*`) и хост `example.com` (через `##*@`).",
+  "openTests": 2,
+  "tests": [
+   {
+    "args": [],
+    "stdin": "",
+    "output": "user\nexample.com\n"
+   }
+  ]
+ },
+ {
+  "id": "pattern-14",
+  "title": "Убрать \"./\"",
+  "statement": "Из строки `s=\"./script.sh\"` уберите ведущие `./`, получив `script.sh` (через `#./`).",
+  "openTests": 2,
+  "tests": [
+   {
+    "args": [],
+    "stdin": "",
+    "output": "script.sh\n"
+   }
+  ]
+ },
+ {
+  "id": "pattern-15",
+  "title": "Убрать префикс",
+  "statement": "Из строки `name=\"img_0423\"` уберите префикс `img_`, получив `0423` (через `#img_`).",
+  "openTests": 2,
+  "tests": [
+   {
+    "args": [],
+    "stdin": "",
+    "output": "0423\n"
+   }
+  ]
+ },
+ {
+  "id": "pattern-16",
+  "title": "Год и день",
+  "statement": "Из даты `d=\"2026-11-11\"` выведите на двух строках год `2026` (через `%%-*`) и день `11` (через `##*-`).",
+  "openTests": 2,
+  "tests": [
+   {
+    "args": [],
+    "stdin": "",
+    "output": "2026\n11\n"
+   }
+  ]
+ }
+]

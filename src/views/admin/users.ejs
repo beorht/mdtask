@@ -1,0 +1,99 @@
+<%- include('partials/start') %>
+
+<div class="a-page-head">
+  <div>
+    <h1>Пользователи</h1>
+    <p class="a-subtitle">Создание аккаунтов и сброс пароля. Новый и сброшенный пароль — общий <code><%= defaultPassword %></code>; пользователь меняет его при первом входе.</p>
+  </div>
+</div>
+
+<section class="a-card">
+  <h2 class="a-card-title">Создать аккаунт</h2>
+  <form method="post" action="/admin/users/add" class="a-user-add">
+    <label>Роль
+      <select name="role" data-role-select>
+        <option value="student">Студент</option>
+        <option value="teacher">Преподаватель</option>
+      </select>
+    </label>
+    <label>ID (логин)
+      <input type="text" name="id" placeholder="например st-ib-700 или stWeb-120" required pattern="[A-Za-z0-9_-]{2,64}">
+    </label>
+    <label>Имя
+      <input type="text" name="name" placeholder="Фамилия Имя" required>
+    </label>
+    <label data-role-group>Группа
+      <input type="text" name="group" list="a-groups" value="<%= filterGroup %>" placeholder="например ib-2">
+      <datalist id="a-groups"><% groups.forEach(function (g) { %><option value="<%= g %>"></option><% }) %></datalist>
+    </label>
+    <button type="submit" class="a-btn a-btn-primary">Создать</button>
+  </form>
+  <p class="a-muted a-small">ID пишите точно, с учётом регистра (web-студенты — вида <code>stWeb-NNN</code>). У преподавателя группа не нужна. Пароль — <code><%= defaultPassword %></code>.</p>
+</section>
+
+<section class="a-card">
+  <h2 class="a-card-title">Массовое добавление студентов</h2>
+  <form method="post" action="/admin/users/bulk" class="a-user-bulk">
+    <label>Группа
+      <input type="text" name="group" list="a-groups" value="<%= filterGroup %>" placeholder="например ib-2" required>
+    </label>
+    <label>Список студентов (по одному в строке: <code>ID; Имя</code>)
+      <textarea name="list" rows="6" placeholder="st-ib-701; Иванов Иван&#10;st-ib-702; Петров Пётр&#10;st-ib-703, Сидорова Анна"></textarea>
+    </label>
+    <button type="submit" class="a-btn a-btn-primary">Добавить список</button>
+  </form>
+  <p class="a-muted a-small">Разделители: «;», «,» или первый пробел. Существующие ID и неверные строки будут пропущены — сводка покажется после добавления. Все попадут в указанную группу с паролем <code><%= defaultPassword %></code>.</p>
+</section>
+
+<form class="a-filters" method="get" action="/admin/users" data-autosubmit>
+  <label>Группа
+    <select name="group">
+      <option value="">все (+ преподаватели)</option>
+      <% groups.forEach(function (g) { %><option value="<%= g %>"<%= filterGroup === g ? ' selected' : '' %>><%= g %></option><% }) %>
+    </select>
+  </label>
+  <button type="submit" class="a-btn a-btn-secondary a-noscript-only">Показать</button>
+</form>
+
+<section class="a-card a-card-flush">
+  <% if (!rows.length) { %>
+    <%- include('partials/empty', { emptyIcon: 'students', emptyTitle: 'Пользователей нет', emptyText: 'Создайте аккаунт формой выше.' }) %>
+  <% } else { %>
+    <div class="a-table-wrap">
+      <table class="a-table">
+        <thead><tr><th>Имя</th><th>ID (логин)</th><th>Роль</th><th>Группа</th><th>Пароль</th><th></th></tr></thead>
+        <tbody>
+          <% rows.forEach(function (s) { %>
+            <tr>
+              <td><span class="a-person"><span class="a-avatar a-avatar-sm"><%= view.initials(s.name) %></span><%= s.name %></span></td>
+              <td><code><%= s.id %></code></td>
+              <td><%= s.role === 'teacher' ? 'Преподаватель' : 'Студент' %></td>
+              <td><%= s.group || '—' %></td>
+              <td><%= s.mustChangePassword ? 'нужно сменить' : 'задан' %></td>
+              <td class="a-nowrap">
+                <form method="post" action="/admin/users/<%= encodeURIComponent(s.id) %>/reset-password" data-confirm="Сбросить пароль у <%= s.name %>?|Пароль станет «<%= defaultPassword %>», пользователь сменит его при входе.|Сбросить">
+                  <input type="hidden" name="group" value="<%= filterGroup %>">
+                  <button type="submit" class="a-btn a-btn-ghost a-btn-sm">Сбросить пароль</button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <div class="a-card-foot a-muted">Сброс ставит пароль <code><%= defaultPassword %></code> и требует сменить его при следующем входе. Сброс доступен и студентам, и преподавателям.</div>
+  <% } %>
+</section>
+
+<script>
+  // Прятать поле «Группа» для роли «Преподаватель».
+  (function () {
+    var sel = document.querySelector('[data-role-select]');
+    var grp = document.querySelector('[data-role-group]');
+    if (!sel || !grp) return;
+    function sync() { grp.style.display = sel.value === 'teacher' ? 'none' : ''; }
+    sel.addEventListener('change', sync); sync();
+  })();
+</script>
+
+<%- include('partials/end') %>

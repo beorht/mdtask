@@ -1,0 +1,167 @@
+[
+ {
+  "id": "result-q01",
+  "kind": "output",
+  "prompt": "Переменная `X` не задана. Что выведет скрипт?",
+  "code": "echo \"${X:-def}\"",
+  "options": [
+   "def",
+   "",
+   "$X",
+   "X"
+  ],
+  "answer": 0,
+  "explain": "`${X:-def}` подставляет `def`, если `X` пуста или не задана."
+ },
+ {
+  "id": "result-q02",
+  "kind": "output",
+  "prompt": "Что выведет скрипт?",
+  "code": "X=5\necho \"${X:-def}\"",
+  "options": [
+   "5",
+   "def",
+   "$X",
+   "5 def"
+  ],
+  "answer": 0,
+  "explain": "`X` задан, поэтому берётся его значение."
+ },
+ {
+  "id": "result-q03",
+  "kind": "output",
+  "prompt": "Что выведет скрипт?",
+  "code": "echo \"${X:=7}\"\necho \"$X\"",
+  "options": [
+   "7\n7",
+   "7\n",
+   "def\n7",
+   "7\ndef"
+  ],
+  "answer": 0,
+  "explain": "`:=` подставляет и присваивает, поэтому `X` становится 7."
+ },
+ {
+  "id": "result-q04",
+  "kind": "output",
+  "prompt": "Что выведет скрипт?",
+  "code": "true && echo yes || echo no",
+  "options": [
+   "yes",
+   "no",
+   "yes\nno",
+   ""
+  ],
+  "answer": 0,
+  "explain": "`true` успешна, поэтому выполняется часть после `&&`."
+ },
+ {
+  "id": "result-q05",
+  "kind": "output",
+  "prompt": "Что выведет скрипт?",
+  "code": "false && echo yes || echo no",
+  "options": [
+   "no",
+   "yes",
+   "",
+   "yes\nno"
+  ],
+  "answer": 0,
+  "explain": "`false` неуспешна: `&&`-часть пропускается, срабатывает `||`-часть."
+ },
+ {
+  "id": "result-q06",
+  "kind": "fix",
+  "prompt": "Как сохранить вывод команды `date` в переменную `d`?",
+  "options": [
+   "d=$(date)",
+   "d=date",
+   "$d=date",
+   "date > d"
+  ],
+  "answer": 0,
+  "explain": "Подстановка команды: `d=$(date)`."
+ },
+ {
+  "id": "result-q07",
+  "kind": "fix",
+  "prompt": "Чем `${v:-x}` отличается от `${v:=x}`?",
+  "options": [
+   "`:-` только подставляет x, `:=` ещё и присваивает v",
+   "Разницы нет",
+   "`:=` только подставляет",
+   "`:-` присваивает, `:=` нет"
+  ],
+  "answer": 0,
+  "explain": "`:=` меняет саму переменную, `:-` — нет."
+ },
+ {
+  "id": "result-q08",
+  "kind": "output",
+  "prompt": "Что выведет скрипт?",
+  "code": "v=1\necho \"a${v:+-b}\"",
+  "options": [
+   "a-b",
+   "a",
+   "a-",
+   "-b"
+  ],
+  "answer": 0,
+  "explain": "`v` задана, поэтому `${v:+-b}` подставляет `-b`."
+ },
+ {
+  "id": "result-q09",
+  "kind": "output",
+  "prompt": "Что выведет скрипт?",
+  "code": "v=\necho \"a${v:+-b}\"",
+  "options": [
+   "a",
+   "a-b",
+   "-b",
+   ""
+  ],
+  "answer": 0,
+  "explain": "`v` пуста, поэтому `${v:+-b}` ничего не подставляет."
+ },
+ {
+  "id": "result-q10",
+  "kind": "output",
+  "prompt": "Что выведет скрипт?",
+  "code": "echo \"$(echo hi)\"",
+  "options": [
+   "hi",
+   "$(echo hi)",
+   "echo hi",
+   ""
+  ],
+  "answer": 0,
+  "explain": "Подстановка команды вставляет вывод `echo hi`."
+ },
+ {
+  "id": "result-q11",
+  "kind": "fix",
+  "prompt": "Когда выполнится правая часть `cmd1 || cmd2`?",
+  "options": [
+   "Если cmd1 завершилась с ошибкой (код не 0)",
+   "Всегда",
+   "Если cmd1 успешна",
+   "Никогда"
+  ],
+  "answer": 0,
+  "explain": "`||` запускает вторую команду при неудаче первой."
+ },
+ {
+  "id": "result-q12",
+  "kind": "output",
+  "prompt": "Что выведет скрипт?",
+  "code": "false\nrc=$?\ntrue\necho \"$rc\"",
+  "options": [
+   "1",
+   "0",
+   "true",
+   "$rc"
+  ],
+  "answer": 0,
+  "explain": "`$?` сохранили сразу после `false`, до того как `true` его перезапишет."
+ }
+]

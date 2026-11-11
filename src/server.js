@@ -55,6 +55,8 @@ function createApp() {
   const cssCourseRoutes = require('./routes/css-course');
   const pythonCourseRoutes = require('./routes/python-course');
   const jsCourseRoutes = require('./routes/js-course');
+  const bashCourseRoutes = require('./routes/bash-course');
+  const ibMidRoutes = require('./routes/ib-mid');
   const examRoutes = require('./routes/exam');
   const webExamRoutes = require('./routes/web-exam');
 
@@ -72,6 +74,9 @@ function createApp() {
   app.use(cssCourseRoutes);
   app.use(pythonCourseRoutes);
   app.use(jsCourseRoutes);
+  app.use(bashCourseRoutes);
+  // Средняя контрольная ИБ отвечает своим /exam/ib-mid-1 до остальных exam-роутов.
+  app.use(ibMidRoutes);
   // The WEB group's exam answers its own /exam/<id> and passes every other id on to examRoutes.
   app.use(webExamRoutes);
   app.use(examRoutes);

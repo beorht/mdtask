@@ -1,0 +1,5 @@
+p="/var/log/nginx/access.log.1"
+echo "${p##*/}"
+echo "${p%/*}"
+name="${p##*/}"
+echo "${name%.*}"

@@ -1,0 +1,167 @@
+[
+ {
+  "id": "pattern-q01",
+  "kind": "output",
+  "prompt": "Что выведет скрипт?",
+  "code": "p=/a/b/c.txt\necho \"${p##*/}\"",
+  "options": [
+   "c.txt",
+   "/a/b",
+   "txt",
+   "c"
+  ],
+  "answer": 0,
+  "explain": "`##*/` удаляет всё до последнего `/` — остаётся имя файла."
+ },
+ {
+  "id": "pattern-q02",
+  "kind": "output",
+  "prompt": "Что выведет скрипт?",
+  "code": "p=/a/b/c.txt\necho \"${p%/*}\"",
+  "options": [
+   "/a/b",
+   "c.txt",
+   "/a/b/c",
+   "txt"
+  ],
+  "answer": 0,
+  "explain": "`%/*` удаляет всё после последнего `/` — остаётся каталог."
+ },
+ {
+  "id": "pattern-q03",
+  "kind": "output",
+  "prompt": "Что выведет скрипт?",
+  "code": "s=a.tar.gz\necho \"${s%.*}\"",
+  "options": [
+   "a.tar",
+   "a",
+   "gz",
+   "tar.gz"
+  ],
+  "answer": 0,
+  "explain": "`%.*` убирает кратчайшее с конца — одно расширение."
+ },
+ {
+  "id": "pattern-q04",
+  "kind": "output",
+  "prompt": "Что выведет скрипт?",
+  "code": "s=a.tar.gz\necho \"${s%%.*}\"",
+  "options": [
+   "a",
+   "a.tar",
+   "gz",
+   "tar.gz"
+  ],
+  "answer": 0,
+  "explain": "`%%.*` жадно убирает всё с первой точки."
+ },
+ {
+  "id": "pattern-q05",
+  "kind": "output",
+  "prompt": "Что выведет скрипт?",
+  "code": "s=a.tar.gz\necho \"${s#*.}\"",
+  "options": [
+   "tar.gz",
+   "a",
+   "gz",
+   "a.tar"
+  ],
+  "answer": 0,
+  "explain": "`#*.` убирает кратчайшее с начала — до первой точки."
+ },
+ {
+  "id": "pattern-q06",
+  "kind": "output",
+  "prompt": "Что выведет скрипт?",
+  "code": "s=banana\necho \"${s/a/A}\"",
+  "options": [
+   "bAnana",
+   "bAnAnA",
+   "banana",
+   "Banana"
+  ],
+  "answer": 0,
+  "explain": "Одинарный `/` заменяет только первое вхождение."
+ },
+ {
+  "id": "pattern-q07",
+  "kind": "output",
+  "prompt": "Что выведет скрипт?",
+  "code": "s=banana\necho \"${s//a/A}\"",
+  "options": [
+   "bAnAnA",
+   "bAnana",
+   "banana",
+   "BANANA"
+  ],
+  "answer": 0,
+  "explain": "Двойной `//` заменяет все вхождения."
+ },
+ {
+  "id": "pattern-q08",
+  "kind": "fix",
+  "prompt": "Как получить расширение файла из переменной `f`?",
+  "options": [
+   "${f##*.}",
+   "${f%.*}",
+   "${f#*.}",
+   "${f%%.*}"
+  ],
+  "answer": 0,
+  "explain": "`##*.` удаляет всё до последней точки — остаётся расширение."
+ },
+ {
+  "id": "pattern-q09",
+  "kind": "fix",
+  "prompt": "С какого конца строки режут `#` и `%`?",
+  "options": [
+   "`#` — с начала, `%` — с конца",
+   "Наоборот: `#` с конца",
+   "Оба с начала",
+   "Оба с конца"
+  ],
+  "answer": 0,
+  "explain": "На клавиатуре `#` левее `%`, как и начало строки левее конца."
+ },
+ {
+  "id": "pattern-q10",
+  "kind": "output",
+  "prompt": "Что выведет скрипт?",
+  "code": "p=/etc/hosts\necho \"${p#/}\"",
+  "options": [
+   "etc/hosts",
+   "hosts",
+   "/etc/hosts",
+   "etc"
+  ],
+  "answer": 0,
+  "explain": "`#/` удаляет только первый символ `/`, а не всё до него."
+ },
+ {
+  "id": "pattern-q11",
+  "kind": "fix",
+  "prompt": "Чем двойной знак (`##`, `%%`) отличается от одинарного?",
+  "options": [
+   "Удаляет самое длинное совпадение (жадный режим)",
+   "Удаляет ровно два символа",
+   "Ничем",
+   "Всегда режет с конца"
+  ],
+  "answer": 0,
+  "explain": "Двойной знак — жадный режим, одинарный — самое короткое совпадение."
+ },
+ {
+  "id": "pattern-q12",
+  "kind": "output",
+  "prompt": "Что выведет скрипт?",
+  "code": "f=notes.txt\necho \"${f%.txt}.md\"",
+  "options": [
+   "notes.md",
+   "notes.txt.md",
+   "notes",
+   ".md"
+  ],
+  "answer": 0,
+  "explain": "`%.txt` убирает `.txt`, затем дописывается `.md`."
+ }
+]

@@ -7,9 +7,16 @@ const { blockDuringExam } = require('../middleware/exam-lock');
 const { examLockFor } = require('../lib/exam');
 const { buildSidebarTree } = require('../lib/sidebar');
 const course = require('../lib/linux-course');
+const practical = require('../lib/linux-course/practical');
 
 const router = express.Router();
 const BASE = `/subjects/${course.LINUX_KEY}`;
+
+function fmtTime(iso) {
+  return new Intl.DateTimeFormat('ru-RU', {
+    timeZone: 'Asia/Tashkent', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
+  }).format(new Date(iso));
+}
 
 function requireVisible(req, res, next) {
   if (!course.canSeeLinux(req.session.user)) return res.status(404).render('404');
@@ -33,8 +40,61 @@ router.get(BASE, ...page, (req, res) => {
     base: BASE,
     lead: course.LINUX_LEAD,
     summary: course.summaryForStudent(user),
+    practical: (function () {
+      const v = practical.view(user);
+      const win = practical.windowState();
+      return {
+        title: practical.TITLE,
+        href: `${BASE}/practical`,
+        open: practical.isOpenFor(user),
+        opensText: win.opensAt ? fmtTime(win.opensAt) : null,
+        solvedCount: v.solvedCount,
+        total: v.total,
+        done: v.done,
+      };
+    })(),
   });
 });
+
+// Практическая работа «Терминал»: одна страница с последовательностью шагов (общая ФС).
+router.get(`${BASE}/practical`, ...page, (req, res) => {
+  const user = req.session.user;
+  const win = practical.windowState();
+  const open = practical.isOpenFor(user);
+  res.render('linux-course/practical-work', {
+    user,
+    base: BASE,
+    pageTitle: `${practical.TITLE} · ${course.LINUX_TITLE}`,
+    title: practical.TITLE,
+    open,
+    opensText: win.opensAt ? fmtTime(win.opensAt) : null,
+  });
+});
+
+function practicalApi(handler) {
+  return (req, res) => {
+    const user = req.session.user;
+    res.set('Cache-Control', 'no-store');
+    if (!user) return res.status(401).json({ error: 'Войдите на сайт заново.' });
+    if (user.mustChangePassword) return res.status(401).json({ error: 'Сначала смените пароль.' });
+    if (!practical.canSee(user)) return res.status(404).json({ error: 'Недоступно.' });
+    const lock = examLockFor(user);
+    if (lock) return res.status(423).json({ error: lock.during ? 'Закрыто на время контрольной.' : 'Закрыто преподавателем.' });
+    if (!practical.isOpenFor(user)) {
+      const win = practical.windowState();
+      return res.status(423).json({ error: `Практическая откроется ${win.opensAt ? fmtTime(win.opensAt) : 'позже'} (+05).` });
+    }
+    try {
+      res.json(handler(req, user));
+    } catch (err) {
+      if (!(err instanceof course.LinuxCourseError)) throw err;
+      res.status(err.status).json({ error: err.message });
+    }
+  };
+}
+
+router.get(`${BASE}/practical/api/me`, requireRole('student'), practicalApi((req, user) => practical.view(user)));
+router.post(`${BASE}/practical/api/check`, requireRole('student'), practicalApi((req, user) => practical.checkStep(user, req.body && req.body.stepId, req.body)));
 
 router.get(`${BASE}/mission/:id`, ...page, (req, res) => {
   const status = course.missionStatus(req.session.user, req.params.id);

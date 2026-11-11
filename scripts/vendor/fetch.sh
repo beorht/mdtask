@@ -14,7 +14,7 @@ PYODIDE_FILES="pyodide.js pyodide.asm.js pyodide.asm.wasm python_stdlib.zip pyod
 CODEMIRROR_VERSION=5.65.16
 CODEMIRROR_URL="https://cdnjs.cloudflare.com/ajax/libs/codemirror/$CODEMIRROR_VERSION"
 CODEMIRROR_DIR="$ROOT/public/vendor/codemirror/$CODEMIRROR_VERSION"
-CODEMIRROR_FILES="codemirror.min.js codemirror.min.css theme/material-darker.min.css mode/python/python.min.js addon/edit/matchbrackets.min.js mode/xml/xml.min.js mode/javascript/javascript.min.js mode/css/css.min.js mode/htmlmixed/htmlmixed.min.js addon/edit/closebrackets.min.js addon/edit/closetag.min.js"
+CODEMIRROR_FILES="codemirror.min.js codemirror.min.css theme/material-darker.min.css mode/python/python.min.js addon/edit/matchbrackets.min.js mode/xml/xml.min.js mode/javascript/javascript.min.js mode/css/css.min.js mode/htmlmixed/htmlmixed.min.js mode/shell/shell.min.js addon/edit/closebrackets.min.js addon/edit/closetag.min.js"
 
 fetch() {
   mkdir -p "$(dirname "$2")"

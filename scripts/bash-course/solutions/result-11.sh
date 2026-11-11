@@ -1,0 +1,1 @@
+echo "Редактор: ${EDITOR:-nano}"

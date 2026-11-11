@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Анимации · песочница</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="top">
+    <h1>Анимации по событиям</h1>
+    <div class="top-actions">
+      <label class="auto">
+        <input type="checkbox" id="auto"> Случайный режим
+      </label>
+      <button type="button" class="btn" id="toggle-assign">Назначения</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <nav class="events" id="events" aria-label="События"></nav>
+
+    <section class="stage" id="stage">
+      <div class="empty" id="empty" hidden>
+        <p></p>
+      </div>
+
+      <div class="viewer" id="viewer" hidden>
+        <div class="frame" id="frame"></div>
+        <div class="controls">
+          <button type="button" id="prev" class="btn">◀</button>
+          <button type="button" id="rand" class="btn btn-primary">Случайная из события</button>
+          <button type="button" id="next" class="btn">▶</button>
+        </div>
+        <p class="counter" id="counter"></p>
+        <div class="info">
+          <h2 id="title"></h2>
+          <dl>
+            <dt>Когда</dt><dd id="when"></dd>
+            <dt>Где на сайте</dt><dd id="where"></dd>
+          </dl>
+        </div>
+        <div class="thumbs" id="thumbs"></div>
+      </div>
+
+      <div class="assign" id="assign" hidden>
+        <p class="assign-help">
+          Отметьте, для каких событий показывать каждую анимацию. Одна анимация может быть у нескольких событий,
+          у события может быть несколько анимаций: при показе выбирается случайная.
+        </p>
+        <div id="assign-list"></div>
+        <div class="assign-save">
+          <button type="button" class="btn btn-primary" id="save">Сохранить</button>
+          <span id="save-status" class="status" role="status"></span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>

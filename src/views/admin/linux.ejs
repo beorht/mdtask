@@ -1,0 +1,89 @@
+<%- include('partials/start') %>
+
+<div class="a-page-head">
+  <div>
+    <h1>Linux Terminal</h1>
+    <p class="a-subtitle">Результаты «Практической работы. Терминал» (по командам — сколько шагов пройдено) и миссий тренажёра. Нажмите на студента — его шаги и журнал команд. Открытие практической: <%= !o.window.scheduled ? 'сразу' : (o.window.before ? ('с ' + (o.window.opensAt ? new Date(o.window.opensAt).toLocaleString('ru-RU',{timeZone:'Asia/Tashkent',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '') + ' (+05)') : 'открыта') %>.</p>
+  </div>
+</div>
+
+<div class="a-stats a-stats-sm">
+  <div class="a-stat"><span class="a-stat-value"><%= o.rows.length %></span><span class="a-stat-label">Студентов</span></div>
+  <div class="a-stat<%= o.startedPracticalCount ? ' a-stat-accent' : '' %>"><span class="a-stat-value"><%= o.startedPracticalCount %></span><span class="a-stat-label">Начали практику</span></div>
+  <div class="a-stat"><span class="a-stat-value"><%= o.practicalTotal %></span><span class="a-stat-label">Шагов в практике</span></div>
+  <div class="a-stat"><span class="a-stat-value"><%= o.missionsTotal %></span><span class="a-stat-label">Миссий тренажёра</span></div>
+</div>
+
+<form class="a-filters" method="get" action="/admin/linux" data-autosubmit>
+  <label class="a-input-search"><%- icon('search') %><input type="search" name="q" value="<%= filters.q %>" placeholder="Поиск по имени или ID" aria-label="Поиск студента"></label>
+  <label>Группа
+    <select name="group">
+      <option value="">все</option>
+      <% groups.forEach(function (g) { %><option value="<%= g %>"<%= filters.group === g ? ' selected' : '' %>><%= g %></option><% }) %>
+    </select>
+  </label>
+  <button type="submit" class="a-btn a-btn-secondary a-noscript-only">Применить</button>
+</form>
+
+<% if (!o.rows.length) { %>
+  <section class="a-card a-card-flush">
+    <%- include('partials/empty', { emptyIcon: 'students', emptyTitle: 'Студентов нет', emptyText: 'Здесь появятся студенты группы web-1 и их результаты.' }) %>
+  </section>
+<% } else { %>
+
+  <h2 class="a-section-title">Практическая работа. Терминал — по командам</h2>
+  <section class="a-card a-card-flush">
+    <div class="a-table-wrap">
+      <table class="a-table a-emmet-matrix">
+        <thead>
+          <tr>
+            <th>Студент</th>
+            <% o.commands.forEach(function (c) { %><th class="a-num" title="команда <%= c.cmd %>"><%= c.cmd %></th><% }) %>
+            <th class="a-num">Всего</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% o.rows.forEach(function (r) { %>
+            <tr>
+              <td><a class="a-person" href="/admin/linux/students/<%= r.student.id %>"><span class="a-avatar a-avatar-sm"><%= view.initials(r.student.name) %></span><%= r.student.name %></a></td>
+              <% r.cells.forEach(function (c) { %><td class="a-num a-emmet-cell is-<%= c.state %>" title="<%= c.cmd %>: <%= c.solved %>/<%= c.total %>"><%= c.solved %>/<%= c.total %></td><% }) %>
+              <td class="a-num a-nowrap"><%= r.practicalSolved %> / <%= r.practicalTotal %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <div class="a-card-foot a-muted">Ячейка команды — сколько её шагов практической пройдено (из 3). Зелёная — все, частично — не все, серая — нет. Практическую студент мог ещё не начинать — тогда здесь нули, а выполненные им миссии см. ниже.</div>
+  </section>
+
+  <h2 class="a-section-title">Миссии тренажёра — по заданиям</h2>
+  <section class="a-card a-card-flush">
+    <div class="a-table-wrap">
+      <table class="a-table a-emmet-matrix">
+        <thead>
+          <tr>
+            <th rowspan="2">Студент</th>
+            <% o.modules.forEach(function (m) { %><th colspan="<%= m.missions.length %>" class="a-num">М<%= m.number %>. <%= m.title %></th><% }) %>
+            <th rowspan="2" class="a-num">Всего</th>
+          </tr>
+          <tr>
+            <% o.missions.forEach(function (m) { %><th class="a-num" title="<%= m.title %>"><%= m.short %></th><% }) %>
+          </tr>
+        </thead>
+        <tbody>
+          <% o.rows.forEach(function (r) { %>
+            <tr>
+              <td><a class="a-person" href="/admin/linux/students/<%= r.student.id %>"><span class="a-avatar a-avatar-sm"><%= view.initials(r.student.name) %></span><%= r.student.name %></a></td>
+              <% r.missionCells.forEach(function (m, i) { %><td class="a-num a-emmet-cell is-<%= m.solved ? 'solved' : 'none' %>" title="<%= o.missions[i].title %>: <%= m.solved ? 'пройдена' : 'не пройдена' %>"><%= m.solved ? '✓' : '·' %></td><% }) %>
+              <td class="a-num a-nowrap"><%= r.missionsSolved %> / <%= r.missionsTotal %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <div class="a-card-foot a-muted">✓ — миссия пройдена, · — нет. Столбцы — миссии по модулям; наведите для названия. Это задания основного тренажёра (15 миссий).</div>
+  </section>
+
+<% } %>
+
+<%- include('partials/end') %>

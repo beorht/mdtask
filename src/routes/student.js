@@ -20,6 +20,7 @@ const { UPLOAD_DIR } = require('../lib/submission-files');
 const { hasFullAccess, seesSharedAssignments } = require('../lib/test-access');
 const { blockDuringExam } = require('../middleware/exam-lock');
 const { LANGUAGE_SUBJECTS, COURSE_SUBJECTS, uploadTypesOf } = require('../lib/subjects');
+const { assignmentWindow } = require('../lib/assignment-window');
 const {
   buildStudentHome,
   buildLanguageSubject,
@@ -35,9 +36,16 @@ const router = express.Router();
 
 // The group's practical work closed for the final exam or by the teacher (src/lib/exam
 // examLockFor): subject pages, theory, assignments and uploads show why / answer 423.
-router.use(['/subjects', '/assignment'], (req, res, next) =>
-  req.session.user && require('../lib/exam').examLockFor(req.session.user) ? blockDuringExam(req, res, next) : next(),
-);
+router.use(['/subjects', '/assignment'], (req, res, next) => {
+  const user = req.session.user;
+  if (!user) return next();
+  const lock = require('../lib/exam').examLockFor(user);
+  if (!lock) return next();
+  // Саму контрольную, в которую студент заперт, не блокируем (веб-контрольная — это /assignment/<id>).
+  const reqPath = req.originalUrl.split('?')[0];
+  if (lock.assignmentId && reqPath.startsWith(`/assignment/${lock.assignmentId}`)) return next();
+  return blockDuringExam(req, res, next);
+});
 
 const upload = multer({
   // Browsers send file names as UTF-8; busboy's default (latin1) turned «Задача 1.zip» into mojibake.
@@ -79,6 +87,12 @@ function canAccessAssignment(assignment, user) {
 }
 
 function canSubmit(assignment, latestSubmission) {
+  // Жёсткое окно задания приоритетнее даты сдачи: приём только внутри окна.
+  const win = assignmentWindow(assignment);
+  if (win.hasWindow) {
+    if (!win.open) return false;
+    return !(latestSubmission && latestSubmission.status === 'done');
+  }
   if (!latestSubmission) return Date.now() <= new Date(assignment.dueDate).getTime();
   if (latestSubmission.status === 'done') return false;
   if (latestSubmission.status === 'pending') return true;
@@ -214,9 +228,12 @@ router.get('/assignment/:id', requireRole('student'), (req, res) => {
     return res.status(404).render('404');
   }
 
-  const mdText = fs.readFileSync(path.join(CONTENT_DIR, assignment.mdPath), 'utf-8');
-  const html = renderMarkdown(mdText);
-  const toc = extractHeadings(mdText);
+  // Жёсткое окно: до открытия текст задания скрыт (нельзя заранее подготовиться).
+  const win = assignmentWindow(assignment);
+  const statementHidden = win.hasWindow && win.before;
+  const mdText = statementHidden ? '' : fs.readFileSync(path.join(CONTENT_DIR, assignment.mdPath), 'utf-8');
+  const html = statementHidden ? '' : renderMarkdown(mdText);
+  const toc = statementHidden ? [] : extractHeadings(mdText);
 
   const submissions = getSubmissions()
     .filter((s) => s.assignmentId === assignment.id && s.studentId === user.id)
@@ -236,6 +253,8 @@ router.get('/assignment/:id', requireRole('student'), (req, res) => {
     toc,
     submissions,
     canSubmit: canSubmit(assignment, latest),
+    assignmentWindow: win,
+    statementHidden,
     subject: course ? { key: course.key, title: course.title } : { key: language, title: LANGUAGE_SUBJECTS[language] },
     uploadTypes: uploadTypesOf(assignment),
     uploadError: req.query.upload === 'bad',

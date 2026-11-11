@@ -1,0 +1,60 @@
+<%- include('partials/start') %>
+
+<div class="a-page-head">
+  <div>
+    <h1>ИБ-контрольная</h1>
+    <p class="a-subtitle">Выполненные работы студентов по блокам A · B · D · C. Нажмите на студента — его работы с кодом и результатом проверки. Окно: <%= !o.window.scheduled ? 'не назначено' : (o.window.before ? 'ещё не началась' : (o.window.open ? 'идёт' : 'завершена')) %>.</p>
+  </div>
+</div>
+
+<div class="a-stats a-stats-sm">
+  <div class="a-stat"><span class="a-stat-value"><%= o.rows.length %></span><span class="a-stat-label">Студентов</span></div>
+  <div class="a-stat<%= o.submittedStudents ? ' a-stat-accent' : '' %>"><span class="a-stat-value"><%= o.submittedStudents %></span><span class="a-stat-label">Начали сдавать</span></div>
+  <div class="a-stat"><span class="a-stat-value"><%= o.total %></span><span class="a-stat-label">Заданий</span></div>
+  <div class="a-stat"><span class="a-stat-value"><%= !o.window.scheduled ? 'нет' : (o.window.open ? 'идёт' : (o.window.before ? 'ждёт' : 'закрыта')) %></span><span class="a-stat-label">Окно</span></div>
+</div>
+
+<form class="a-filters" method="get" action="/admin/ib-mid" data-autosubmit>
+  <label class="a-input-search"><%- icon('search') %><input type="search" name="q" value="<%= filters.q %>" placeholder="Поиск по имени или ID" aria-label="Поиск студента"></label>
+  <label>Группа
+    <select name="group">
+      <option value="">все</option>
+      <% groups.forEach(function (g) { %><option value="<%= g %>"<%= filters.group === g ? ' selected' : '' %>><%= g %></option><% }) %>
+    </select>
+  </label>
+  <button type="submit" class="a-btn a-btn-secondary a-noscript-only">Применить</button>
+</form>
+
+<section class="a-card a-card-flush">
+  <% if (!o.rows.length) { %>
+    <%- include('partials/empty', { emptyIcon: 'students', emptyTitle: 'Студентов нет', emptyText: 'Здесь появятся студенты группы ИБ и их работы.' }) %>
+  <% } else { %>
+    <div class="a-table-wrap">
+      <table class="a-table a-emmet-matrix">
+        <thead>
+          <tr>
+            <th rowspan="2">Студент</th>
+            <% o.blocks.forEach(function (b) { %><th colspan="<%= b.tasks.length %>" class="a-num">Блок <%= b.key %>. <%= b.title %></th><% }) %>
+            <th rowspan="2" class="a-num">Сдано</th><th rowspan="2" class="a-num">Баллы</th>
+          </tr>
+          <tr>
+            <% o.tasks.forEach(function (t) { %><th class="a-num" title="<%= t.blockTitle %>: <%= t.title %>"><%= t.short %></th><% }) %>
+          </tr>
+        </thead>
+        <tbody>
+          <% o.rows.forEach(function (r) { %>
+            <tr>
+              <td><a class="a-person" href="/admin/ib-mid/students/<%= r.student.id %>"><span class="a-avatar a-avatar-sm"><%= view.initials(r.student.name) %></span><%= r.student.name %></a></td>
+              <% r.cells.forEach(function (c) { %><td class="a-num a-emmet-cell is-<%= c.cell[1] %>" title="<%= c.task.title %>: <%= STATUS_META[c.statusKey] ? STATUS_META[c.statusKey].label : c.status %>"><%= c.cell[0] %></td><% }) %>
+              <td class="a-num a-nowrap"><%= r.submitted %> / <%= o.total %></td>
+              <td class="a-num"><%= r.graded ? r.score : '—' %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <div class="a-card-foot a-muted">Символы: ✓ выполнено · ● сдано (на проверке) · ◐ в процессе · × не зачтено · · не начато. Столбцы — задания блоков, наведите для названия.</div>
+  <% } %>
+</section>
+
+<%- include('partials/end') %>

@@ -22,6 +22,7 @@
     { "path": "section-dom-rabota-s-document/zadacha-10-*", "lesson": "dom-forms" },
     { "path": "section-dom-rabota-s-document/zadacha-11-*", "lesson": "dom-project" },
     { "path": "section-dom-rabota-s-document/zadacha-12-*", "lesson": "dom-project" },
+    { "path": "individual/*/katalog-na-xml-i-dom*", "lesson": "dom-project" },
     { "path": "section-obekty-i-slovari/*", "lesson": "objects", "replacedBy": ["jsd"] }
   ]
 }

@@ -14,6 +14,18 @@
     <%- include('partials/sidebar') %>
     <main class="content">
       <nav class="breadcrumbs"><a href="/">Главная</a> / <a href="/subjects/<%= subject.key %>"><%= subject.title %></a> / <%= assignment.title %></nav>
+      <% const win = (typeof assignmentWindow !== 'undefined') ? assignmentWindow : { hasWindow: false }; %>
+      <% const hidden = (typeof statementHidden !== 'undefined') && statementHidden; %>
+      <% if (win.hasWindow) { %>
+        <% if (win.before) { %>
+          <div class="assignment-window-note is-before">⏳ Задание откроется <strong><%= win.opensText %></strong> (+05). До этого момента условие и загрузка недоступны.</div>
+        <% } else if (win.after) { %>
+          <div class="assignment-window-note is-after">⛔ Приём закрыт <strong><%= win.closesText %></strong> (+05).</div>
+        <% } else { %>
+          <div class="assignment-window-note is-open">🟢 Окно сдачи открыто до <strong><%= win.closesText %></strong> (+05).</div>
+        <% } %>
+      <% } %>
+      <% if (!hidden) { %>
       <%- html %>
 
       <% if (code) { %>
@@ -70,6 +82,17 @@
         <% if (code) { %>
           <% if (!submissions.length) { %><p class="empty-state">Решение ещё не сдано. Напишите код в редакторе выше и нажмите «Сдать на проверку».</p><% } %>
           <% if (!canSubmit) { %><p class="empty-state">Приём решений по этому заданию закрыт.</p><% } %>
+        <% } else if (canSubmit && assignment.uploadSlots) { %>
+          <% if (uploadError) { %><p class="upload-error" role="alert">Файл не загружен: этот формат не принимается.</p><% } %>
+          <form method="post" action="/assignment/<%= assignment.id %>/submit" enctype="multipart/form-data" class="upload-slots">
+            <% assignment.uploadSlots.forEach(function (slot, i) { %>
+              <label class="upload-slot">
+                <span class="upload-slot-label"><%= i + 1 %>. <%= slot.label %> <small>(<%= (slot.accept || []).join(', ') %>)</small></span>
+                <input type="file" name="files" accept="<%= (slot.accept || []).join(',') %>">
+              </label>
+            <% }) %>
+            <button type="submit" class="btn btn-accent">Сдать</button>
+          </form>
         <% } else if (canSubmit) { %>
           <% if (uploadError) { %><p class="upload-error" role="alert">Файл не загружен: этот формат не принимается. Допустимые форматы: <%= uploadTypes.join(', ') %>.</p><% } %>
           <form method="post" action="/assignment/<%= assignment.id %>/submit" enctype="multipart/form-data" id="uploadForm">
@@ -80,6 +103,7 @@
           <p class="empty-state">Приём решений по этому заданию закрыт.</p>
         <% } %>
       </section>
+      <% } %>
     </main>
     <aside class="toc">
       <h3>На этой странице</h3>

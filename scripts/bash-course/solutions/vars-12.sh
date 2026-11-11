@@ -1,0 +1,3 @@
+APP_NAME=demo
+APP_PORT=8080
+echo "$APP_NAME:$APP_PORT"

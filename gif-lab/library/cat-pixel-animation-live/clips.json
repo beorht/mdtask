@@ -1,0 +1,20 @@
+{
+  "_about": "Клипы: именованные последовательности кадров. frames — пути без .png относительно frames/ (группа/кадр). fps — кадров в секунду. loop: true — повторяется, пока действие держит клип; false — проигрывается один раз.",
+  "clips": {
+    "sit_tail":  { "group": "sit",   "frames": ["sit/r1c1", "sit/r1c2", "sit/r1c3", "sit/r1c4"], "fps": 4,   "loop": true },
+    "look":      { "group": "sit",   "frames": ["sit/r5c1", "sit/r5c2", "sit/r5c3", "sit/r5c4"], "fps": 4,   "loop": true },
+
+    "wash_back": { "group": "wash", "frames": ["wash/r3c1", "wash/r3c2", "wash/r3c3", "wash/r3c4"], "fps": 4, "loop": true },
+    "wash_paw":  { "group": "wash", "frames": ["wash/r6c1", "wash/r6c2", "wash/r6c3", "wash/r6c4"], "fps": 4, "loop": true },
+
+    "walk_right": { "group": "walk", "frames": ["walk/r2c1", "walk/r2c2", "walk/r2c3", "walk/r2c4"], "fps": 7.5, "loop": true },
+    "walk_left":  { "group": "walk", "frames": ["walk/r4c1", "walk/r4c2", "walk/r4c3", "walk/r4c4"], "fps": 7.5, "loop": true },
+    "walk_extra": { "group": "walk", "frames": ["walk/r7c1"], "fps": 1, "loop": true },
+
+    "lie_down":  { "group": "lie",   "frames": ["lie/r7c2", "lie/r7c3", "lie/r7c4"], "fps": 4,   "loop": false },
+    "lie_rest":  { "group": "lie",   "frames": ["lie/r8c3", "lie/r8c4"],            "fps": 1.25, "loop": true },
+    "wake":      { "group": "lie",   "frames": ["lie/r8c3", "lie/r8c4"],            "fps": 3.5, "loop": false },
+
+    "sleep":     { "group": "sleep", "frames": ["sleep/r8c1", "sleep/r8c2"], "fps": 1.5, "loop": true }
+  }
+}

@@ -1,0 +1,12 @@
+[
+  { "key": "intro", "dir": "01-intro", "title": "Введение в bash-скрипты", "lead": "Что такое скрипт, shebang, запуск, exit и код возврата." },
+  { "key": "vars", "dir": "02-vars", "title": "Переменные и получение ввода", "lead": "Присваивание, $var, окружение, read и echo -e." },
+  { "key": "args", "dir": "03-args", "title": "Аргументы скрипта", "lead": "$1…$9, $#, $@, кавычки и shift." },
+  { "key": "result", "dir": "04-result", "title": "Результат команд и операторов", "lead": "$?, подстановка $( ), ${var:-…}, && и ||." },
+  { "key": "pattern", "dir": "05-pattern", "title": "Pattern matching", "lead": "Обрезка строк ${v#…}, ${v%…} и замена." },
+  { "key": "math", "dir": "06-math", "title": "Математические операции", "lead": "$(( )), expr, let и дроби через bc." },
+  { "key": "test", "dir": "07-test", "title": "Условия и команда test", "lead": "test, [ ], [[ ]], проверки файлов, чисел и строк." },
+  { "key": "if", "dir": "08-if", "title": "Условная конструкция if", "lead": "if, elif, else и команда как условие." },
+  { "key": "case", "dir": "09-case", "title": "Конструкция case", "lead": "Выбор ветки по шаблону значения." },
+  { "key": "loops", "dir": "10-loops", "title": "Циклы", "lead": "while, until, for, break и continue." }
+]

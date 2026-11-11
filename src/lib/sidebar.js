@@ -16,6 +16,7 @@ const { IB_SUBJECT_KEY, IB_SUBJECT_TITLE, ibTasksForUser } = require('./ib-tasks
 const htmlCourse = require('./html-course');
 const cssCourse = require('./css-course');
 const linuxCourse = require('./linux-course');
+const bashCourse = require('./bash-course');
 const pythonCourse = require('./python-course');
 const jsCourse = require('./js-course');
 
@@ -157,6 +158,35 @@ function buildSidebarTree({ role, studentId, studentGroup, subject }) {
     const s = linuxCourse.summaryForStudent({ id: studentId, role, group: studentGroup });
     return [backLink(), { kind: 'header', icon: linuxCourse.LINUX_ICON, title: linuxCourse.LINUX_TITLE,
       href: '/subjects/linux', done: s.solved, total: s.total, label: 'миссий пройдено', children: [] }];
+  }
+  if (subject === bashCourse.SUBJECT_KEY) return bashCourseNav();
+
+  function bashCourseNav() {
+    const base = bashCourse.SUBJECT_BASE;
+    const { topics, solved, total, current } = bashCourse.summaryForStudent({ id: studentId, role, group: studentGroup });
+    return [
+      backLink(),
+      { kind: 'header', icon: '🐚', title: bashCourse.SUBJECT_TITLE, href: base, done: solved, total, label: 'задач решено', children: [] },
+      {
+        kind: 'section',
+        title: 'Темы',
+        children: topics.map((t) => ({
+          kind: 'group',
+          number: t.number,
+          title: t.title,
+          status: t.done ? 'done' : t.theoryOpen ? 'open' : 'locked',
+          meta: t.ready ? `${t.solved}/${t.total}` : 'скоро',
+          open: Boolean(current && current.key === t.key),
+          children: t.ready
+            ? [
+              { kind: 'link', icon: t.theoryRead ? '✓' : '📖', title: `${t.number}.1. Теория`, href: `${base}/${t.key}/theory`, locked: !t.theoryOpen, lockedTitle: 'Откроется после предыдущей темы', children: [] },
+              { kind: 'link', icon: t.tasksDone ? '✓' : '🧪', title: `${t.number}.2. Практика`, href: `${base}/${t.key}/practice`, meta: `${t.solved}/${t.total}`, locked: !t.practiceOpen, lockedTitle: 'Откроется после теории темы', children: [] },
+              { kind: 'link', icon: t.quizDone ? '✓' : '❓', title: `${t.number}.3. Тест`, href: `${base}/${t.key}/test`, meta: `${t.quizSolved}/${t.quizTotal}`, locked: !t.practiceOpen, lockedTitle: 'Откроется после теории темы', children: [] },
+            ]
+            : [{ kind: 'link', icon: '⏳', title: 'Тема готовится', href: base, locked: true, lockedTitle: 'Материалы темы ещё готовятся', children: [] }],
+        })),
+      },
+    ];
   }
 
   function backLink() {

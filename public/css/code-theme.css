@@ -118,8 +118,10 @@
 }
 
 /* Светлая тема «Тетрадь» (docs/color-tetrad.md): блоки кода — светлый лист в клетку с полоской «дерево»,
-   подсветка тёплыми цветами «Тетради». Тёмная тема не меняется. */
-:root[data-theme="light"] .content pre {
+   подсветка тёплыми цветами «Тетради». Тёмная тема не меняется.
+   :not(.CodeMirror-line…) — не задевать внутренние <pre> редактора CodeMirror: у них был бы свой фон и
+   рамка поверх общей сетки .CodeMirror-lines, из-за чего клетки «уходили» на строке с текстом. */
+:root[data-theme="light"] .content pre:not(.CodeMirror-line):not(.CodeMirror-line-like) {
   background-color: var(--editor-bg);
   background-image:
     linear-gradient(var(--grid-line) 1px, transparent 1px),

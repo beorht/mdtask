@@ -1,0 +1,329 @@
+[
+ {
+  "id": "loops-01",
+  "title": "while 0..4",
+  "statement": "Циклом `while` выведите числа от 0 до 4 в одну строку через пробел (`0 1 2 3 4 `).",
+  "openTests": 2,
+  "require": [
+   "while"
+  ],
+  "tests": [
+   {
+    "args": [],
+    "stdin": "",
+    "output": "0 1 2 3 4 \n"
+   }
+  ]
+ },
+ {
+  "id": "loops-02",
+  "title": "until 0..4",
+  "statement": "То же самое (числа 0–4 через пробел), но циклом `until`.",
+  "openTests": 2,
+  "require": [
+   "until"
+  ],
+  "tests": [
+   {
+    "args": [],
+    "stdin": "",
+    "output": "0 1 2 3 4 \n"
+   }
+  ]
+ },
+ {
+  "id": "loops-03",
+  "title": "for в C-стиле",
+  "statement": "Циклом `for ((…))` выведите числа от 0 до 4 в одну строку через пробел.",
+  "openTests": 2,
+  "require": [
+   "for"
+  ],
+  "tests": [
+   {
+    "args": [],
+    "stdin": "",
+    "output": "0 1 2 3 4 \n"
+   }
+  ]
+ },
+ {
+  "id": "loops-04",
+  "title": "Чётные вниз",
+  "statement": "Циклом `for ((…))` с шагом −2 выведите `10 8 6 4 2 ` в одну строку.",
+  "openTests": 2,
+  "require": [
+   "for"
+  ],
+  "tests": [
+   {
+    "args": [],
+    "stdin": "",
+    "output": "10 8 6 4 2 \n"
+   }
+  ]
+ },
+ {
+  "id": "loops-05",
+  "title": "Перебор списка",
+  "statement": "Переберите слова `apple banana cherry` (`for … in`) и выведите каждое на своей строке.",
+  "openTests": 2,
+  "require": [
+   "for"
+  ],
+  "tests": [
+   {
+    "args": [],
+    "stdin": "",
+    "output": "apple\nbanana\ncherry\n"
+   }
+  ]
+ },
+ {
+  "id": "loops-06",
+  "title": "Сумма 1..N",
+  "statement": "Циклом `while` посчитайте сумму чисел от 1 до `$1` и выведите её.",
+  "openTests": 2,
+  "require": [
+   "while"
+  ],
+  "tests": [
+   {
+    "args": [
+     "5"
+    ],
+    "stdin": "",
+    "output": "15\n"
+   },
+   {
+    "args": [
+     "10"
+    ],
+    "stdin": "",
+    "output": "55\n"
+   }
+  ]
+ },
+ {
+  "id": "loops-07",
+  "title": "Кратные семи",
+  "statement": "Выведите все числа от 1 до 100, делящиеся на 7, в одну строку через пробел. Остальные пропускайте через `continue`.",
+  "openTests": 2,
+  "require": [
+   "continue"
+  ],
+  "tests": [
+   {
+    "args": [],
+    "stdin": "",
+    "output": "7 14 21 28 35 42 49 56 63 70 77 84 91 98 \n"
+   }
+  ]
+ },
+ {
+  "id": "loops-08",
+  "title": "Таблица умножения",
+  "statement": "Вложенными циклами выведите таблицу умножения 3×3: каждое произведение — через `printf \"%4d\"`, строки по три числа.",
+  "openTests": 2,
+  "require": [
+   "for",
+   "printf"
+  ],
+  "tests": [
+   {
+    "args": [],
+    "stdin": "",
+    "output": "   1   2   3\n   2   4   6\n   3   6   9\n"
+   }
+  ]
+ },
+ {
+  "id": "loops-09",
+  "title": "Выход по break",
+  "statement": "В бесконечном цикле `while true` считайте проходы: на 3-м выйдите через `break`, не печатая его. Для проходов 1 и 2 выведите `проход 1` и `проход 2`.",
+  "openTests": 2,
+  "require": [
+   "break",
+   "while"
+  ],
+  "tests": [
+   {
+    "args": [],
+    "stdin": "",
+    "output": "проход 1\nпроход 2\n"
+   }
+  ]
+ },
+ {
+  "id": "loops-10",
+  "title": "Нечётные через seq",
+  "statement": "С помощью `$(seq 1 2 9)` выведите нечётные числа `1 3 5 7 9 ` в одну строку.",
+  "openTests": 2,
+  "require": [
+   "for"
+  ],
+  "tests": [
+   {
+    "args": [],
+    "stdin": "",
+    "output": "1 3 5 7 9 \n"
+   }
+  ]
+ },
+ {
+  "id": "loops-11",
+  "title": "Факториал",
+  "statement": "Циклом посчитайте факториал числа `$1` (произведение 1·2·…·N) и выведите его.",
+  "openTests": 2,
+  "require": [
+   "for"
+  ],
+  "tests": [
+   {
+    "args": [
+     "5"
+    ],
+    "stdin": "",
+    "output": "120\n"
+   },
+   {
+    "args": [
+     "4"
+    ],
+    "stdin": "",
+    "output": "24\n"
+   }
+  ]
+ },
+ {
+  "id": "loops-12",
+  "title": "Нумерация строк",
+  "statement": "Прочитайте файл `data.txt` построчно (`while read`) и выведите каждую строку с номером: `1: <строка>`, `2: …` и так далее.",
+  "openTests": 2,
+  "require": [
+   "while",
+   "read"
+  ],
+  "tests": [
+   {
+    "args": [],
+    "stdin": "",
+    "output": "1: первая\n2: вторая\n3: третья\n",
+    "files": {
+     "data.txt": "первая\nвторая\nтретья\n"
+    }
+   }
+  ]
+ },
+ {
+  "id": "loops-13",
+  "title": "Префикс к файлам",
+  "statement": "Для каждого файла `*.txt` в текущем каталоге выведите его имя с префиксом `old_` (по одному на строке).",
+  "openTests": 2,
+  "require": [
+   "for"
+  ],
+  "tests": [
+   {
+    "args": [],
+    "stdin": "",
+    "output": "old_a.txt\nold_b.txt\n",
+    "files": {
+     "a.txt": "1",
+     "b.txt": "2"
+    }
+   }
+  ]
+ },
+ {
+  "id": "loops-14",
+  "title": "Обратный отсчёт",
+  "statement": "Выведите обратный отсчёт от `$1` до 1 в одну строку через пробел, затем слово `Пуск`.",
+  "openTests": 2,
+  "require": [
+   "for"
+  ],
+  "tests": [
+   {
+    "args": [
+     "3"
+    ],
+    "stdin": "",
+    "output": "3 2 1 Пуск\n"
+   },
+   {
+    "args": [
+     "5"
+    ],
+    "stdin": "",
+    "output": "5 4 3 2 1 Пуск\n"
+   }
+  ]
+ },
+ {
+  "id": "loops-15",
+  "title": "Сумма чётных",
+  "statement": "Сложите только чётные числа среди аргументов и выведите сумму.",
+  "openTests": 2,
+  "require": [
+   "for"
+  ],
+  "tests": [
+   {
+    "args": [
+     "1",
+     "2",
+     "3",
+     "4"
+    ],
+    "stdin": "",
+    "output": "6\n"
+   },
+   {
+    "args": [
+     "10",
+     "20",
+     "15"
+    ],
+    "stdin": "",
+    "output": "30\n"
+   }
+  ]
+ },
+ {
+  "id": "loops-16",
+  "title": "Максимум в списке",
+  "statement": "Найдите наибольшее число среди аргументов (перебором в цикле) и выведите его.",
+  "openTests": 2,
+  "require": [
+   "for"
+  ],
+  "tests": [
+   {
+    "args": [
+     "3",
+     "7",
+     "2"
+    ],
+    "stdin": "",
+    "output": "7\n"
+   },
+   {
+    "args": [
+     "5"
+    ],
+    "stdin": "",
+    "output": "5\n"
+   },
+   {
+    "args": [
+     "1",
+     "9",
+     "4"
+    ],
+    "stdin": "",
+    "output": "9\n"
+   }
+  ]
+ }
+]

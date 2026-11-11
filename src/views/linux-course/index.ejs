@@ -21,6 +21,30 @@
         </span>
       </div>
 
+      <% if (typeof practical !== 'undefined' && practical) { %>
+        <% const ppct = practical.total ? Math.round((practical.solvedCount / practical.total) * 100) : 0; %>
+        <section class="linux-module linux-practical-card">
+          <h2>📋 <%= practical.title %></h2>
+          <p class="subject-block-lead">Сборка всех команд предмета: задания идут по порядку и связаны одной файловой системой. Выполнили — нажмите «Проверить», появится следующее.</p>
+          <div class="html-topic-list">
+            <div class="html-topic<%= practical.done ? ' is-done' : '' %><%= practical.open ? '' : ' is-locked' %>">
+              <span class="ib-task-num" aria-hidden="true"><%= practical.done ? '✓' : (practical.open ? '🖥️' : '🔒') %></span>
+              <span class="html-topic-body">
+                <span class="html-topic-title">Выполнено шагов: <%= practical.solvedCount %> / <%= practical.total %></span>
+                <% if (!practical.open && practical.opensText) { %><span class="html-topic-sub">Откроется <%= practical.opensText %> (+05)</span><% } %>
+              </span>
+              <span class="html-topic-steps">
+                <% if (practical.open) { %>
+                  <a class="topic-btn topic-btn-practice topic-btn-lg<%= practical.done ? ' is-done' : '' %>" href="<%= practical.href %>"><span aria-hidden="true"><%= practical.done ? '✓' : '🖥️' %></span> <%= practical.done ? 'Пройдена' : (practical.solvedCount ? 'Продолжить' : 'Начать') %></a>
+                <% } else { %>
+                  <span class="topic-btn topic-btn-practice is-locked" title="Откроется <%= practical.opensText || 'позже' %>"><span aria-hidden="true">🔒</span> <%= practical.opensText ? ('Откроется ' + practical.opensText) : 'Скоро' %></span>
+                <% } %>
+              </span>
+            </div>
+          </div>
+        </section>
+      <% } %>
+
       <% summary.modules.forEach(function (m) { %>
         <section class="linux-module">
           <h2>Модуль <%= m.number %>. <%= m.title %></h2>

@@ -162,6 +162,34 @@
 .sidebar-progress { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
 .sidebar-progress-label { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--text-soft); margin-bottom: 0.4rem; }
 
+.html-topic-sub { display: block; font-size: 0.82rem; color: var(--text-soft); margin-top: 2px; }
+
+/* Окно сдачи задания (жёсткий временной интервал) */
+.assignment-window-note {
+  margin: 0.75rem 0 1rem;
+  padding: 0.85rem 1.1rem;
+  border: 1px solid var(--border);
+  border-left-width: 4px;
+  border-radius: 10px;
+  background: var(--card, var(--bg-soft, #fff));
+  color: var(--text, #111);
+  font-size: 1rem;
+}
+.assignment-window-note.is-before { border-left-color: var(--color-status-pending, #c9972b); }
+.assignment-window-note.is-after { border-left-color: var(--color-status-failed, #c0392b); }
+.assignment-window-note.is-open { border-left-color: var(--color-status-done, #2e9e5b); }
+
+/* Загрузка по отдельным полям (напр. «Код» + «Схема») */
+.upload-slots { display: flex; flex-direction: column; gap: 0.9rem; max-width: 520px; }
+.upload-slot { display: flex; flex-direction: column; gap: 0.35rem; }
+.upload-slot-label { font-weight: 600; }
+.upload-slot-label small { font-weight: 400; color: var(--text-soft); }
+.upload-slot input[type="file"] {
+  padding: 0.5rem; border: 1px dashed var(--border); border-radius: 8px;
+  background: var(--card, var(--bg-soft, #fff)); color: var(--text, #111); width: 100%;
+}
+.upload-slots .btn { align-self: flex-start; }
+
 /* Status badges: color + icon (never color alone) */
 .badge {
   display: inline-flex;
@@ -1296,6 +1324,13 @@ a.topic-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2p
   border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.9rem;
 }
+/* Однострочное поле «Аргументы» (предмет Bash): как .pyb-stdin, но в одну строку. */
+.pyb-args {
+  width: 100%; box-sizing: border-box; padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.9rem;
+}
+.pyb-editor-panel .bash-stdin { min-height: 72px; }
 .pyb-output { min-height: 80px; max-height: 260px; }
 .pyb-results { margin-top: 0.75rem; }
 .pyb-test-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; }
@@ -1311,6 +1346,31 @@ a.topic-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2p
 .pyb-test-block { background: var(--accent-soft-bg); border-radius: 4px; padding: 0.35rem 0.5rem; min-width: 0; }
 .pyb-test-label { font-size: 0.75rem; color: var(--text-soft); margin-bottom: 0.15rem; }
 .pyb-next { margin: 1rem 0 0; }
+
+/* ---------- Bash: результаты проверки и тест (src/views/bash-course) ---------- */
+.pyb-rule-bad { color: var(--color-status-failed); font-weight: 600; margin: 0.3rem 0; }
+.pyb-test-list { list-style: none; margin: 0.4rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; }
+.pyb-test-ok, .pyb-test-bad { border: 1px solid var(--border); border-radius: 6px; padding: 0.45rem 0.7rem; font-size: 0.92rem; }
+.pyb-test-ok { border-color: color-mix(in srgb, var(--color-status-done) 50%, var(--border)); }
+.pyb-test-bad { border-color: var(--color-status-failed); }
+.pyb-test-io { margin-top: 0.4rem; display: grid; grid-template-columns: auto 1fr; gap: 0.25rem 0.6rem; align-items: start; font-size: 0.85rem; }
+.pyb-test-io pre { margin: 0; background: var(--accent-soft-bg); border-radius: 4px; padding: 0.3rem 0.5rem; white-space: pre-wrap; }
+
+.bash-quiz { list-style: none; margin: 1rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 1rem; counter-reset: bq; }
+.bash-quiz-item { border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.1rem; background: var(--surface); box-shadow: var(--card-shadow); }
+.bash-quiz-item.is-solved { border-color: color-mix(in srgb, var(--color-status-done) 55%, var(--border)); }
+.bash-quiz-kind { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-soft); }
+.bash-quiz-prompt { margin: 0.2rem 0 0.6rem; font-weight: 600; }
+.bash-quiz-prompt::before { counter-increment: bq; content: counter(bq) ". "; color: var(--text-soft); }
+.bash-quiz-code { margin: 0 0 0.7rem; max-height: 220px; }
+.bash-quiz-options { display: flex; flex-direction: column; gap: 0.45rem; }
+.bash-quiz-opt { text-align: left; border: 1px solid var(--border); border-radius: 8px; padding: 0.3rem 0.6rem; background: var(--bg); cursor: pointer; font: inherit; color: inherit; transition: border-color 0.15s, background 0.15s; }
+.bash-quiz-opt:hover:not(:disabled) { border-color: var(--accent); }
+.bash-quiz-opt:disabled { cursor: default; }
+.bash-quiz-opt pre { margin: 0; white-space: pre-wrap; font-family: var(--font-mono, monospace); font-size: 0.9rem; }
+.bash-quiz-opt.is-correct { border-color: var(--color-status-done); background: color-mix(in srgb, var(--color-status-done) 14%, var(--bg)); }
+.bash-quiz-opt.is-wrong { border-color: var(--color-status-failed); background: color-mix(in srgb, var(--color-status-failed) 12%, var(--bg)); }
+.bash-quiz-feedback { margin-top: 0.6rem; font-size: 0.9rem; color: var(--text-soft); }
 
 @media (max-width: 1100px) {
   .pyb-workspace { grid-template-columns: minmax(0, 1fr); }

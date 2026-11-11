@@ -1,7 +1,4 @@
 <%- include('partials/start') %>
-<%
-const CELL = { none: ['·', 'не открывал'], opened: ['○', 'открыл'], tried: ['×', 'пробовал'], partial: ['◐', 'вид совпал, правило не выполнено'], solved: ['✓', 'решено'] };
-%>
 
 <div class="a-page-head">
   <div>
@@ -44,21 +41,21 @@ const CELL = { none: ['·', 'не открывал'], opened: ['○', 'откр�
       <table class="a-table a-emmet-matrix">
         <thead>
           <tr>
-            <th rowspan="2">Студент</th>
-            <% o.topics.forEach(function (t) { %><th colspan="<%= t.tasks.length + 1 %>" class="a-num">Тема <%= t.number %>. <%= t.title %></th><% }) %>
-            <th rowspan="2" class="a-num">Решено</th><th rowspan="2">Сигналы</th>
-          </tr>
-          <tr>
-            <% o.topics.forEach(function (t) { %><th class="a-num" title="Теория">Т</th><% t.tasks.forEach(function (task) { %><th class="a-num" title="<%= t.number %>.<%= task.number %>. <%= task.title %>"><%= task.number %></th><% }) %><% }) %>
+            <th>Студент</th>
+            <% o.topics.forEach(function (t) { %><th class="a-num" title="Тема <%= t.number %>. <%= t.title %>"><%= t.number %></th><% }) %>
+            <th class="a-num">Решено</th><th>Сигналы</th>
           </tr>
         </thead>
         <tbody>
           <% o.rows.forEach(function (r) { %>
             <tr>
               <td><a class="a-person" href="/admin/css/students/<%= r.student.id %>"><span class="a-avatar a-avatar-sm"><%= view.initials(r.student.name) %></span><%= r.student.name %></a></td>
-              <% r.topics.forEach(function (rt, ti) { %>
-                <td class="a-num a-emmet-cell is-<%= rt.theoryRead ? 'solved' : 'none' %>" title="Теория: <%= rt.theoryRead ? 'прочитана' : 'не открывал' %>"><%= rt.theoryRead ? '✓' : '·' %></td>
-                <% rt.cells.forEach(function (c, i) { %><td class="a-num a-emmet-cell is-<%= c %>" title="<%= o.topics[ti].tasks[i].title %>: <%= CELL[c][1] %>"><%= CELL[c][0] %></td><% }) %>
+              <% r.topics.forEach(function (rt, ti) {
+                   const total = rt.cells.length;
+                   const solved = rt.cells.filter(function (c) { return c === 'solved'; }).length;
+                   const st = total && solved === total ? 'solved' : solved ? 'partial' : rt.theoryRead ? 'opened' : 'none';
+                   const tp = o.topics[ti]; %>
+                <td class="a-num a-emmet-cell is-<%= st %>" title="Тема <%= tp.number %>. <%= tp.title %> — решено <%= solved %> из <%= total %><%= rt.theoryRead ? ', теория прочитана' : (solved ? '' : ', не открывал') %>"><%= solved %>/<%= total %></td>
               <% }) %>
               <td class="a-num a-nowrap"><%= r.solved %> / <%= o.total %></td>
               <td class="a-muted"><%= r.signals.join(', ') || '—' %></td>
@@ -67,7 +64,7 @@ const CELL = { none: ['·', 'не открывал'], opened: ['○', 'откр�
         </tbody>
       </table>
     </div>
-    <div class="a-card-foot a-muted">Т — теория · ✓ решено · ◐ почти · × пробовал · ○ открыл · · не открывал</div>
+    <div class="a-card-foot a-muted">В ячейке под каждой темой — <strong>решено / всего</strong> заданий темы. Цвет: зелёный — всё решено, частично — часть решена, бледный — только теория, серый — не открывал. В шапке — номер темы, наведите для названия.</div>
   <% } %>
 </section>
 

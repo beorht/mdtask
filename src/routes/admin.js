@@ -503,7 +503,12 @@ require('./admin-html').register(router, { render, notFound, flash });
 require('./admin-css').register(router, { render, notFound, flash });
 require('./admin-python-course').register(router, { render, notFound, flash });
 require('./admin-js-course').register(router, { render, notFound, flash });
+require('./admin-bash-course').register(router, { render, notFound, flash });
 require('./admin-locks').register(router, { render, notFound, flash });
+require('./admin-ib-mid').register(router, { render, notFound, flash });
+require('./admin-web-mid').register(router, { render, notFound, flash });
+require('./admin-linux').register(router, { render, notFound, flash });
+require('./admin-users').register(router, { render, notFound, flash });
 
 // --- Settings ---
 

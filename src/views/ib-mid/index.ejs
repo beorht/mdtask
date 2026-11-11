@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <%- include('../partials/head', { pageTitle: title }) %>
+</head>
+<body>
+  <%- include('../partials/header') %>
+  <main class="content">
+    <h1><%= title %></h1>
+    <% if (window.scheduled) { %><p class="muted">Окно: <%= windowText.start %> — <%= windowText.end %> (время +05).</p><% } %>
+
+    <% if (!open && !window.scheduled) { %>
+      <section class="task-panel">
+        <h2>Дата контрольной ещё не назначена</h2>
+        <p>Время проведения объявит преподаватель. Загляните позже.</p>
+        <p><%- include('../partials/back-btn', { href: '/', label: 'На главную' }) %></p>
+      </section>
+    <% } else if (!open && window.before) { %>
+      <section class="task-panel">
+        <h2>⏳ Контрольная ещё не началась</h2>
+        <p>Начало — <%= windowText.start %>. Загляните позже.</p>
+        <p><%- include('../partials/back-btn', { href: '/', label: 'На главную' }) %></p>
+      </section>
+    <% } else if (!open && window.after) { %>
+      <section class="task-panel">
+        <h2>🔒 Контрольная завершена</h2>
+        <p>Приём работ закрыт (<%= windowText.end %>).</p>
+        <p><%- include('../partials/back-btn', { href: '/', label: 'На главную' }) %></p>
+      </section>
+    <% } else { %>
+      <p class="muted">Четыре блока. Решайте в любом порядке; у задания «Поиск ошибок» — не больше 4 запусков, после 4-го код отправляется автоматически.</p>
+      <% blocks.forEach(function (b) { %>
+        <section class="task-panel">
+          <h2>Блок <%= b.key %>. <%= b.title %></h2>
+          <p class="muted"><%= b.desc %></p>
+          <div class="html-topic-list">
+            <% b.tasks.forEach(function (t) { %>
+              <div class="topic-row">
+                <span class="topic-row-title"><%= t.title %>
+                  <% if (t.status === 'done') { %><span class="topic-deadline-badge">✓ выполнено</span>
+                  <% } else if (t.status === 'submitted') { %><span class="topic-deadline-badge">● сдано</span>
+                  <% } else if (t.status === 'in_progress') { %><span class="topic-deadline-badge">◐ в процессе</span><% } %>
+                </span>
+                <span class="topic-row-links">
+                  <% if (t.ready) { %>
+                    <a class="topic-btn topic-btn-practice" href="<%= t.href || ('/exam/ib-mid-1/' + t.id) %>">🧪 Открыть задание</a>
+                  <% } else { %>
+                    <span class="topic-btn topic-btn-none">Готовится</span>
+                  <% } %>
+                </span>
+              </div>
+            <% }) %>
+          </div>
+        </section>
+      <% }) %>
+    <% } %>
+  </main>
+  <%- include('../partials/scripts') %>
+</body>
+</html>

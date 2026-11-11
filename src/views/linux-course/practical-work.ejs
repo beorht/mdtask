@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <%- include('../partials/head', { pageTitle: pageTitle }) %>
+  <link rel="stylesheet" href="/css/linux-course.css">
+</head>
+<body class="ltt-body">
+  <div class="ltt" id="ltt" data-base="<%= base %>">
+    <header class="ltt-header">
+      <div class="ltt-brand"><span class="ltt-logo" aria-hidden="true">🐧</span> <%= title %>
+        <span class="ltt-sub" id="ltt-sub"></span></div>
+      <div class="ltt-head-actions">
+        <button id="themeToggle" class="ltt-btn ltt-icon" type="button" aria-label="Переключить тему" title="Переключить тему">🌓</button>
+        <%- include('../partials/back-btn', { href: base, label: 'К предмету', extraClass: 'back-btn-sm' }) %>
+      </div>
+    </header>
+
+    <% if (!open) { %>
+      <main class="ltt-main ltt-locked">
+        <section class="ltt-task">
+          <h1>⏳ Практическая ещё не открыта</h1>
+          <p>Откроется <%= opensText || 'позже' %> (время +05). Загляните позже.</p>
+        </section>
+      </main>
+    <% } else { %>
+      <main class="ltt-main">
+        <aside class="ltt-task" id="ltt-task">
+          <div class="ltt-task-head"><span class="ltt-badge" id="ltt-num"></span><h1 id="ltt-title">Практическая работа</h1></div>
+          <div class="ltt-progress" id="ltt-progress"></div>
+          <section class="ltt-section"><h2>Задание</h2><p id="ltt-goal">Загрузка…</p></section>
+          <section class="ltt-section"><h2>Команды</h2><ul id="ltt-syntax" class="ltt-syntax"></ul></section>
+          <section class="ltt-section ltt-hint-box" id="ltt-hint-box" hidden><h2>Подсказка</h2><p id="ltt-hint"></p></section>
+          <div class="ltt-verdict" id="ltt-verdict" hidden></div>
+        </aside>
+
+        <section class="ltt-terminal-wrap">
+          <div class="ltt-terminal" id="ltt-terminal" tabindex="0">
+            <div class="ltt-out" id="ltt-out"></div>
+            <div class="ltt-input-line">
+              <span class="ltt-prompt" id="ltt-prompt">student@linux:~$</span>
+              <input class="ltt-input" id="ltt-input" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Команда">
+            </div>
+          </div>
+        </section>
+
+        <aside class="ltt-tree-wrap">
+          <div class="ltt-tree-head">Файловая система <span class="ltt-cwd" id="ltt-cwd"></span></div>
+          <div class="ltt-tree" id="ltt-tree"></div>
+        </aside>
+      </main>
+
+      <footer class="ltt-controls">
+        <button class="ltt-btn" id="ltt-hint-btn" type="button">💡 Подсказка</button>
+        <button class="ltt-btn" id="ltt-clear" type="button">⌫ Очистить экран</button>
+        <button class="ltt-btn ltt-check" id="ltt-check" type="button">✔ Проверить</button>
+      </footer>
+    <% } %>
+  </div>
+  <% if (open) { %>
+    <script src="/js/linux-fs.js"></script>
+    <script src="/js/linux-practical.js"></script>
+  <% } %>
+</body>
+</html>

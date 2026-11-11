@@ -83,7 +83,9 @@ function examLockFor(user) {
     const during = phaseOf(win) === 'open';
     if (during || win.lockPractice) return { ...exam, window: win, during };
   }
-  return null;
+  // Промежуточные контрольные (ИБ-контрольная для ib-2, веб-контрольная для web-2): во время их окна
+  // тоже закрываем остальную практику и открыта только сама контрольная (src/lib/control-lock).
+  return require('../control-lock').controlLockFor(user);
 }
 
 // ---------------------------------------------------------------- variants ---

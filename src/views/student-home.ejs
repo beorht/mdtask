@@ -16,6 +16,17 @@
       <p class="home-lead">Выберите предмет — у каждого своя страница с навигацией, теорией и заданиями.</p>
     </header>
 
+    <% if (home.control) { %>
+      <a class="exam-home-card exam-home-open" href="<%= home.control.href %>">
+        <span class="exam-home-icon" aria-hidden="true">📝</span>
+        <span class="exam-home-text">
+          <strong><%= home.control.title %></strong>
+          <span>Идёт сейчас — откройте, чтобы приступить. Остальные предметы на это время закрыты.</span>
+        </span>
+        <span class="subject-card-go">Открыть →</span>
+      </a>
+    <% } %>
+
     <% (home.exams || []).forEach(function (e) { %>
       <a class="exam-home-card exam-home-<%= e.phase %>" href="/exam/<%= e.id %>">
         <span class="exam-home-icon" aria-hidden="true">🎓</span>

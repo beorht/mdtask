@@ -10,9 +10,11 @@ const { makeExamDb } = require('./exam');
 const { makeEmmetDb } = require('./emmet');
 const { makeHtmlCourseDb } = require('./html-course');
 const { makeTopicLocksDb } = require('./topic-locks');
+const { makeIbMidDb } = require('./ib-mid');
 const { makeCssCourseDb } = require('./css-course');
 const { makeLinuxCourseDb } = require('./linux-course');
 const { makeJsCourseDb } = require('./js-course');
+const { makeBashCourseDb } = require('./bash-course');
 const { makePythonCourseDb } = require('./python-course');
 
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, '..', '..', 'data', 'mdtask.db');
@@ -58,6 +60,15 @@ addColumnIfMissing('assignments', 'code_readonly', 'TEXT');
 // shared Python/JavaScript assignments. upload_types: JSON list of allowed extensions, NULL = .zip/.rar.
 addColumnIfMissing('assignments', 'subject', 'TEXT');
 addColumnIfMissing('assignments', 'upload_types', 'TEXT');
+// Optional submission window (ISO strings, UTC). NULL = no window — available once issued and
+// closes by due_date, the normal behaviour. Both set = a hard exam-like window (e.g. 09:00–14:00):
+// before opens_at the statement and upload are hidden, after closes_at the upload is closed.
+addColumnIfMissing('assignments', 'opens_at', 'TEXT');
+addColumnIfMissing('assignments', 'closes_at', 'TEXT');
+// Optional named upload slots (JSON [{label, accept:[".zip"]}]). NULL = one plain dropzone.
+// Set = the assignment page shows one labelled file field per slot (all submitted together),
+// e.g. «Код (архив)» + «Схема (.xsd)». upload_types stays the union of the slots' accepts.
+addColumnIfMissing('assignments', 'upload_slots', 'TEXT');
 // Set by the admin "На пересдачу" verdict: a not_done submission the student may
 // replace even after the due date (plain not_done only allows it before the deadline).
 // SQL trainer: keyword a solution must contain (the "Практикум" JOIN tasks).
@@ -116,8 +127,10 @@ const htmlCourseDb = makeHtmlCourseDb(db, prepared);
 const cssCourseDb = makeCssCourseDb(db, prepared);
 const linuxCourseDb = makeLinuxCourseDb(db, prepared);
 const jsCourseDb = makeJsCourseDb(db, prepared);
+const bashCourseDb = makeBashCourseDb(db, prepared);
 const pythonCourseDb = makePythonCourseDb(db, prepared);
 const topicLocksDb = makeTopicLocksDb(db, prepared);
+const ibMidDb = makeIbMidDb(db, prepared);
 
 function rowToUser(row) {
   return {
@@ -144,6 +157,9 @@ function rowToAssignment(row) {
     codeReadonly: row.code_readonly ? JSON.parse(row.code_readonly) : [],
     subject: row.subject || null,
     uploadTypes: row.upload_types ? JSON.parse(row.upload_types) : null,
+    opensAt: row.opens_at || null,
+    closesAt: row.closes_at || null,
+    uploadSlots: row.upload_slots ? JSON.parse(row.upload_slots) : null,
   };
 }
 
@@ -380,6 +396,13 @@ function setUserPassword(id, newPassword) {
   return row ? rowToUser(row) : null;
 }
 
+// Админский сброс пароля: ставит временный пароль и требует сменить его при следующем входе.
+function adminResetPassword(id, newPassword) {
+  const { hash, salt } = hashPassword(newPassword);
+  const res = prepared('UPDATE users SET password_hash = ?, password_salt = ?, must_change_password = 1 WHERE id = ?').run(hash, salt, id);
+  return res.changes > 0;
+}
+
 function getCourses() {
   return prepared('SELECT id, title, teacher_id as teacherId FROM courses').all();
 }
@@ -515,6 +538,22 @@ function setAssignmentSubject(id, { subject = null, uploadTypes = null } = {}) {
   prepared('UPDATE assignments SET subject = ?, upload_types = ? WHERE id = ?').run(
     subject,
     uploadTypes ? JSON.stringify(uploadTypes) : null,
+    id
+  );
+}
+
+// Hard submission window (ISO UTC strings) or null to clear it. See the schema note.
+function setAssignmentWindow(id, { opensAt = null, closesAt = null } = {}) {
+  prepared('UPDATE assignments SET opens_at = ?, closes_at = ? WHERE id = ?').run(opensAt || null, closesAt || null, id);
+}
+
+// Named upload slots (or null to clear). Also stores upload_types as the union of the slots'
+// accepts, so the dropzone/accept and the slot fields stay consistent.
+function setAssignmentUploadSlots(id, slots) {
+  const types = slots && slots.length ? [...new Set(slots.flatMap((s) => s.accept || []))] : null;
+  prepared('UPDATE assignments SET upload_slots = ?, upload_types = ? WHERE id = ?').run(
+    slots && slots.length ? JSON.stringify(slots) : null,
+    types ? JSON.stringify(types) : null,
     id
   );
 }
@@ -749,7 +788,7 @@ function purgeExpiredSessions(now) {
 }
 
 function __resetForTests() {
-  db.exec('DELETE FROM topic_overrides; DELETE FROM linux_events; DELETE FROM linux_progress; DELETE FROM login_attempts; DELETE FROM sessions; DELETE FROM python_course_attempts; DELETE FROM python_course_progress; DELETE FROM css_events; DELETE FROM css_progress; DELETE FROM js_course_attempts; DELETE FROM js_course_progress; DELETE FROM html_events; DELETE FROM html_progress; DELETE FROM emmet_events; DELETE FROM emmet_progress; DELETE FROM emmet_assignments; DELETE FROM emmet_sessions; DELETE FROM exam_pcs; DELETE FROM exam_events; DELETE FROM exam_tasks; DELETE FROM exam_variants; DELETE FROM exams; DELETE FROM python_basics_attempts; DELETE FROM python_basics_progress; DELETE FROM code_drafts; DELETE FROM ib_guard_events; DELETE FROM ib_task_defense; DELETE FROM ib_logs_detector; DELETE FROM ib_lab_log; DELETE FROM ib_lab_tasks; DELETE FROM ib_terminal_log; DELETE FROM ib_terminal_tasks; DELETE FROM ib_config_tasks; DELETE FROM ctf_caesar_secrets; DELETE FROM sql_attempts; DELETE FROM submissions; DELETE FROM assignments; DELETE FROM courses; DELETE FROM users;');
+  db.exec('DELETE FROM linux_practical_window; DELETE FROM ib_mid_window; DELETE FROM ib_mid_progress; DELETE FROM topic_overrides; DELETE FROM linux_events; DELETE FROM linux_progress; DELETE FROM login_attempts; DELETE FROM sessions; DELETE FROM python_course_attempts; DELETE FROM python_course_progress; DELETE FROM css_events; DELETE FROM css_progress; DELETE FROM bash_quiz_attempts; DELETE FROM bash_course_attempts; DELETE FROM bash_course_progress; DELETE FROM js_course_attempts; DELETE FROM js_course_progress; DELETE FROM html_events; DELETE FROM html_progress; DELETE FROM emmet_events; DELETE FROM emmet_progress; DELETE FROM emmet_assignments; DELETE FROM emmet_sessions; DELETE FROM exam_pcs; DELETE FROM exam_events; DELETE FROM exam_tasks; DELETE FROM exam_variants; DELETE FROM exams; DELETE FROM python_basics_attempts; DELETE FROM python_basics_progress; DELETE FROM code_drafts; DELETE FROM ib_guard_events; DELETE FROM ib_task_defense; DELETE FROM ib_logs_detector; DELETE FROM ib_lab_log; DELETE FROM ib_lab_tasks; DELETE FROM ib_terminal_log; DELETE FROM ib_terminal_tasks; DELETE FROM ib_config_tasks; DELETE FROM ctf_caesar_secrets; DELETE FROM sql_attempts; DELETE FROM submissions; DELETE FROM assignments; DELETE FROM courses; DELETE FROM users;');
   seed(db);
 }
 
@@ -788,6 +827,7 @@ module.exports = {
   getCaesarHiddenDirs,
   seedLabTaskForTests,
   setUserPassword,
+  adminResetPassword,
   createUser,
   setMustChangePasswordForTests,
   getDistinctStudentGroups,
@@ -807,6 +847,8 @@ module.exports = {
   createAssignment,
   setAssignmentCodeFiles,
   setAssignmentSubject,
+  setAssignmentWindow,
+  setAssignmentUploadSlots,
   getCodeDraft,
   saveCodeDraft,
   updateAssignmentTitle,
@@ -829,7 +871,9 @@ module.exports = {
   ...cssCourseDb,
   ...linuxCourseDb,
   ...jsCourseDb,
+  ...bashCourseDb,
   ...pythonCourseDb,
   ...topicLocksDb,
+  ...ibMidDb,
   __resetForTests,
 };

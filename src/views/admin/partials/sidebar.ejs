@@ -29,16 +29,21 @@ const navItem = function (key, href, label, iconName, badge) {
     <%- navItem('css', '/admin/css', 'Web-разработка: CSS', 'book') %>
     <%- navItem('python-course', '/admin/python-course', 'Начальный Python', 'book') %>
     <%- navItem('js-course', '/admin/js-course', 'JavaScript: курс', 'book') %>
+    <%- navItem('bash-course', '/admin/bash-course', 'Bash: скрипты', 'book') %>
     <%- navItem('ib', '/admin/ib', 'Инфобез', 'shield') %>
+    <%- navItem('linux', '/admin/linux', 'Linux Terminal', 'book') %>
   </div>
   <div class="a-nav-group">
     <div class="a-nav-label">Контрольные</div>
     <%- navItem('exam', '/admin/exam', 'Контрольная IB', 'review') %>
     <%- navItem('webexam', '/admin/web-exam', 'Контрольная WEB', 'review') %>
+    <%- navItem('ibmid', '/admin/ib-mid', 'ИБ-контрольная', 'review') %>
+    <%- navItem('webmid', '/admin/web-control', 'Веб-контрольная', 'review') %>
   </div>
   <div class="a-nav-spacer"></div>
   <div class="a-nav-group">
     <%- navItem('locks', '/admin/locks', 'Доступ к темам', 'settings') %>
+    <%- navItem('users', '/admin/users', 'Пользователи', 'students') %>
     <%- navItem('settings', '/admin/settings', 'Настройки', 'settings') %>
   </div>
 </nav>

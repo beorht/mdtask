@@ -243,6 +243,22 @@ function buildStudentHome(user, now = Date.now()) {
     });
   }
 
+  // «Bash: скрипты в Linux» — только TEST (src/lib/bash-course, BASH_COURSE_GROUPS пуст).
+  const bashCourse = require('./bash-course');
+  if (bashCourse.canSeeSubject(user)) {
+    const bc = bashCourse.summaryForStudent(user);
+    htmlSubjects.push({
+      key: bashCourse.SUBJECT_KEY,
+      kind: 'html',
+      title: bashCourse.SUBJECT_TITLE,
+      icon: '🐚',
+      solved: bc.solved,
+      total: bc.total,
+      topicsCount: bc.topics.filter((t) => t.ready).length,
+      current: bc.current && { number: String(bc.current.number), title: bc.current.title },
+    });
+  }
+
   // The final exam: a card while it runs and after it; the IB tasks and the trainer are closed while it runs.
   const webExam = require('./web-exam');
   const exams = [...Object.values(exam.EXAMS).map((def) => [def, exam]), ...Object.values(webExam.EXAMS).map((def) => [def, webExam])]
@@ -258,11 +274,14 @@ function buildStudentHome(user, now = Date.now()) {
   const subjects = [sqlSubject, ...emmetSubjects, ...htmlSubjects, ...languageSubjects, ...ibSubjects, ...courseSubjects]
     .filter((s) => subjectAllowed(user, s.key));
   if (lock) subjects.forEach((s) => (s.examLocked = true));
+  // Вход на активную контрольную (ИБ-/веб-контрольная; у итогового экзамена своя карточка в exams).
+  const control = lock && lock.kind ? { title: lock.title, href: lock.href || `/exam/${lock.id}` } : null;
 
   return {
     exams,
     subjects,
     counts,
+    control,
     lockLabel: lock && (lock.during ? 'Закрыто на время контрольной' : 'Закрыто преподавателем'),
     // Anything the student still has to act on (or is waiting on), nearest deadline first; nothing while closed.
     upcoming: lock ? [] : open.slice(0, UPCOMING_LIMIT),

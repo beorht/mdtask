@@ -1,0 +1,66 @@
+<%- include('partials/start') %>
+
+<div class="a-page-head">
+  <div>
+    <h1>Веб-контрольная</h1>
+    <p class="a-subtitle">«Каталог на XML и DOM» (группа web-2): персональные варианты. Сданные работы — код (архив) и схема (XSD) — можно скачать по каждому студенту или все сразу.</p>
+  </div>
+  <% if (o.submitted) { %>
+    <div class="a-head-actions">
+      <a class="a-btn a-btn-primary" href="/admin/web-control/all.zip">⬇ Скачать все работы (.zip)</a>
+    </div>
+  <% } %>
+</div>
+
+<div class="a-stats a-stats-sm">
+  <div class="a-stat"><span class="a-stat-value"><%= o.total %></span><span class="a-stat-label">Выдано</span></div>
+  <div class="a-stat<%= o.submitted ? ' a-stat-accent' : '' %>"><span class="a-stat-value"><%= o.submitted %></span><span class="a-stat-label">Сдали</span></div>
+</div>
+
+<section class="a-card a-card-flush">
+  <% if (!o.issued) { %>
+    <%- include('partials/empty', { emptyIcon: 'students', emptyTitle: 'Задание ещё не выдано', emptyText: 'Выдайте веб-контрольную группе web-2: node scripts/web-dom-xml/issue.js --date ГГГГ-ММ-ДД --group web-2' }) %>
+  <% } else { %>
+    <div class="a-table-wrap">
+      <table class="a-table">
+        <thead>
+          <tr>
+            <th>Студент</th>
+            <th>Вариант</th>
+            <th>Статус</th>
+            <th>Сдано</th>
+            <th>Файлы (код + схема)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% o.rows.forEach(function (r) { %>
+            <% const meta = STATUS_META[r.statusKey] || STATUS_META.not_submitted; %>
+            <tr>
+              <td><a class="a-person" href="/admin/submissions/<%= r.submission ? r.submission.id : '' %>"<%= r.submission ? '' : ' aria-disabled="true"' %>><span class="a-avatar a-avatar-sm"><%= view.initials(r.student.name) %></span><%= r.student.name %></a><div class="a-muted a-small"><%= r.student.id %></div></td>
+              <td><%= r.theme %></td>
+              <td><span class="a-status a-status-<%= meta.tone %>"><span class="a-status-icon" aria-hidden="true"><%= meta.icon %></span><%= meta.label %></span></td>
+              <td class="a-nowrap"><%= r.submittedAt ? view.formatDateTime(r.submittedAt) : '—' %></td>
+              <td>
+                <% if (r.files.length) { %>
+                  <% r.files.forEach(function (f) { %>
+                    <% if (f.available) { %>
+                      <a class="a-pill a-pill-link" href="<%= f.url %>">⬇ <%= f.name %></a>
+                    <% } else { %>
+                      <span class="a-pill a-muted" title="файл не найден на сервере"><%= f.name %></span>
+                    <% } %>
+                  <% }) %>
+                  <a class="a-muted a-small" href="/admin/submissions/<%= r.submission.id %>">открыть работу →</a>
+                <% } else { %>
+                  <span class="a-muted">—</span>
+                <% } %>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <div class="a-card-foot a-muted">Нажмите на имя или «открыть работу» — страница проверки с предпросмотром архива. «Скачать все работы» собирает сдачи в один архив, по папке на студента.</div>
+  <% } %>
+</section>
+
+<%- include('partials/end') %>

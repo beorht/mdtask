@@ -604,6 +604,9 @@ def get(key):
         import grep_task  # noqa: F401
         import perms_task  # noqa: F401
         import procs_task  # noqa: F401
+        import webattack_task  # noqa: F401
+        import firewall_task  # noqa: F401
+        import midterm_a_task  # noqa: F401
     return LABS.get(key)
 
 

@@ -35,7 +35,25 @@ function makeLinuxCourseDb(db, prepared) {
     })();
   }
 
-  return { getLinuxProgress, saveLinuxProgress, addLinuxEvent, getLinuxEvents, resetLinuxStudent };
+  // Время открытия практической работы «Терминал» (строка id='practical-terminal') или null.
+  function getLinuxPracticalOpen() {
+    const row = prepared("SELECT opens_at FROM linux_practical_window WHERE id = 'practical-terminal'").get();
+    return row ? row.opens_at : null;
+  }
+  function setLinuxPracticalOpen(opensAt) {
+    prepared(
+      "INSERT INTO linux_practical_window (id, opens_at) VALUES ('practical-terminal', ?) " +
+        'ON CONFLICT(id) DO UPDATE SET opens_at = excluded.opens_at'
+    ).run(opensAt || null);
+  }
+  function clearLinuxPracticalOpen() {
+    prepared("DELETE FROM linux_practical_window WHERE id = 'practical-terminal'").run();
+  }
+
+  return {
+    getLinuxProgress, saveLinuxProgress, addLinuxEvent, getLinuxEvents, resetLinuxStudent,
+    getLinuxPracticalOpen, setLinuxPracticalOpen, clearLinuxPracticalOpen,
+  };
 }
 
 module.exports = { makeLinuxCourseDb };

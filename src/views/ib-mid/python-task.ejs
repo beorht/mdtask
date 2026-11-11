@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <%- include('../partials/head', { pageTitle: title }) %>
+  <link rel="stylesheet" href="/vendor/codemirror/5.65.16/codemirror.min.css">
+  <link rel="stylesheet" href="/vendor/codemirror/5.65.16/theme/material-darker.min.css">
+</head>
+<body>
+  <%- include('../partials/header') %>
+  <main class="content">
+    <nav class="breadcrumbs"><a href="/">Главная</a> / <a href="/exam/ib-mid-1"><%= midTitle %></a> / <%= title %></nav>
+    <h1><%= title %></h1>
+    <%- statementHtml %>
+
+    <section class="task-panel code-editor-panel" id="ibmidPy"
+             data-task="<%= taskId %>"
+             data-draft-url="/exam/ib-mid-1/<%= taskId %>/draft"
+             data-check-url="/exam/ib-mid-1/<%= taskId %>/check"
+             data-datasets="<%= datasetsAttr %>"
+             data-datafile="<%= datafile %>"
+             data-solved="<%= solved ? '1' : '' %>">
+      <h3 class="task-panel-title">Редактор Python (main.py)</h3>
+      <p class="code-editor-hint">Пишите программу целиком. «Запустить» выполняет main.py в браузере (Python 3, доступен модуль sqlite3) на основном наборе данных (файл <code><%= datafile %></code>). «Проверить» запускает её на двух наборах и сверяет вывод.</p>
+      <textarea class="sql-console code-file-source" id="ibmidCode" rows="18" spellcheck="false" autocomplete="off" aria-label="main.py"><%= draft %></textarea>
+      <div class="code-editor-actions">
+        <button type="button" class="btn btn-primary" id="ibmidRun">▶ Запустить</button>
+        <button type="button" class="btn btn-accent" id="ibmidCheck">Проверить</button>
+        <span class="code-editor-status" id="ibmidStatus" aria-live="polite"></span>
+      </div>
+      <div class="code-output-head">Вывод</div>
+      <pre class="code-output" id="ibmidOut" aria-live="polite">Нажмите «Запустить».</pre>
+      <div class="ltt-verdict" id="ibmidVerdict" hidden></div>
+    </section>
+    <p><%- include('../partials/back-btn', { href: '/exam/ib-mid-1', label: 'К контрольной' }) %></p>
+  </main>
+  <%- include('../partials/scripts') %>
+  <script src="/vendor/codemirror/5.65.16/codemirror.min.js" defer></script>
+  <script src="/vendor/codemirror/5.65.16/mode/python/python.min.js" defer></script>
+  <script src="/js/ib-mid-python.js" defer></script>
+</body>
+</html>

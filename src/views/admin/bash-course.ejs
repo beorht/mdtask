@@ -1,0 +1,48 @@
+<%- include('partials/start') %>
+<div class="a-page-head">
+  <div>
+    <h1><%= pageTitle %></h1>
+    <p class="a-subtitle">Предмет открыт группе <strong>ИБ (ib-2)</strong> и <strong>TEST</strong>. Готово тем: <%= o.topics.length %>, задач: <%= o.totalTasks %>, вопросов теста: <%= o.totalQuiz %>. Скрипт выполняет движок bash в браузере, а засчитывает сервер тем же движком; вопросы теста сверяет сервер.</p>
+  </div>
+</div>
+
+<form class="a-filters" method="get" action="/admin/bash-course" data-autosubmit>
+  <label class="a-input-search">
+    <%- icon('search') %>
+    <input type="search" name="q" value="<%= filters.q %>" placeholder="Поиск по имени или ID" aria-label="Поиск студента">
+  </label>
+  <button type="submit" class="a-btn a-btn-secondary a-noscript-only">Применить</button>
+</form>
+
+<section class="a-card a-card-flush">
+  <% if (!o.rows.length) { %>
+    <%- include('partials/empty', { emptyIcon: 'students', emptyTitle: 'Студентов нет', emptyText: 'Здесь появятся студенты, которым открыт предмет.' }) %>
+  <% } else { %>
+    <div class="a-table-wrap">
+      <table class="a-table a-emmet-matrix">
+        <thead>
+          <tr>
+            <th>Студент</th>
+            <% o.topics.forEach(function (t) { %><th class="a-num" title="<%= t.number %>. <%= t.title %>"><%= t.number %></th><% }) %>
+            <th class="a-num">Задачи</th><th class="a-num">Тест</th><th>Сигналы</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% o.rows.forEach(function (r) { %>
+            <tr>
+              <td><a class="a-person" href="/admin/bash-course/students/<%= r.student.id %>"><span class="a-avatar a-avatar-sm"><%= view.initials(r.student.name) %></span><%= r.student.name %></a></td>
+              <% r.topics.forEach(function (rt) { const done = rt.solved === rt.total && rt.quizSolved === rt.quizTotal; const st = done ? 'solved' : (rt.solved || rt.quizSolved) ? 'partial' : rt.theoryRead ? 'opened' : 'none'; %>
+                <td class="a-num a-emmet-cell is-<%= st %>" title="<%= rt.theoryRead ? 'теория прочитана' : 'теория не открыта' %>; задач <%= rt.solved %>/<%= rt.total %>, вопросов <%= rt.quizSolved %>/<%= rt.quizTotal %>"><%= rt.solved %>/<%= rt.total %></td>
+              <% }) %>
+              <td class="a-num a-nowrap"><%= r.solved %> / <%= o.totalTasks %></td>
+              <td class="a-num a-nowrap"><%= r.quizSolved %> / <%= o.totalQuiz %></td>
+              <td class="a-muted"><%= r.signals.join(', ') || '—' %></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+    <div class="a-card-foot a-muted">В ячейке — решено задач темы; цвет: всё сделано (задачи и тест) · часть · только теория · не открывал.</div>
+  <% } %>
+</section>
+<%- include('partials/end') %>
