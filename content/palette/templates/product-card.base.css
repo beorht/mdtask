@@ -1,0 +1,32 @@
+/* Базовый стиль шаблона «Карточка товара»: раскладка, отступы, типографика. ЦВЕТА — нейтрально-серые,
+   чтобы «нераскрашенная» карточка была видна и ничего не читалось. Их переопределяет CSS студента. */
+* { box-sizing: border-box; }
+body { margin: 0; font-family: "Open Sans", system-ui, sans-serif; background: #e8e8ec; }
+.shop { display: flex; justify-content: center; padding: 24px 20px; }
+.product-card {
+  width: 300px;
+  background: #d9d9de;            /* нейтральный фон карточки */
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+}
+.product-card__media { position: relative; }
+.product-card__img { display: block; width: 100%; height: 200px; object-fit: cover; }
+.product-card__badge {
+  position: absolute; top: 14px; left: 14px;
+  padding: 5px 12px; border-radius: 999px;
+  font-size: 13px; font-weight: 700;
+  background: #b9b9c0; color: #6c6c72;   /* нейтральный бейдж */
+}
+.product-card__body { padding: 18px 20px 22px; }
+.product-card__cat { margin: 0 0 6px; font-size: 13px; letter-spacing: .04em; text-transform: uppercase; color: #9a9aa0; }
+.product-card__title { margin: 0 0 8px; font-size: 22px; line-height: 1.2; color: #8a8a90; }
+.product-card__desc { margin: 0 0 18px; font-size: 14px; line-height: 1.5; color: #9a9aa0; }
+.product-card__row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.product-card__price { font-size: 22px; font-weight: 700; color: #8a8a90; }
+.product-card__btn {
+  border: 0; cursor: pointer;
+  padding: 11px 20px; border-radius: 12px;
+  font-size: 15px; font-weight: 700; font-family: inherit;
+  background: #c4c4ca; color: #76767c;   /* нейтральная кнопка */
+}

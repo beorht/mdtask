@@ -17,6 +17,7 @@ const htmlCourse = require('./html-course');
 const cssCourse = require('./css-course');
 const linuxCourse = require('./linux-course');
 const bashCourse = require('./bash-course');
+const paletteCourse = require('./palette-course');
 const pythonCourse = require('./python-course');
 const jsCourse = require('./js-course');
 
@@ -160,6 +161,34 @@ function buildSidebarTree({ role, studentId, studentGroup, subject }) {
       href: '/subjects/linux', done: s.solved, total: s.total, label: 'миссий пройдено', children: [] }];
   }
   if (subject === bashCourse.SUBJECT_KEY) return bashCourseNav();
+  if (subject === paletteCourse.SUBJECT_KEY) return paletteCourseNav();
+
+  function paletteCourseNav() {
+    const base = paletteCourse.SUBJECT_BASE;
+    const { topics, solved, total, current } = paletteCourse.summaryForStudent({ id: studentId, role, group: studentGroup });
+    return [
+      backLink(),
+      { kind: 'header', icon: paletteCourse.SUBJECT_ICON, title: paletteCourse.SUBJECT_TITLE, href: base, done: solved, total, label: 'задач решено', children: [] },
+      {
+        kind: 'section',
+        title: 'Темы',
+        children: topics.map((t) => ({
+          kind: 'group',
+          number: t.number,
+          title: t.title,
+          status: t.done ? 'done' : t.theoryOpen ? 'open' : 'locked',
+          meta: t.ready ? `${t.solved}/${t.total}` : 'скоро',
+          open: Boolean(current && current.key === t.key),
+          children: t.ready
+            ? [
+              { kind: 'link', icon: t.theoryRead ? '✓' : '📖', title: `${t.number}.1. Теория`, href: `${base}/${t.key}/theory`, locked: !t.theoryOpen, lockedTitle: 'Откроется после предыдущей темы', children: [] },
+              { kind: 'link', icon: t.tasksDone ? '✓' : '🎨', title: `${t.number}.2. Практика`, href: `${base}/${t.key}/practice`, meta: `${t.solved}/${t.total}`, locked: !t.practiceOpen, lockedTitle: 'Откроется после теории темы', children: [] },
+            ]
+            : [{ kind: 'link', icon: '⏳', title: 'Тема готовится', href: base, locked: true, lockedTitle: 'Материалы темы ещё готовятся', children: [] }],
+        })),
+      },
+    ];
+  }
 
   function bashCourseNav() {
     const base = bashCourse.SUBJECT_BASE;

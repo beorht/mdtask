@@ -1,0 +1,14 @@
+/* Шаблон «Минимал-страница»: раскладка и типографика. ЦВЕТА нейтрально-серые — их задаёт студент.
+   «Солнце» и панели — цветные блоки (без картинок), чтобы тренировать сочетание оттенков. */
+* { box-sizing: border-box; }
+body { margin: 0; font-family: "Open Sans", system-ui, sans-serif; background: #e6e6ea; }
+.hero { max-width: 760px; margin: 0 auto; padding: 22px 26px 28px; background: #e6e6ea; }
+.hero__bar { display: flex; align-items: center; justify-content: space-between; letter-spacing: .18em; font-size: 14px; color: #8a8a90; }
+.hero__stage { text-align: center; padding: 18px 0 26px; }
+.hero__sun { width: 150px; height: 150px; border-radius: 50%; margin: 6px auto 16px; background: #c9c9d0; }
+.hero__title { margin: 0 0 6px; font-size: 34px; font-weight: 700; color: #8a8a90; }
+.hero__sub { margin: 0 0 18px; font-size: 15px; letter-spacing: .04em; color: #9a9aa0; }
+.hero__btn { border: 0; cursor: pointer; padding: 11px 26px; border-radius: 999px; font-size: 15px; font-weight: 700; font-family: inherit; background: #c4c4ca; color: #76767c; }
+.hero__panels { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.hero__panel { height: 96px; border-radius: 14px; display: flex; align-items: flex-end; padding: 14px; background: #d6d6db; }
+.hero__panel-label { font-size: 15px; font-weight: 700; color: #74747a; }

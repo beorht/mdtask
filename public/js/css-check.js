@@ -10,6 +10,10 @@
 (function (root) {
   const FRAME_HEIGHT = 700;
   const RECT_TOLERANCE = 1.5;
+  // Предохранитель: не ждём готовности шрифтов дольше этого времени. В Firefox внутри srcdoc CSP-ключевое 'self'
+  // не совпадает с origin страницы и режет свой же /vendor/fonts/fonts.css, из-за чего doc.fonts.ready мог не
+  // «успокоиться» — и «Проверить» зависало навсегда. Таймаут гарантирует завершение в любом браузере.
+  const FONT_TIMEOUT = 2000;
   const CSP = "default-src 'none'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:";
   // Фон у html не задаётся: иначе фон body не растекался бы на всё окно, как в обычном браузере.
   const BASE_CSS = ':root { color-scheme: light; } html { font-family: "Open Sans", sans-serif; color: #222222; }';
@@ -95,11 +99,17 @@
     return String(css || '').replace(/<\/style/gi, '<\\/style');
   }
 
-  /** Документ для iframe: разметка задания + CSS (студента или эталон). */
-  function documentHtml(html, css) {
+  /**
+   * Документ для iframe: разметка задания + CSS (студента или эталон).
+   * opts.fonts === false — не подключать внешний /vendor/fonts/fonts.css (для iframe ПРОВЕРКИ): он всё равно
+   * режется CSP 'self' внутри srcdoc в Firefox, а оба iframe рисуются одним системным шрифтом, так что сравнение
+   * честное. Для живого предпросмотра (css-course.js) шрифт оставляем — там нет ожидания и вид не меняется.
+   */
+  function documentHtml(html, css, opts) {
+    const withFonts = !opts || opts.fonts !== false;
     return '<!doctype html><html lang="ru"><head><meta charset="utf-8">'
       + '<meta http-equiv="Content-Security-Policy" content="' + CSP + '">'
-      + '<link rel="stylesheet" href="/vendor/fonts/fonts.css">'
+      + (withFonts ? '<link rel="stylesheet" href="/vendor/fonts/fonts.css">' : '')
       + '<style>' + BASE_CSS + '</style><style id="user-css">' + escapeStyle(css) + '</style></head><body>'
       + String(html || '') + '</body></html>';
   }
@@ -116,14 +126,18 @@
   function load(frame, html, css) {
     return new Promise((resolve) => {
       frame.addEventListener('load', resolve, { once: true });
-      frame.srcdoc = documentHtml(html, css);
+      frame.srcdoc = documentHtml(html, css, { fonts: false });
     }).then(() => settle(frame.contentDocument));
   }
 
-  // Дождаться шрифтов и картинок.
+  // Дождаться шрифтов и картинок. Шрифты — с предохранителем-таймаутом: заблокированный CSP шрифт не должен
+  // навсегда держать проверку. Картинки резолвятся и по onerror, так что их блокировка тоже не вешает.
   function settle(doc) {
     const images = [...doc.images].map((img) => (img.complete ? null : new Promise((r) => { img.onload = r; img.onerror = r; })));
-    return Promise.all([doc.fonts ? doc.fonts.ready : null, ...images]).then(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+    const fonts = doc.fonts
+      ? Promise.race([doc.fonts.ready, new Promise((r) => setTimeout(r, FONT_TIMEOUT))])
+      : null;
+    return Promise.all([fonts, ...images]).then(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
   }
 
   const num = (v) => Math.round(parseFloat(v) * 10) / 10;

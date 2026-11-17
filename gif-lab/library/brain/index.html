@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Загрузка · мозг</title>
+  <style>
+    /* фон полностью прозрачный */
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+    }
+
+    /* сцена — квадрат по центру; координаты слоёв заданы в процентах от квадрата
+       (исходный рисунок 1200 × 1200) */
+    #scene {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: min(100vw, 100vh);
+      height: min(100vw, 100vh);
+      transform: translate(-50%, -50%);
+    }
+
+    .layer {
+      position: absolute;
+      display: block;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+
+    /* мозг: покачивается, как будто думает; по центру сцены */
+    #body {
+      left: 17%;
+      top: 27%;
+      width: 66%;
+      height: auto;
+      transform-origin: 50% 90%;
+      animation: think 1.6s ease-in-out infinite;
+    }
+
+    /* загрузка над головой: 8 штрихов, которые крутятся по кругу */
+    #loader {
+      position: absolute;
+      left: 50%;
+      top: 2%;
+      width: 18%;
+      height: auto;
+      transform: translateX(-50%);
+      overflow: visible;
+    }
+
+    #loader g {
+      transform-origin: 0 0;
+      animation: spin 1s steps(8, end) infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes think {
+      0%   { transform: translateY(0) rotate(0deg); }
+      25%  { transform: translateY(-1.2%) rotate(-1.5deg); }
+      50%  { transform: translateY(0) rotate(0deg); }
+      75%  { transform: translateY(-0.6%) rotate(1.5deg); }
+      100% { transform: translateY(0) rotate(0deg); }
+    }
+  </style>
+</head>
+<body>
+  <div id="scene">
+    <img class="layer" id="body" src="img/brain-body.png" alt="">
+    <svg id="loader" viewBox="-50 -50 100 100" role="img" aria-label="Загрузка">
+      <g>
+        <line x1="0" y1="-44" x2="0" y2="-24" stroke="#f5f7fa" stroke-width="8" stroke-linecap="round"/>
+        <line x1="0" y1="-44" x2="0" y2="-24" stroke="#f5f7fa" stroke-width="8" stroke-linecap="round" transform="rotate(45)" opacity="0.95"/>
+        <line x1="0" y1="-44" x2="0" y2="-24" stroke="#f5f7fa" stroke-width="8" stroke-linecap="round" transform="rotate(90)" opacity="0.8"/>
+        <line x1="0" y1="-44" x2="0" y2="-24" stroke="#f5f7fa" stroke-width="8" stroke-linecap="round" transform="rotate(135)" opacity="0.65"/>
+        <line x1="0" y1="-44" x2="0" y2="-24" stroke="#f5f7fa" stroke-width="8" stroke-linecap="round" transform="rotate(180)" opacity="0.5"/>
+        <line x1="0" y1="-44" x2="0" y2="-24" stroke="#f5f7fa" stroke-width="8" stroke-linecap="round" transform="rotate(225)" opacity="0.4"/>
+        <line x1="0" y1="-44" x2="0" y2="-24" stroke="#f5f7fa" stroke-width="8" stroke-linecap="round" transform="rotate(270)" opacity="0.3"/>
+        <line x1="0" y1="-44" x2="0" y2="-24" stroke="#f5f7fa" stroke-width="8" stroke-linecap="round" transform="rotate(315)" opacity="0.2"/>
+      </g>
+    </svg>
+  </div>
+</body>
+</html>

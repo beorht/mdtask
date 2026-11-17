@@ -15,6 +15,7 @@ const { makeCssCourseDb } = require('./css-course');
 const { makeLinuxCourseDb } = require('./linux-course');
 const { makeJsCourseDb } = require('./js-course');
 const { makeBashCourseDb } = require('./bash-course');
+const { makePaletteCourseDb } = require('./palette-course');
 const { makePythonCourseDb } = require('./python-course');
 
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, '..', '..', 'data', 'mdtask.db');
@@ -128,6 +129,7 @@ const cssCourseDb = makeCssCourseDb(db, prepared);
 const linuxCourseDb = makeLinuxCourseDb(db, prepared);
 const jsCourseDb = makeJsCourseDb(db, prepared);
 const bashCourseDb = makeBashCourseDb(db, prepared);
+const paletteCourseDb = makePaletteCourseDb(db, prepared);
 const pythonCourseDb = makePythonCourseDb(db, prepared);
 const topicLocksDb = makeTopicLocksDb(db, prepared);
 const ibMidDb = makeIbMidDb(db, prepared);
@@ -788,7 +790,7 @@ function purgeExpiredSessions(now) {
 }
 
 function __resetForTests() {
-  db.exec('DELETE FROM linux_practical_window; DELETE FROM ib_mid_window; DELETE FROM ib_mid_progress; DELETE FROM topic_overrides; DELETE FROM linux_events; DELETE FROM linux_progress; DELETE FROM login_attempts; DELETE FROM sessions; DELETE FROM python_course_attempts; DELETE FROM python_course_progress; DELETE FROM css_events; DELETE FROM css_progress; DELETE FROM bash_quiz_attempts; DELETE FROM bash_course_attempts; DELETE FROM bash_course_progress; DELETE FROM js_course_attempts; DELETE FROM js_course_progress; DELETE FROM html_events; DELETE FROM html_progress; DELETE FROM emmet_events; DELETE FROM emmet_progress; DELETE FROM emmet_assignments; DELETE FROM emmet_sessions; DELETE FROM exam_pcs; DELETE FROM exam_events; DELETE FROM exam_tasks; DELETE FROM exam_variants; DELETE FROM exams; DELETE FROM python_basics_attempts; DELETE FROM python_basics_progress; DELETE FROM code_drafts; DELETE FROM ib_guard_events; DELETE FROM ib_task_defense; DELETE FROM ib_logs_detector; DELETE FROM ib_lab_log; DELETE FROM ib_lab_tasks; DELETE FROM ib_terminal_log; DELETE FROM ib_terminal_tasks; DELETE FROM ib_config_tasks; DELETE FROM ctf_caesar_secrets; DELETE FROM sql_attempts; DELETE FROM submissions; DELETE FROM assignments; DELETE FROM courses; DELETE FROM users;');
+  db.exec('DELETE FROM palette_attempts; DELETE FROM palette_progress; DELETE FROM linux_practical_window; DELETE FROM ib_mid_window; DELETE FROM ib_mid_progress; DELETE FROM topic_overrides; DELETE FROM linux_events; DELETE FROM linux_progress; DELETE FROM login_attempts; DELETE FROM sessions; DELETE FROM python_course_attempts; DELETE FROM python_course_progress; DELETE FROM css_events; DELETE FROM css_progress; DELETE FROM bash_quiz_attempts; DELETE FROM bash_course_attempts; DELETE FROM bash_course_progress; DELETE FROM js_course_attempts; DELETE FROM js_course_progress; DELETE FROM html_events; DELETE FROM html_progress; DELETE FROM emmet_events; DELETE FROM emmet_progress; DELETE FROM emmet_assignments; DELETE FROM emmet_sessions; DELETE FROM exam_pcs; DELETE FROM exam_events; DELETE FROM exam_tasks; DELETE FROM exam_variants; DELETE FROM exams; DELETE FROM python_basics_attempts; DELETE FROM python_basics_progress; DELETE FROM code_drafts; DELETE FROM ib_guard_events; DELETE FROM ib_task_defense; DELETE FROM ib_logs_detector; DELETE FROM ib_lab_log; DELETE FROM ib_lab_tasks; DELETE FROM ib_terminal_log; DELETE FROM ib_terminal_tasks; DELETE FROM ib_config_tasks; DELETE FROM ctf_caesar_secrets; DELETE FROM sql_attempts; DELETE FROM submissions; DELETE FROM assignments; DELETE FROM courses; DELETE FROM users;');
   seed(db);
 }
 
@@ -872,6 +874,7 @@ module.exports = {
   ...linuxCourseDb,
   ...jsCourseDb,
   ...bashCourseDb,
+  ...paletteCourseDb,
   ...pythonCourseDb,
   ...topicLocksDb,
   ...ibMidDb,

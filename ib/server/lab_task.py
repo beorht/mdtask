@@ -90,7 +90,7 @@ TOKEN_RES = [
     re.compile(r"\b\d{4}-\d{2}-\d{2}\b"),                                     # даты
     re.compile(r"\b\d{2}:\d{2}:\d{2}\b"),                                     # время
     re.compile(r"\b\d{2}/[A-Za-z]{3}/\d{4}\b"),                                 # дата nginx
-    re.compile(r"[A-Za-z][A-Za-z0-9_.\-]{1,40}"),                               # имена (от 2 букв), пути, действия
+    re.compile(r"[A-Za-z][A-Za-z0-9_.\-]{0,40}"),                               # имена (от 1 буквы — напр. параметр ?q=), пути, действия
 ]
 NUMBER_RE = re.compile(r"(?<![\d.:])\d+(?![\d.:])")
 

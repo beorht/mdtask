@@ -1,0 +1,110 @@
+<!-- src/views/palette-course/task.ejs — задача предмета «Цвет и палитра».
+     СЛЕВА: условие + живой предпросмотр готовой страницы (ваш CSS) + список проверок.
+     СПРАВА (липко): пипетки по ролям + редактор CSS + «Проверить» (public/js/palette-course.js).
+     Проверку делает сервер по правилам теории цвета на вычисленных цветах. -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <%- include('../partials/head', { pageTitle: topic.number + '.' + task.number + '. ' + task.title }) %>
+  <link rel="stylesheet" href="/vendor/codemirror/5.65.16/codemirror.min.css">
+  <link rel="stylesheet" href="/vendor/codemirror/5.65.16/theme/material-darker.min.css">
+</head>
+<body>
+  <%- include('../partials/header') %>
+  <div class="app-layout">
+    <%- include('../partials/sidebar') %>
+    <main class="content pyb-page">
+      <nav class="breadcrumbs"><a href="/">Главная</a> / <a href="<%= base %>"><%= subjectTitle %></a> / <a href="<%= base %>/<%= topic.key %>/theory">Тема <%= topic.number %></a> / <%= task.title %></nav>
+
+      <header class="sql-task-head">
+        <h1 class="sql-task-title"><%= topic.number %>.<%= task.number %>. <%= task.title %></h1>
+        <div class="sql-task-meta">
+          <span class="sql-chip sql-chip-<%= task.solved ? 'done' : 'open' %>" data-pal-chip><%= task.solved ? '✓ Решено' : '○ Не решено' %></span>
+          <span class="sql-chip">Задача <%= task.number %> / <%= topic.total %></span>
+          <a class="sql-chip sql-chip-link" href="<%= base %>/<%= topic.key %>/theory">📖 Теория темы</a>
+        </div>
+      </header>
+
+      <div class="pyb-workspace">
+        <div class="pyb-left">
+          <section class="task-panel pyb-statement">
+            <h2 class="task-panel-title">📝 Задание</h2>
+            <%- promptHtml %>
+            <p class="pyb-note">Разметка уже готова — у каждого элемента есть класс. Вы пишете только цвет, обращаясь к классу (без переменных). Выбрать оттенок помогает пипетка справа. Тренажёр проверяет теорию цвета, а не совпадение с «правильной» палитрой — верных вариантов много.</p>
+          </section>
+
+          <% if (task.brand) { %>
+          <section class="task-panel palette-brand-panel">
+            <h2 class="task-panel-title">🎯 Бренд-гайд</h2>
+            <p class="palette-brand-note">Воспроизведите эти цвета точно — назначьте каждый нужному элементу. Нажмите на образец, чтобы скопировать его код.</p>
+            <ul class="palette-brand">
+              <% task.brand.forEach(function (b) { %>
+                <li class="palette-brand-item" data-pal-brand="<%= b.hex %>" title="Скопировать <%= b.hex %>">
+                  <span class="palette-brand-swatch" style="background: <%= b.hex %>"></span>
+                  <span class="palette-brand-text"><span class="palette-brand-label"><%= b.label %></span><span class="palette-brand-hex"><%= b.hex.toUpperCase() %></span></span>
+                </li>
+              <% }) %>
+            </ul>
+          </section>
+          <% } %>
+
+          <section class="task-panel palette-preview-panel">
+            <h2 class="task-panel-title">👁 Ваш результат</h2>
+            <iframe class="palette-preview-frame" data-pal-preview title="Предпросмотр страницы" sandbox="allow-same-origin"></iframe>
+          </section>
+
+          <section class="task-panel palette-checks-panel">
+            <h2 class="task-panel-title">Проверки</h2>
+            <ul class="palette-checks" data-pal-checks></ul>
+            <p class="palette-checks-note">Серые — пока не выполнено, зелёные — ок. Это подсказка; окончательно засчитывает «Проверить».</p>
+          </section>
+
+          <nav class="pyc-task-nav" aria-label="Задачи темы">
+            <% if (prev) { %><a class="topic-btn topic-btn-theory" href="<%= base %>/<%= topic.key %>/<%= prev.id %>">← <%= prev.number %>. <%= prev.title %></a><% } %>
+            <% if (next) { %><a class="topic-btn topic-btn-theory" href="<%= base %>/<%= topic.key %>/<%= next.id %>"><%= next.number %>. <%= next.title %> →</a><% } %>
+          </nav>
+        </div>
+
+        <section class="task-panel pyb-editor-panel" id="palEditor"
+                 data-draft-url="<%= base %>/<%= topic.key %>/<%= task.id %>/draft"
+                 data-check-url="<%= base %>/<%= topic.key %>/<%= task.id %>/check"
+                 data-event-url="<%= base %>/<%= topic.key %>/<%= task.id %>/event">
+          <div class="sql-panel-head">
+            <h2 class="task-panel-title">Палитра</h2>
+            <span class="sql-hint">нажмите на цвет</span>
+          </div>
+          <div class="palette-roles" data-pal-roles></div>
+
+          <div class="sql-panel-head">
+            <h2 class="task-panel-title">Ваш CSS</h2>
+            <span class="sql-hint">Ctrl+Enter — проверить</span>
+          </div>
+          <div class="code-file-pane">
+            <textarea class="sql-console code-file-source" data-pal-code rows="10" spellcheck="false" autocomplete="off" aria-label="CSS с цветами"><%= task.draft %></textarea>
+          </div>
+
+          <div class="code-editor-actions">
+            <button type="button" class="topic-btn topic-btn-practice" data-pal-action="check">✓ Проверить</button>
+            <span class="code-editor-status" data-pal-status aria-live="polite"></span>
+          </div>
+
+          <div class="pyb-results" data-pal-results hidden></div>
+          <p class="pyb-next" data-pal-next <%= task.solved ? '' : 'hidden' %>>
+            <% if (next) { %><a class="topic-btn topic-btn-practice" href="<%= base %>/<%= topic.key %>/<%= next.id %>">Следующая задача: <%= next.title %> →</a><% } else { %><a class="topic-btn topic-btn-practice" href="<%= base %>">К темам →</a><% } %>
+          </p>
+        </section>
+      </div>
+
+      <script type="application/json" data-pal-config><%- JSON.stringify({
+        roles: task.roles, rules: task.rules, skeleton: task.skeleton,
+        template: task.template, solved: task.solved,
+      }).replace(/</g, '\\u003c') %></script>
+    </main>
+  </div>
+  <%- include('../partials/scripts') %>
+  <script src="/vendor/codemirror/5.65.16/codemirror.min.js" defer></script>
+  <script src="/vendor/codemirror/5.65.16/mode/css/css.min.js" defer></script>
+  <script src="/js/color-engine.js" defer></script>
+  <script src="/js/palette-course.js" defer></script>
+</body>
+</html>

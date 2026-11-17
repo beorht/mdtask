@@ -8,6 +8,8 @@ const css = require('./css-course');
 const cssAdmin = require('./css-course/admin');
 const bash = require('./bash-course');
 const bashAdmin = require('./bash-course/admin');
+const palette = require('./palette-course');
+const paletteAdmin = require('./palette-course/admin');
 
 function topicsOf(course, { trainer = false } = {}) {
   const list = [];
@@ -35,6 +37,11 @@ const SUBJECTS = {
     key: bash.SUBJECT_KEY, title: bash.SUBJECT_TITLE, groups: bash.BASH_COURSE_GROUPS,
     topics: topicsOf(bash),
     overview: (group) => bashAdmin.overview({ group }),
+  },
+  palette: {
+    key: palette.SUBJECT_KEY, title: palette.SUBJECT_TITLE, groups: palette.PALETTE_GROUPS,
+    topics: topicsOf(palette),
+    overview: (group) => paletteAdmin.overview({ group }),
   },
 };
 

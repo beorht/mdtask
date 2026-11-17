@@ -5,6 +5,23 @@
 // <p> закрывается блочным элементом). Ручной ввод HTML определяет только браузер — сервер получает признак.
 
 const VOID_TAGS = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'source', 'track', 'wbr']);
+// Секции таблицы: при их открытии браузер закрывает уже открытый неявный <tbody> (сервер — теперь тоже).
+const TABLE_SECTIONS = new Set(['thead', 'tbody', 'tfoot', 'caption', 'colgroup']);
+// Атрибуты-адреса: завершающий слэш не меняет адрес, поэтому сравниваем без него («site.org» = «site.org/»).
+const URL_ATTRS = new Set(['href', 'src', 'action', 'poster', 'cite', 'formaction', 'data', 'background']);
+// URL: ведущий «./» и завершающий «/» не меняют адрес («./file» = «file», «site.org/» = «site.org»).
+const normUrl = (v) => v.replace(/^(?:\.\/)+/, '').replace(/\/+$/, '') || v;
+// target: ключевые слова _blank/_self/_parent/_top трактуются без учёта регистра (как в браузере).
+const normTarget = (v) => (/^_(blank|self|parent|top)$/i.test(v) ? v.toLowerCase() : v);
+function attrEqual(attr, a, b) {
+  if (URL_ATTRS.has(attr)) return normUrl(a) === normUrl(b);
+  if (attr === 'target') return normTarget(a) === normTarget(b);
+  return a === b;
+}
+// Завершающий знак конца предложения (. ! ? …) не относится к разметке: студент не должен терять зачёт из-за
+// него (наличия, отсутствия или того, внутри инлайн-элемента он или снаружи). Текст сравнивается без него.
+const normText = (t) => String(t == null ? '' : t).replace(/[.!?\s]+$/, '');
+const sameText = (a, b) => normText(a) === normText(b);
 const CLOSES_P = new Set([
   'address', 'article', 'aside', 'blockquote', 'details', 'div', 'dl', 'fieldset', 'figcaption', 'figure', 'footer',
   'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'header', 'hgroup', 'hr', 'main', 'menu', 'nav', 'ol', 'p', 'pre',
@@ -128,6 +145,8 @@ function parseTree(html) {
         if (!['b', 'i', 'em', 'strong', 'span', 'a', 'small', 'code'].includes(stack[i].tag)) break;
       }
     }
+    // Открытие секции таблицы закрывает неявный <tbody> (напр. <tfoot> после строк без <tbody>).
+    if (TABLE_SECTIONS.has(name) && top().implicit && top().tag === 'tbody') stack.pop();
     if (name === 'tr' && top().tag === 'table') {
       const lastChild = top().children[top().children.length - 1];
       stack.push(lastChild && lastChild.implicit ? lastChild : Object.assign(open('tbody', new Map()), { implicit: true }));
@@ -156,9 +175,9 @@ function hasDetailIssues(expected, actual) {
       if (attr === 'class') {
         const present = new Set(actualValue.split(' '));
         if (value.split(' ').some((cls) => !present.has(cls))) return true;
-      } else if (actualValue !== value) return true;
+      } else if (!attrEqual(attr, actualValue, value)) return true;
     }
-    if (need.text && need.text !== have.text) return true;
+    if (normText(need.text) && !sameText(need.text, have.text)) return true;
     return hasDetailIssues(need.children, have.children);
   });
 }
@@ -234,9 +253,9 @@ function explainNodes(expected, actual, parent, out) {
         const present = new Set(actualValue.split(' '));
         const lost = value.split(' ').filter((c) => !present.has(c));
         if (lost.length) out.push(`У ${describe(have)} не хватает класса ${lost.map((c) => `«${c}»`).join(', ')}.`);
-      } else if (actualValue !== value) out.push(`У ${describe(have)} атрибут ${attr} другой: «${actualValue}».`);
+      } else if (!attrEqual(attr, actualValue, value)) out.push(`У ${describe(have)} атрибут ${attr} другой: «${actualValue}».`);
     }
-    if (need.text && need.text !== have.text) {
+    if (normText(need.text) && !sameText(need.text, have.text)) {
       out.push(have.text ? `Текст в ${describe(have)} отличается от образца: «${have.text.length > 40 ? have.text.slice(0, 40) + '…' : have.text}».` : `В ${describe(have)} нет текста — он должен быть.`);
     }
     explainNodes(need.children, have.children, have, out);

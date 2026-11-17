@@ -556,6 +556,29 @@ CREATE TABLE IF NOT EXISTS bash_quiz_attempts (
 );
 CREATE INDEX IF NOT EXISTS idx_bash_quiz_attempts ON bash_quiz_attempts(student_id, question_id, id);
 
+-- Предмет «Цвет и палитра» (src/lib/palette-course/). item_id: '<тема>:theory' | id задачи.
+-- draft — CSS студента (цвета к готовой разметке). Проверка — по правилам теории цвета на вычисленных цветах.
+CREATE TABLE IF NOT EXISTS palette_progress (
+  student_id TEXT NOT NULL,
+  item_id TEXT NOT NULL,
+  draft TEXT,
+  stats TEXT NOT NULL DEFAULT '{}',
+  solved_at TEXT,
+  updated_at TEXT NOT NULL,
+  PRIMARY KEY (student_id, item_id)
+);
+CREATE TABLE IF NOT EXISTS palette_attempts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  student_id TEXT NOT NULL,
+  task_id TEXT NOT NULL,
+  code TEXT NOT NULL,
+  passed INTEGER NOT NULL,
+  total INTEGER NOT NULL,
+  success INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_palette_attempts ON palette_attempts(student_id, task_id, id);
+
 -- Админ-блокировки и дедлайны тем по предметам (src/lib/topic-locks.js).
 -- scope: 'group' (target = имя группы) | 'student' (target = id студента).
 -- mode: 'lock' (закрыто сразу) | 'deadline' (закрыто после deadline) | 'allow' (только student: форс-открыть).

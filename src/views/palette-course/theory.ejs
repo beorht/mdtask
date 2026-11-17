@@ -1,0 +1,23 @@
+<!-- src/views/palette-course/theory.ejs — N.1. Теория темы предмета «Цвет и палитра» (content/palette/<тема>/theory.md) -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <%- include('../partials/head', { pageTitle: topic.number + '. ' + topic.title }) %>
+</head>
+<body>
+  <%- include('../partials/header') %>
+  <div class="app-layout">
+    <%- include('../partials/sidebar') %>
+    <main class="content html-theory">
+      <nav class="breadcrumbs"><a href="/">Главная</a> / <a href="<%= base %>"><%= subjectTitle %></a> / Тема <%= topic.number %></nav>
+      <p class="html-theory-kicker">Тема <%= topic.number %> · Теория</p>
+      <h1><%= topic.title %></h1>
+      <div class="markdown-body"><%- html %></div>
+      <div class="html-theory-next">
+        <a class="topic-btn topic-btn-practice topic-btn-lg" href="<%= base %>/<%= topic.key %>/practice"><span aria-hidden="true">🎨</span> К практике <span class="topic-btn-count"><%= topic.solved %>/<%= topic.total %></span></a>
+      </div>
+    </main>
+  </div>
+  <%- include('../partials/scripts') %>
+</body>
+</html>

@@ -6,5 +6,10 @@
   ],
   "success": [
     "simba-jump"
+  ],
+  "error": [
+    "brain",
+    "math-spinner-grid",
+    "spinning-cat-loader"
   ]
 }

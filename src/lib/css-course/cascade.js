@@ -1200,4 +1200,4 @@ function stateLabel(state) {
   return `${names[state.state] || state.state} на ${state.selector}`;
 }
 
-module.exports = { checkCss, parseCss, parseSelector, parseColor, expand, lengthPx, matchesSelector, buildDocument, mediaMatches };
+module.exports = { checkCss, parseCss, parseSelector, parseColor, expand, lengthPx, matchesSelector, buildDocument, mediaMatches, prepareSheets, computeTree, stateEnv };

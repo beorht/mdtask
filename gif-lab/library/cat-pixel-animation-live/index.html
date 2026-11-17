@@ -90,6 +90,7 @@
       for (const [name, clip] of Object.entries(clips)) {
         if (!Array.isArray(clip.frames) || clip.frames.length === 0) problems.push(`клип «${name}»: нет кадров`);
         if (!(clip.fps > 0)) problems.push(`клип «${name}»: fps должен быть больше 0`);
+        if (clip.pause !== undefined && !(clip.pause >= 0)) problems.push(`клип «${name}»: pause должен быть 0 или больше`);
       }
       const check = (clipName, where) => {
         if (!clips[clipName]) problems.push(`${where}: нет клипа «${clipName}» в clips.json`);
@@ -102,6 +103,10 @@
       }
       check(cfg.walk.right, 'walk.right');
       check(cfg.walk.left, 'walk.left');
+      // вверх и вниз — необязательные клипы: если заданы, они должны существовать
+      if (cfg.walk.up) check(cfg.walk.up, 'walk.up');
+      if (cfg.walk.down) check(cfg.walk.down, 'walk.down');
+      if (!(cfg.walkStride > 0)) problems.push('walkStride: должен быть больше 0 (доля высоты кошки за цикл ходьбы)');
       return problems;
     }
 
@@ -146,6 +151,7 @@
     function startLoop(name) {
       const clip = CLIPS[name];
       const interval = 1000 / clip.fps;
+      const pause = clip.pause || 0;  // пауза после полного цикла (дыхание во сне)
       let stopped = false;
       (async () => {
         let i = 0;
@@ -153,6 +159,7 @@
           sprite.src = frameUrl(clip.frames[i % clip.frames.length]);
           i++;
           await wait(interval);
+          if (pause && i % clip.frames.length === 0) await wait(pause);
         }
       })();
       return () => { stopped = true; };
@@ -178,15 +185,33 @@
       const from = pos;
       const dx = to.x - from.x;
       const dy = to.y - from.y;
-      const dist = Math.hypot(dx, Math.abs(dy) * 0.6 + Math.abs(dx) * 0.4);
+      // вертикальный ход (вглубь / к зрителю) считаем «тяжелее»: он идёт медленнее, масштаб меняется плавно
+      const dist = Math.hypot(dx, dy * 1.5);
       if (dist < 2 && Math.abs(to.s - from.s) < 0.01) return;
 
-      if (Math.abs(dx) > 4) facing = dx > 0 ? 'right' : 'left';
-      const stop = startLoop(CFG.walk[facing]);
-      const duration = Math.max(200, dist / CFG.walkSpeed);
+      // Направление кадров: при движении в основном вертикально берём клип вверх/вниз, если он есть;
+      // иначе смотрим вбок в сторону движения (последнее горизонтальное направление сохраняется).
+      const vertical = Math.abs(dy) * 0.6 > Math.abs(dx);
+      let clipName;
+      if (vertical && dy < 0 && CFG.walk.up) clipName = CFG.walk.up;
+      else if (vertical && dy > 0 && CFG.walk.down) clipName = CFG.walk.down;
+      else {
+        if (Math.abs(dx) > 4) facing = dx > 0 ? 'right' : 'left';
+        clipName = CFG.walk[facing];
+      }
+      const stop = startLoop(clipName);
+
+      // Скорость синхронна с лапами: за один полный цикл ходьбы кошка проходит
+      // walkStride × высоту кошки (с учётом масштаба глубины). Чем быстрее цикл, тем быстрее движение.
+      const clip = CLIPS[clipName];
+      const H = cat.offsetHeight;
+      const scale = (from.s + to.s) / 2;
+      const cycleSeconds = clip.frames.length / clip.fps;
+      const pxPerSec = (CFG.walkStride * H * scale) / cycleSeconds;
+      const duration = Math.max(300, (dist / pxPerSec) * 1000);
       await cat.animate(
         [{ transform: toCss(from) }, { transform: toCss(to) }],
-        { duration, easing: 'linear', fill: 'forwards' }
+        { duration, easing: 'ease-in-out', fill: 'forwards' }
       ).finished;
       stop();
       place(to);

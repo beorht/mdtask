@@ -121,13 +121,16 @@
     });
   }
 
-  // Гифка — <img>; HTML-анимация — <iframe> (sandbox без доступа к песочнице и к сайту).
+  // Гифка — <img>; HTML-анимация — <iframe>.
+  // allow-same-origin нужен, чтобы анимация могла читать свои JSON-файлы (fetch):
+  // без него iframe получает «непрозрачное» происхождение и запрос режется как межсайтовый.
+  // Это безопасно: библиотека — свои файлы, а не чужой контент.
   function mediaFor(ev, item) {
     if (item.type === 'html') {
       const f = document.createElement('iframe');
       f.src = item.url;
       f.title = `${ev.title}: ${item.name}`;
-      f.setAttribute('sandbox', 'allow-scripts');
+      f.setAttribute('sandbox', 'allow-scripts allow-same-origin');
       return f;
     }
     const img = document.createElement('img');

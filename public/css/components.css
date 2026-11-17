@@ -1998,3 +1998,45 @@ a.back-btn.back-btn-sm { font-size: 0.85rem; padding-right: 0.8rem; }
   .topic-row { flex-wrap: wrap; }
   .topic-row-links { width: 100%; padding-left: 2.8rem; flex-wrap: wrap; white-space: normal; }
 }
+
+/* ─── Тренажёр «Цвет и палитра» (src/views/palette-course/) ─────────────────────────────────────── */
+.palette-preview-panel { padding-bottom: 1rem; }
+.palette-preview-frame {
+  width: 100%; height: 540px; border: 1px solid var(--border); border-radius: 12px;
+  background: #ffffff; display: block;
+}
+.palette-checks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+.palette-check { display: flex; gap: 0.6rem; align-items: flex-start; padding: 0.5rem 0.65rem; border-radius: 10px; border: 1px solid var(--border); }
+.palette-check-mark { font-weight: 700; line-height: 1.4; }
+.palette-check-text { display: flex; flex-direction: column; gap: 0.1rem; }
+.palette-check-detail { font-size: 0.85rem; color: var(--text-soft); }
+.palette-check.is-ok { border-color: color-mix(in srgb, var(--color-status-done) 45%, var(--border)); background: color-mix(in srgb, var(--color-status-done) 12%, transparent); }
+.palette-check.is-ok .palette-check-mark { color: var(--color-status-done); }
+.palette-check.is-bad { border-color: color-mix(in srgb, var(--color-status-failed) 45%, var(--border)); background: color-mix(in srgb, var(--color-status-failed) 12%, transparent); }
+.palette-check.is-bad .palette-check-mark { color: var(--color-status-failed); }
+.palette-check.is-pending { opacity: 0.75; }
+.palette-check.is-pending .palette-check-mark { color: var(--text-soft); }
+.palette-checks-note { font-size: 0.82rem; color: var(--text-soft); margin: 0.6rem 0 0; }
+
+.palette-roles { display: flex; flex-direction: column; gap: 0.45rem; margin-bottom: 1rem; }
+.palette-role { display: flex; align-items: center; gap: 0.6rem; padding: 0.35rem 0.5rem; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; }
+.palette-role:hover { background: var(--accent-soft-bg); }
+.palette-role-swatch {
+  -webkit-appearance: none; appearance: none; width: 34px; height: 28px; padding: 0;
+  border: 1px solid var(--border); border-radius: 7px; background: none; cursor: pointer; flex: none;
+}
+.palette-role-swatch::-webkit-color-swatch-wrapper { padding: 2px; }
+.palette-role-swatch::-webkit-color-swatch { border: none; border-radius: 5px; }
+.palette-role-swatch::-moz-color-swatch { border: none; border-radius: 5px; }
+.palette-role-name { flex: 1; font-size: 0.92rem; }
+.palette-role-hex { font-family: var(--font-mono, monospace); font-size: 0.82rem; color: var(--text-soft); }
+
+/* Бренд-гайд в теме «По образцу» */
+.palette-brand-note { font-size: 0.85rem; color: var(--text-soft); margin: 0 0 0.75rem; }
+.palette-brand { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.5rem; }
+.palette-brand-item { display: flex; align-items: center; gap: 0.55rem; padding: 0.4rem 0.5rem; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; }
+.palette-brand-item:hover { background: var(--accent-soft-bg); }
+.palette-brand-swatch { width: 30px; height: 30px; border-radius: 7px; border: 1px solid rgba(0,0,0,0.12); flex: none; }
+.palette-brand-text { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
+.palette-brand-label { font-size: 0.85rem; }
+.palette-brand-hex { font-family: var(--font-mono, monospace); font-size: 0.78rem; color: var(--text-soft); }

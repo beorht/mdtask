@@ -1,11 +1,11 @@
 const products = JSON.parse(input());
 const fmt = (p) => '#' + p.id + ' ' + p.title + ' — ' + p.price + (p.stock === 0 ? ' (нет в наличии)' : '');
-const print = (list) => list.forEach((p) => console.log(fmt(p)));
+const show = (list) => list.forEach((p) => console.log(fmt(p)));
 const commands = {
-  list: () => print(products),
-  find: (text) => print(products.filter((p) => p.title.toLowerCase().includes(text.toLowerCase()))),
-  cat: (c) => print(products.filter((p) => p.category === c)),
-  cheap: (n) => print(products.filter((p) => p.stock > 0).sort((a, b) => a.price - b.price || a.id - b.id).slice(0, Number(n))),
+  list: () => show(products),
+  find: (text) => show(products.filter((p) => p.title.toLowerCase().includes(text.toLowerCase()))),
+  cat: (c) => show(products.filter((p) => p.category === c)),
+  cheap: (n) => show(products.filter((p) => p.stock > 0).sort((a, b) => a.price - b.price || a.id - b.id).slice(0, Number(n))),
   price: (id, value) => {
     const p = products.find((x) => x.id === Number(id));
     if (!p) console.log('нет товара ' + id);

@@ -259,6 +259,22 @@ function buildStudentHome(user, now = Date.now()) {
     });
   }
 
+  // «Цвет и палитра» — только TEST (src/lib/palette-course, PALETTE_GROUPS пуст).
+  const paletteCourse = require('./palette-course');
+  if (paletteCourse.canSeeSubject(user)) {
+    const pc = paletteCourse.summaryForStudent(user);
+    htmlSubjects.push({
+      key: paletteCourse.SUBJECT_KEY,
+      kind: 'html',
+      title: paletteCourse.SUBJECT_TITLE,
+      icon: paletteCourse.SUBJECT_ICON,
+      solved: pc.solved,
+      total: pc.total,
+      topicsCount: pc.topics.filter((t) => t.ready).length,
+      current: pc.current && { number: String(pc.current.number), title: pc.current.title },
+    });
+  }
+
   // The final exam: a card while it runs and after it; the IB tasks and the trainer are closed while it runs.
   const webExam = require('./web-exam');
   const exams = [...Object.values(exam.EXAMS).map((def) => [def, exam]), ...Object.values(webExam.EXAMS).map((def) => [def, webExam])]

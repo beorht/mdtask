@@ -1,0 +1,19 @@
+/* Шаблон «Лендинг»: раскладка и типографика целой страницы. ЦВЕТА нейтрально-серые — их задаёт студент:
+   фон, герой, карточки и акцентная кнопка. Здесь собирается всё: контраст, поверхности, акцент, настроение. */
+* { box-sizing: border-box; }
+body { margin: 0; font-family: "Open Sans", system-ui, sans-serif; background: #d9d9de; }
+.site { max-width: 820px; margin: 0 auto; background: #e9e9ed; border-radius: 16px; overflow: hidden; }
+.site__header { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; }
+.site__logo { font-size: 20px; font-weight: 800; letter-spacing: .04em; color: #85858b; }
+.site__nav { display: flex; gap: 18px; }
+.site__link { font-size: 14px; color: #9a9aa0; }
+.hero2 { text-align: center; padding: 34px 28px 40px; background: #dedee3; }
+.hero2__kicker { margin: 0 0 10px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; font-weight: 700; color: #9a9aa0; }
+.hero2__title { margin: 0 0 12px; font-size: 32px; line-height: 1.15; color: #85858b; }
+.hero2__lead { margin: 0 auto 22px; font-size: 16px; line-height: 1.55; color: #9a9aa0; max-width: 46ch; }
+.hero2__btn { border: 0; cursor: pointer; padding: 12px 26px; border-radius: 12px; font-size: 15px; font-weight: 700; font-family: inherit; background: #c4c4ca; color: #76767c; }
+.feat { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; padding: 24px; }
+.feat__card { background: #e2e2e7; border-radius: 12px; padding: 18px; text-align: center; }
+.feat__name { margin: 0 0 6px; font-size: 17px; color: #85858b; }
+.feat__price { margin: 0; font-size: 15px; font-weight: 700; color: #8f8f95; }
+.site__footer { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; font-size: 13px; color: #9a9aa0; }
